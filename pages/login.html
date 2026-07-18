@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Portal Login - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <header class="main-header">
+    <div class="header-container">
+      <h1>Delight International School</h1>
+
+      <nav>
+        <a href="../index.html">Home</a>
+        <a href="../index.html#about">About</a>
+        <a href="../index.html#admission">Admission</a>
+        <a href="../index.html#gallery">Gallery</a>
+        <a href="../index.html#events">Events</a>
+        <a href="../index.html#contact">Contact</a>
+        <a href="login.html" class="login-btn">Portal Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="login-section">
+    <div class="login-box">
+      <h2>Login</h2>
+      <p>Enter your Ghana Card number and password / phone number.</p>
+
+      <form id="loginForm">
+        <div>
+          <label>User Role</label>
+          <select id="role" required>
+            <option value="">Select role</option>
+            <option value="admin">Admin</option>
+            <option value="teacher">Teacher</option>
+            <option value="parent">Parent</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Ghana Card Number</label>
+          <input type="text" id="username" placeholder="Enter Ghana Card Number" required>
+        </div>
+
+        <div>
+          <label>Password / Phone Number</label>
+          <input type="password" id="password" placeholder="Enter phone number or password" required>
+        </div>
+
+        <button type="submit">Login</button>
+      </form>
+
+      <div style="margin-top:15px; text-align:center;">
+        <a href="./forgot-password.html" style="display:inline-block;background:#f59e0b;color:white;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:bold;">
+          Forgot Password?
+        </a>
+      </div>
+
+      <p id="loginMessage" style="font-weight:bold; margin-top:15px;"></p>
+    </div>
+  </section>
+
+
+  <footer class="login-footer">
+    <p>Designed and Developed by CRS Tech Solutions</p>
+  </footer>
+
+  <script src="../js/login.js?v=20"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+</body>
+</html>

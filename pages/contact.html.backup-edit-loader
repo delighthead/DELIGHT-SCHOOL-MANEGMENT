@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="logo">Delight International School</div>
+
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="admission.html">Admission</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="events.html">Events</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html" class="login-btn">Portal Login</a>
+    </nav>
+  </header>
+
+  
+
+
+<section class="section contact-info-section">
+  <div class="container">
+    <div class="contact-info-grid">
+
+      <div class="contact-info-box">
+        <h2 data-edit-key="contact_intro_title">Contact Information</h2>
+
+        <div class="contact-detail">
+          <h3 data-edit-key="contact_location_title">Location / Address</h3>
+          <p data-edit-key="contact_location_text">Box AN 5044, Accra-North</p>
+        </div>
+
+        <div class="contact-detail">
+          <h3 data-edit-key="contact_phone_title">Phone Numbers</h3>
+          <p data-edit-key="contact_phone_text">0244113286 / 0277776449</p>
+        </div>
+
+        <div class="contact-detail">
+          <h3 data-edit-key="contact_email_title">Email Address</h3>
+          <p data-edit-key="contact_email_text">delightintschool@gmail.com</p>
+        </div>
+
+        <div class="contact-detail">
+          <h3 data-edit-key="contact_hours_title">Working Hours</h3>
+          <p data-edit-key="contact_hours_text">Monday to Friday: 6:00 AM to 4:00 PM</p>
+        </div>
+
+        <div class="contact-detail">
+          <h3 data-edit-key="contact_social_title">Social Media</h3>
+          <div class="contact-social-buttons">
+            <a href="https://wa.me/233244113286" target="_blank" class="social-btn whatsapp-btn">WhatsApp</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-info-box">
+        <h2 data-edit-key="contact_map_title">Map Location</h2>
+        <div class="school-map-box">
+          <iframe
+            src="https://www.google.com/maps?q=Delight%20International%20School%20Accra%20Ghana&output=embed"
+            width="100%"
+            height="350"
+            style="border:0;"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade">
+          </iframe>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+
+
+  <footer>
+    <p>&copy; 2025 Delight International School | All Rights Reserved</p>
+    <p>Designed and Developed by CRS Tech Solutions</p>
+  </footer>
+
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/public-pages-loader.js?v=5"></script>
+</body>
+</html>

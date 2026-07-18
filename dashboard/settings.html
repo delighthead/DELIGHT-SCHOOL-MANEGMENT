@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Settings - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Super Admin<br>Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="admin.html">Dashboard Overview</a>
+      <a href="admin-profile.html">My Profile</a>
+      <a href="students.html">Add / Manage Students</a>
+      <a href="promote-students.html">Promote Students</a>
+      <a href="scores.html">Scores & Results</a>
+      <a href="fees.html">Fees Management</a>
+      <a href="attendance.html">Attendance</a>
+      <a href="announcements.html">Announcements</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html" class="active">System Settings</a>
+      <a href="edit-pages.html">Edit Website Pages</a>
+      <a href="teachers.html">Add / Assign Teachers</a>
+      <a href="parents.html">Add Parents</a>
+      <a href="accounts.html">Lock / Disable Accounts</a>
+      <a href="activities.html">Recent Activities</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>System Settings</h1>
+      <p>Manage school information, academic year, grading, score limits, and account security rules.</p>
+
+      <section class="dashboard-section">
+        <h2>School Information</h2>
+
+        <form class="admin-form" id="schoolInfoForm">
+          <div class="form-grid">
+            <div>
+              <label>School Name</label>
+              <input type="text" id="school_name" placeholder="Enter school name">
+            </div>
+
+            <div>
+              <label>School Motto</label>
+              <input type="text" id="school_motto" placeholder="Enter school motto">
+            </div>
+
+            <div>
+              <label>School Phone</label>
+              <input type="text" id="school_phone" placeholder="Enter school phone">
+            </div>
+
+            <div>
+              <label>School Email</label>
+              <input type="email" id="school_email" placeholder="Enter school email">
+            </div>
+
+            <div class="full-width">
+              <label>School Address</label>
+              <input type="text" id="school_address" placeholder="Enter school address">
+            </div>
+
+            <div>
+              <label>Upload School Logo</label>
+              <input type="file" id="school_logo" accept="image/*">
+            </div>
+
+            <div>
+              <label>Current Logo</label>
+              <div id="currentLogoBox">No logo uploaded.</div>
+            </div>
+          </div>
+
+          <button type="submit">Save School Info</button>
+        </form>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Academic Settings</h2>
+
+        <form class="admin-form" id="academicSettingsForm">
+          <div class="form-grid">
+            <div>
+              <label>Academic Year</label>
+              <input type="text" id="academic_year" placeholder="2025/2026">
+            </div>
+
+            <div>
+              <label>Current Term</label>
+              <select id="current_term">
+                <option value="">Select term</option>
+                <option value="Term 1">Term 1</option>
+                <option value="Term 2">Term 2</option>
+                <option value="Term 3">Term 3</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Assessment Maximum Score</label>
+              <input type="number" id="assessment_max_score" placeholder="30">
+            </div>
+
+            <div>
+              <label>Examination Maximum Score</label>
+              <input type="number" id="examination_max_score" placeholder="70">
+            </div>
+
+            <div>
+              <label>Total Maximum Score</label>
+              <input type="number" id="total_max_score" placeholder="100">
+            </div>
+
+            <div>
+              <label>Pass Mark</label>
+              <input type="number" id="pass_mark" placeholder="50">
+            </div>
+          </div>
+
+          <button type="submit">Save Academic Settings</button>
+        </form>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Grading System</h2>
+
+        <form id="gradingSettingsForm">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Grade</th>
+                <th>Minimum Score</th>
+                <th>Maximum Score</th>
+                <th>Remark</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>A</td>
+                <td><input type="number" id="grade_a_min" value="80"></td>
+                <td><input type="number" id="grade_a_max" value="100"></td>
+                <td><input type="text" id="grade_a_remark" value="Excellent"></td>
+              </tr>
+              <tr>
+                <td>B</td>
+                <td><input type="number" id="grade_b_min" value="70"></td>
+                <td><input type="number" id="grade_b_max" value="79"></td>
+                <td><input type="text" id="grade_b_remark" value="Very Good"></td>
+              </tr>
+              <tr>
+                <td>C</td>
+                <td><input type="number" id="grade_c_min" value="60"></td>
+                <td><input type="number" id="grade_c_max" value="69"></td>
+                <td><input type="text" id="grade_c_remark" value="Good"></td>
+              </tr>
+              <tr>
+                <td>D</td>
+                <td><input type="number" id="grade_d_min" value="50"></td>
+                <td><input type="number" id="grade_d_max" value="59"></td>
+                <td><input type="text" id="grade_d_remark" value="Pass"></td>
+              </tr>
+              <tr>
+                <td>F</td>
+                <td><input type="number" id="grade_f_min" value="0"></td>
+                <td><input type="number" id="grade_f_max" value="49"></td>
+                <td><input type="text" id="grade_f_remark" value="Needs Improvement"></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <button type="submit" style="margin-top:15px;">Save Grading System</button>
+        </form>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Account Security Settings</h2>
+
+        <form class="admin-form" id="securitySettingsForm">
+          <div class="form-grid">
+            <div>
+              <label>Default Username</label>
+              <input type="text" id="default_username" placeholder="Ghana Card Number">
+            </div>
+
+            <div>
+              <label>Default Password</label>
+              <input type="text" id="default_password" placeholder="Phone Number">
+            </div>
+
+            <div>
+              <label>Allow Password Reset</label>
+              <select id="allow_password_reset">
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Lock Account After Failed Attempts</label>
+              <input type="number" id="lock_after_attempts" placeholder="5">
+            </div>
+          </div>
+
+          <button type="submit">Save Security Settings</button>
+        </form>
+      </section>
+
+    
+      <section class="dashboard-section" id="backup-tools">
+        <h2>Database Backup</h2>
+        <p>Click the button below to create a backup of all school data.</p>
+
+        <p>
+          <strong>Backup folder:</strong><br>
+          <code>/home/abraham-sowah/Documents/DELIGHT SCHOOL MANEGMENT/backend/backups</code>
+        </p>
+
+        <button type="button" class="primary-btn" id="backupDatabaseBtn">
+          Backup Database
+        </button>
+
+        <p id="backupStatusText" style="margin-top:10px;"></p>
+      </section>
+
+    
+      <section class="dashboard-section" id="restore-tools">
+        <h2>Restore Database</h2>
+        <p style="color:red;">
+          Warning: Restoring a backup may replace current school data.
+          Use this only when necessary.
+        </p>
+
+        <input type="file" id="restoreBackupFile" accept=".sql">
+
+        <button type="button" class="danger-btn" id="restoreDatabaseBtn">
+          Restore Database
+        </button>
+
+        <p id="restoreStatusText" style="margin-top:10px;"></p>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="../js/settings-api.js?v=7"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/admin-guard.js?v=1"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/admin-sidebar-picture-final.js?v=1"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+</body>
+</html>

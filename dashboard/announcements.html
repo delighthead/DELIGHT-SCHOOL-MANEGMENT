@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Announcements - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Admin Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="admin.html">Dashboard Overview</a>
+      <a href="admin-profile.html">My Profile</a>
+      <a href="students.html">Add / Manage Students</a>
+      <a href="promote-students.html">Promote Students</a>
+      <a href="scores.html">Scores & Results</a>
+      <a href="fees.html">Fees Management</a>
+      <a href="attendance.html">Attendance</a>
+      <a href="announcements.html" class="active">Announcements</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">System Settings</a>
+      <a href="edit-pages.html">Edit Website Pages</a>
+      <a href="teachers.html">Add / Assign Teachers</a>
+      <a href="parents.html">Add Parents</a>
+      <a href="accounts.html">Lock / Disable Accounts</a>
+      <a href="activities.html">Recent Activities</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Announcements</h1>
+      <p>Create branch-specific announcements for parents, teachers, or everyone.</p>
+
+      <section class="dashboard-section">
+        <h2>Create Announcement</h2>
+
+        <form class="admin-form" id="announcementForm">
+          <div id="announcement_branch_wrapper">
+            <label>Branch / Location</label>
+            <select id="announcement_branch_id" required>
+              <option value="">Loading branches...</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Audience</label>
+            <select id="announcement_audience" required>
+              <option value="all">Everyone</option>
+              <option value="parents">Parents</option>
+              <option value="teachers">Teachers</option>
+              <option value="students">Students</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Title</label>
+            <input type="text" id="announcement_title" placeholder="Enter announcement title" required>
+          </div>
+
+          <div>
+            <label>Message</label>
+            <textarea id="announcement_message" rows="5" placeholder="Enter announcement message" required></textarea>
+          </div>
+
+          <button type="submit">Publish Announcement</button>
+        </form>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Announcement List</h2>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Branch</th>
+              <th>Title</th>
+              <th>Message</th>
+              <th>Audience</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="announcementTableBody">
+            <tr>
+              <td colspan="6">Loading announcements...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/dashboard-actions.js?v=4"></script>
+  <script src="../js/admin-panel-title.js?v=1"></script>
+  <script src="../js/announcements-api.js?v=70"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/admin-guard.js?v=1"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/admin-sidebar-picture-final.js?v=1"></script>
+  <script src="../js/branch-dropdowns-superadmin-final.js?v=1"></script>
+  <script src="../js/announcements-list-final.js?v=2"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+</body>
+</html>

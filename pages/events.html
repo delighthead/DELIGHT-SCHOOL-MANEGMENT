@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Events - Delight International School</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #222;
+    }
+
+    .public-header {
+      background: #073b70;
+      color: #ffffff;
+      padding: 15px 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .public-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .public-logo img {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 5px;
+    }
+
+    .public-logo h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .public-header nav a {
+      color: #ffffff;
+      text-decoration: none;
+      margin-left: 18px;
+      font-weight: bold;
+    }
+
+    .public-header nav a:hover,
+    .public-header nav a.active {
+      color: #ffcc00;
+    }
+
+    .public-hero {
+      background: #265b8c;
+      color: #ffffff;
+      text-align: center;
+      padding: 70px 20px;
+    }
+
+    .public-hero h1 {
+      font-size: 42px;
+      margin: 0 0 15px;
+    }
+
+    .public-hero p {
+      font-size: 18px;
+      max-width: 800px;
+      margin: auto;
+      line-height: 1.6;
+    }
+
+    .public-main {
+      max-width: 1150px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .public-section {
+      background: #ffffff;
+      padding: 30px;
+      margin-bottom: 25px;
+      border-radius: 14px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    }
+
+    .public-section h2 {
+      color: #073b70;
+      margin-top: 0;
+      font-size: 30px;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 22px;
+    }
+
+    .event-card {
+      background: #f8fbff;
+      border-left: 6px solid #ffcc00;
+      padding: 22px;
+      border-radius: 14px;
+      min-height: 230px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .event-top {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .event-info {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .event-info h4 {
+      margin: 0 0 6px;
+      color: #073b70;
+      font-size: 15px;
+    }
+
+    .event-info p {
+      margin: 0;
+      font-weight: bold;
+    }
+
+    .event-card h3 {
+      color: #073b70;
+      font-size: 24px;
+      margin: 12px 0 10px;
+    }
+
+    .event-card .event-text {
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    @media (max-width: 900px) {
+      .events-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .public-header {
+        padding: 15px 20px;
+      }
+
+      .public-header nav {
+        margin-top: 15px;
+      }
+
+      .public-header nav a {
+        display: inline-block;
+        margin: 5px 10px 5px 0;
+      }
+    }
+  </style>
+</head>
+
+<body data-page-key="events">
+
+  <header class="public-header">
+    <div class="public-logo">
+      <img src="../images/delight_international_school_transparent.png" alt="School Logo">
+      <h1>Delight International School</h1>
+    </div>
+
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="admission.html">Admission</a>
+      <a href="events.html" class="active">Events</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <section class="public-hero">
+    <h1 data-page-title data-edit-key="events_main_heading">Events</h1>
+    <p data-section-content data-edit-key="events_intro_text">
+      Stay updated with upcoming school events, programs, meetings, and activities.
+    </p>
+  </section>
+
+  <main class="public-main">
+    <section class="public-section">
+      <h2>Upcoming Events</h2>
+
+      <div class="events-grid">
+
+        <div class="event-card">
+          <div class="event-top">
+            <div class="event-info">
+              <h4>Date</h4>
+              <p data-edit-key="event1_date">21/02/2027</p>
+            </div>
+
+            <div class="event-info">
+              <h4>Time</h4>
+              <p data-edit-key="event1_time">12:30pm</p>
+            </div>
+          </div>
+
+          <h3 data-edit-key="event1_title">PTA Meeting</h3>
+          <p class="event-text" data-edit-key="event1_text">
+            Parents and guardians are invited to attend the PTA meeting.
+          </p>
+        </div>
+
+        <div class="event-card">
+          <div class="event-top">
+            <div class="event-info">
+              <h4>Date</h4>
+              <p data-edit-key="event2_date">Enter date</p>
+            </div>
+
+            <div class="event-info">
+              <h4>Time</h4>
+              <p data-edit-key="event2_time">Enter time</p>
+            </div>
+          </div>
+
+          <h3 data-edit-key="event2_title">Academic Event</h3>
+          <p class="event-text" data-edit-key="event2_text">
+            Details of the academic event will be displayed here.
+          </p>
+        </div>
+
+        <div class="event-card">
+          <div class="event-top">
+            <div class="event-info">
+              <h4>Date</h4>
+              <p data-edit-key="event3_date">Enter date</p>
+            </div>
+
+            <div class="event-info">
+              <h4>Time</h4>
+              <p data-edit-key="event3_time">Enter time</p>
+            </div>
+          </div>
+
+          <h3 data-edit-key="event3_title">School Activity</h3>
+          <p class="event-text" data-edit-key="event3_text">
+            Details of the school activity will be displayed here.
+          </p>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/public-pages-loader.js?v=9"></script>
+</body>
+</html>

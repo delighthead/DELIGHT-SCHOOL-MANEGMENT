@@ -1,0 +1,653 @@
+const bcrypt = require("bcryptjs");
+const db = require("../config/database");
+
+async function getOrCreateClass(className, branchId = 4) {
+  if (!className) return null;
+
+  const academicYear = "2025/2026";
+
+  // classes.class_name is UNIQUE in your database,
+  // so search by class_name only to avoid duplicate class errors.
+  const [existing] = await db.query(
+    "SELECT id FROM classes WHERE class_name = ? LIMIT 1",
+    [className]
+  );
+
+  if (existing.length > 0) {
+    return existing[0].id;
+  }
+
+  const [result] = await db.query(
+    "INSERT INTO classes (branch_id, class_name, academic_year, status) VALUES (?, ?, ?, 'active')",
+    [branchId || null, className, academicYear]
+  );
+
+  return result.insertId;
+}
+
+async function getTeacherByUserId(userId) {
+  if (!userId) return null;
+
+  const [rows] = await db.query(
+    "SELECT id, user_id, branch_id FROM teachers WHERE user_id = ? LIMIT 1",
+    [userId]
+  );
+
+  return rows.length > 0 ? rows[0] : null;
+}
+
+exports.createTeacher = async (req, res) => {
+  try {
+    const {
+      teacher_id,
+      full_name,
+      ghana_card_number,
+      phone,
+      email,
+      address,
+      profile_picture,
+      branch_id,
+      status
+    } = req.body;
+
+    if (!teacher_id || !full_name || !ghana_card_number || !phone) {
+      return res.status(400).json({
+        message: "Teacher ID, full name, Ghana Card number, and phone are required"
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(phone, 10);
+
+    const [userResult] = await db.query(
+      `INSERT INTO users (branch_id, full_name, username, password, role, phone, email, status)
+       VALUES (?, ?, ?, ?, 'teacher', ?, ?, ?)`,
+      [
+        branch_id || 4,
+        full_name,
+        ghana_card_number,
+        hashedPassword,
+        phone,
+        email || null,
+        status || "active"
+      ]
+    );
+
+    const [teacherResult] = await db.query(
+      `INSERT INTO teachers 
+      (branch_id, user_id, teacher_id, full_name, ghana_card_number, phone, email, address,
+      profile_picture, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        branch_id || 4,
+        userResult.insertId,
+        teacher_id,
+        full_name,
+        ghana_card_number,
+        phone,
+        email || null,
+        address || null,
+        profile_picture || null,
+        status || "active"
+      ]
+    );
+
+    await db.query(
+      `INSERT INTO activity_logs
+      (branch_id, user_id, action, module, description)
+      VALUES (?, ?, ?, ?, ?)`,
+      [
+        branch_id,
+        req.user ? req.user.id : null,
+        "Teacher Added",
+        "Teachers",
+        `Added teacher ${full_name} with teacher ID ${teacher_id}.`
+      ]
+    );
+
+    res.status(201).json({
+      message: "Teacher added successfully",
+      teacher_database_id: teacherResult.insertId,
+      login_username: ghana_card_number,
+      login_password: phone
+    });
+  } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        message: "Teacher ID, Ghana Card, or username already exists"
+      });
+    }
+
+    res.status(500).json({
+      message: "Failed to add teacher",
+      error: error.message
+    });
+  }
+};
+
+exports.getTeachers = async (req, res) => {
+  try {
+    let { branch_id } = req.query;
+
+    // Branch admin must only see teachers in their own branch
+    if (req.user && req.user.role === "branch_admin") {
+      branch_id = req.user.branch_id;
+    }
+
+    let sql = `SELECT 
+        teachers.id,
+        teachers.branch_id,
+        branches.branch_name,
+        teachers.teacher_id,
+        teachers.full_name,
+        teachers.ghana_card_number,
+        teachers.phone,
+        teachers.email,
+        teachers.status,
+        teachers.created_at,
+        GROUP_CONCAT(DISTINCT classes.class_name ORDER BY classes.class_name SEPARATOR ', ') AS assigned_classes,
+        GROUP_CONCAT(DISTINCT teacher_assignments.subject ORDER BY teacher_assignments.subject SEPARATOR ', ') AS assigned_subjects
+      FROM teachers
+      LEFT JOIN branches ON teachers.branch_id = branches.id
+      LEFT JOIN teacher_assignments 
+        ON teacher_assignments.teacher_id = teachers.id
+        AND teacher_assignments.status = 'active'
+      LEFT JOIN classes ON teacher_assignments.class_id = classes.id`;
+
+    const params = [];
+
+    if (branch_id) {
+      sql += " WHERE teachers.branch_id = ?";
+      params.push(branch_id);
+    }
+
+    sql += " GROUP BY teachers.id ORDER BY teachers.id DESC";
+
+    const [teachers] = await db.query(sql, params);
+
+    res.json({
+      message: "Teachers retrieved successfully",
+      teachers
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to retrieve teachers",
+      error: error.message
+    });
+  }
+};
+
+exports.assignTeacher = async (req, res) => {
+  try {
+    const {
+      teacher_database_id,
+      branch_id,
+      class_name,
+      subject,
+      role,
+      academic_year
+    } = req.body;
+
+    if (!teacher_database_id || !class_name || !subject) {
+      return res.status(400).json({
+        message: "Teacher, class, and subject are required"
+      });
+    }
+
+    const class_id = await getOrCreateClass(class_name, branch_id || 4);
+
+    const [result] = await db.query(
+      `INSERT INTO teacher_assignments
+      (branch_id, teacher_id, class_id, subject, role, academic_year, status)
+      VALUES (?, ?, ?, ?, ?, ?, 'active')`,
+      [
+        branch_id || 4,
+        teacher_database_id,
+        class_id,
+        subject,
+        role || "Subject Teacher",
+        academic_year || "2025/2026"
+      ]
+    );
+
+    res.status(201).json({
+      message: "Teacher assigned successfully",
+      assignment_id: result.insertId
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to assign teacher",
+      error: error.message
+    });
+  }
+};
+
+// Get students for teacher's assigned classes
+exports.getTeacherStudents = async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+
+    if (req.user && req.user.role === "teacher") {
+      const ownTeacher = await getTeacherByUserId(req.user.id);
+
+      if (!ownTeacher || Number(ownTeacher.id) !== Number(teacherId)) {
+        return res.status(403).json({
+          message: "You can only view students assigned to your own account"
+        });
+      }
+    }
+
+    const [students] = await db.query(
+      `SELECT DISTINCT
+        students.id,
+        students.student_id,
+        students.admission_number,
+        students.first_name,
+        students.surname,
+        students.other_name,
+        students.sex,
+        classes.class_name,
+        students.parent_ghana_card_number,
+        students.status
+      FROM teacher_assignments
+      INNER JOIN classes ON teacher_assignments.class_id = classes.id
+      INNER JOIN students ON students.class_id = classes.id
+      AND students.branch_id = teacher_assignments.branch_id
+      WHERE teacher_assignments.teacher_id = ?
+      AND teacher_assignments.status = 'active'
+      ORDER BY classes.class_name, students.surname, students.first_name`,
+      [teacherId]
+    );
+
+    res.json({
+      message: "Teacher students retrieved successfully",
+      students
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to retrieve teacher students",
+      error: error.message
+    });
+  }
+};
+
+// Get teacher record by user login ID
+exports.getTeacherByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (req.user && req.user.role === "teacher" && Number(req.user.id) !== Number(userId)) {
+      return res.status(403).json({
+        message: "You can only view your own teacher profile"
+      });
+    }
+
+    const [rows] = await db.query(
+      `SELECT 
+          t.*,
+          b.branch_name
+       FROM teachers t
+       LEFT JOIN branches b ON t.branch_id = b.id
+       WHERE t.user_id = ?
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Teacher not found"
+      });
+    }
+
+    res.json({
+      message: "Teacher retrieved successfully",
+      teacher: rows[0]
+    });
+  } catch (error) {
+    console.error("Get teacher by user ID error:", error);
+    res.status(500).json({
+      message: "Failed to retrieve teacher",
+      error: error.message
+    });
+  }
+};
+
+// Update teacher own profile
+exports.updateTeacherProfile = async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+
+    if (req.user && req.user.role === "teacher") {
+      const ownTeacher = await getTeacherByUserId(req.user.id);
+
+      if (!ownTeacher || Number(ownTeacher.id) !== Number(teacherId)) {
+        return res.status(403).json({
+          message: "You can only update your own profile"
+        });
+      }
+    }
+
+    const phone = req.body.phone || null;
+    const email = req.body.email || null;
+    const address = req.body.address || req.body.residential_address || null;
+
+    let profilePicture = null;
+
+    if (req.file) {
+      profilePicture = "/uploads/teachers/" + req.file.filename;
+    }
+
+    const fields = [];
+    const values = [];
+
+    if (phone !== null) {
+      fields.push("phone = ?");
+      values.push(phone);
+    }
+
+    if (email !== null) {
+      fields.push("email = ?");
+      values.push(email);
+    }
+
+    if (address !== null) {
+      fields.push("address = ?");
+      values.push(address);
+    }
+
+    if (profilePicture !== null) {
+      fields.push("profile_picture = ?");
+      values.push(profilePicture);
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({
+        message: "No profile fields provided"
+      });
+    }
+
+    values.push(teacherId);
+
+    const [result] = await db.query(
+      `UPDATE teachers SET ${fields.join(", ")} WHERE id = ?`,
+      values
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Teacher profile not found"
+      });
+    }
+
+    // If teacher changes phone number, update login password to the new phone number
+    if (phone !== null && String(phone).trim() !== "") {
+      const [teacherUserRows] = await db.query(
+        "SELECT user_id FROM teachers WHERE id = ? LIMIT 1",
+        [teacherId]
+      );
+
+      if (teacherUserRows.length > 0 && teacherUserRows[0].user_id) {
+        const hashedPassword = await bcrypt.hash(String(phone).trim(), 10);
+
+        await db.query(
+          "UPDATE users SET password = ? WHERE id = ?",
+          [hashedPassword, teacherUserRows[0].user_id]
+        );
+      }
+    }
+
+    const [rows] = await db.query(
+      `SELECT id, teacher_id, full_name, phone, email, address,
+      profile_picture, profile_picture
+       FROM teachers
+       WHERE id = ?`,
+      [teacherId]
+    );
+
+    res.json({
+      message: "Teacher profile updated successfully",
+      teacher: rows[0],
+      profile_picture: profilePicture
+    });
+  } catch (error) {
+    console.error("Update teacher profile error:", error);
+    res.status(500).json({
+      message: "Failed to update teacher profile",
+      error: error.message
+    });
+  }
+};
+
+// Update teacher from admin panel
+exports.updateTeacher = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      branch_id,
+      teacher_id,
+      full_name,
+      ghana_card_number,
+      phone,
+      email,
+      address,
+      profile_picture,
+      status
+    } = req.body;
+
+    if (!branch_id || !teacher_id || !full_name || !ghana_card_number || !phone) {
+      return res.status(400).json({
+        message: "Branch, Teacher ID, full name, Ghana Card, and phone are required"
+      });
+    }
+
+    const [teachers] = await db.query(
+      "SELECT id, branch_id, user_id, ghana_card_number FROM teachers WHERE id = ? LIMIT 1",
+      [id]
+    );
+
+    if (teachers.length === 0) {
+      return res.status(404).json({
+        message: "Teacher not found"
+      });
+    }
+
+    const teacher = teachers[0];
+
+    if (req.user.role === "branch_admin" && Number(teacher.branch_id) !== Number(req.user.branch_id)) {
+      return res.status(403).json({
+        message: "You can only edit teachers in your own branch"
+      });
+    }
+
+    await db.query(
+      `UPDATE teachers
+       SET branch_id = ?,
+           teacher_id = ?,
+           full_name = ?,
+           ghana_card_number = ?,
+           phone = ?,
+           email = ?,
+           address = ?,
+           status = ?
+       WHERE id = ?`,
+      [
+        branch_id,
+        teacher_id,
+        full_name,
+        ghana_card_number,
+        phone,
+        email || null,
+        address || null,
+        status || "active",
+        id
+      ]
+    );
+
+    if (teacher.user_id) {
+      await db.query(
+        `UPDATE users
+         SET branch_id = ?,
+             full_name = ?,
+             username = ?,
+             phone = ?,
+             email = ?,
+             status = ?
+         WHERE id = ?`,
+        [
+          branch_id,
+          full_name,
+          ghana_card_number,
+          phone,
+          email || null,
+          status || "active",
+          teacher.user_id
+        ]
+      );
+    } else {
+      await db.query(
+        `UPDATE users
+         SET branch_id = ?,
+             full_name = ?,
+             username = ?,
+             phone = ?,
+             email = ?,
+             status = ?
+         WHERE username = ?`,
+        [
+          branch_id,
+          full_name,
+          ghana_card_number,
+          phone,
+          email || null,
+          status || "active",
+          teacher.ghana_card_number
+        ]
+      );
+    }
+
+    await db.query(
+      `INSERT INTO activity_logs
+      (branch_id, user_id, action, module, description)
+      VALUES (?, ?, ?, ?, ?)`,
+      [
+        branch_id,
+        req.user ? req.user.id : null,
+        "Teacher Updated",
+        "Teachers",
+        `Updated teacher ${full_name}.`
+      ]
+    );
+
+    res.json({
+      message: "Teacher updated successfully"
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to update teacher",
+      error: error.message
+    });
+  }
+};
+
+
+// ==============================
+// Make Teacher Also Admin
+// Super Admin only
+// ==============================
+exports.makeTeacherAdmin = async (req, res) => {
+  try {
+    const loggedRole = req.user && req.user.role;
+
+    if (loggedRole !== "super_admin") {
+      return res.status(403).json({
+        message: "Only Super Admin can make a teacher an admin."
+      });
+    }
+
+    const { id } = req.params;
+
+    const [teacherRows] = await db.query(
+      `SELECT id, user_id, full_name, branch_id
+       FROM teachers
+       WHERE id = ?
+       LIMIT 1`,
+      [id]
+    );
+
+    if (teacherRows.length === 0) {
+      return res.status(404).json({
+        message: "Teacher not found"
+      });
+    }
+
+    const teacher = teacherRows[0];
+
+    if (!teacher.user_id) {
+      return res.status(400).json({
+        message: "This teacher has no login account yet."
+      });
+    }
+
+    await db.query(
+      `UPDATE users
+       SET role = 'teacher_admin',
+           branch_id = ?,
+           status = 'active'
+       WHERE id = ?`,
+      [teacher.branch_id, teacher.user_id]
+    );
+
+    res.json({
+      message: `${teacher.full_name} is now both Teacher and Branch Admin.`,
+      role: "teacher_admin"
+    });
+  } catch (error) {
+    console.error("Make teacher admin error:", error);
+    res.status(500).json({
+      message: "Failed to make teacher admin",
+      error: error.message
+    });
+  }
+};
+
+
+// Disable / lock teacher account without deleting record
+exports.disableTeacher = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [teacherRows] = await db.query(
+      "SELECT id, user_id, full_name FROM teachers WHERE id = ? LIMIT 1",
+      [id]
+    );
+
+    if (teacherRows.length === 0) {
+      return res.status(404).json({
+        message: "Teacher not found"
+      });
+    }
+
+    const teacher = teacherRows[0];
+
+    await db.query(
+      "UPDATE teachers SET status = 'disabled' WHERE id = ?",
+      [id]
+    );
+
+    if (teacher.user_id) {
+      await db.query(
+        "UPDATE users SET status = 'disabled' WHERE id = ?",
+        [teacher.user_id]
+      );
+    }
+
+    res.json({
+      message: `${teacher.full_name || "Teacher"} has been disabled successfully.`
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to disable teacher",
+      error: error.message
+    });
+  }
+};

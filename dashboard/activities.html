@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recent Activities - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Admin Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="admin.html">Dashboard Overview</a>
+      <a href="admin-profile.html">My Profile</a>
+      <a href="students.html">Add / Manage Students</a>
+      <a href="promote-students.html">Promote Students</a>
+      <a href="scores.html">Scores & Results</a>
+      <a href="fees.html">Fees Management</a>
+      <a href="attendance.html">Attendance</a>
+      <a href="announcements.html">Announcements</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">System Settings</a>
+      <a href="edit-pages.html">Edit Website Pages</a>
+      <a href="teachers.html">Add / Assign Teachers</a>
+      <a href="parents.html">Add Parents</a>
+      <a href="accounts.html">Lock / Disable Accounts</a>
+      <a href="activities.html" class="active">Recent Activities</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Recent Activities</h1>
+      <p>View recent system actions by branch, user, and module.</p>
+
+      <section class="dashboard-section">
+        <h2>Activity Log</h2>
+        <div style="display:flex; gap:15px; align-items:center; margin-bottom:15px; flex-wrap:wrap;">
+          <p id="activityCountText" style="font-weight: bold; margin:0;"></p>
+
+          <label for="activityLimitSelect" style="font-weight:bold;">View:</label>
+          <select id="activityLimitSelect" style="max-width:160px;">
+            <option value="5">Latest 5</option>
+            <option value="10">Latest 10</option>
+            <option value="20">Latest 20</option>
+            <option value="all">All</option>
+          </select>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date / Time</th>
+              <th>Branch</th>
+              <th>User</th>
+              <th>Module</th>
+              <th>Action</th>
+              <th>Description</th>
+              <th>Manage</th>
+            </tr>
+          </thead>
+
+          <tbody id="activityTableBody">
+            <tr>
+              <td colspan="7">Loading activities...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="../js/dashboard-actions.js?v=4"></script>
+  <script src="../js/admin-panel-title.js?v=1"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/admin-guard.js?v=1"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/admin-sidebar-picture-final.js?v=1"></script>
+  <script src="../js/activities-api.js?v=1"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+</body>
+</html>

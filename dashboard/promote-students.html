@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Promote Students - Delight School Management</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <h2>Admin Panel</h2>
+      <a href="admin.html">Dashboard</a>
+      <a href="students.html">Add / Manage Students</a>
+      <a href="promote-students.html" class="active">Promote Students</a>
+      <a href="fees.html">Fees</a>
+      <a href="attendance.html">Attendance</a>
+      <a href="scores.html">Scores & Results</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">Settings</a>
+      <button id="logoutBtn">Logout</button>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Promote Students</h1>
+
+      <section class="dashboard-section">
+        <h2>Class Promotion</h2>
+
+        <div class="admin-form">
+          <div class="form-group">
+            <label for="promotion_branch_id">Branch</label>
+            <select id="promotion_branch_id">
+              <option value="">Select branch</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="from_class_id">Current Class</label>
+            <select id="from_class_id">
+              <option value="">Select current class</option>
+            </select>
+          </div>
+</div>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Promotion Preview</h2>
+        <p id="promotionCountText">No students loaded.</p>
+
+        <div class="admin-form" id="promotionActionBox" style="display:none; margin: 15px 0;">
+          <div class="form-group">
+            <label for="to_class_id">Promote To</label>
+            <select id="to_class_id">
+              <option value="">Select class to promote to</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="promotion_academic_year">Academic Year</label>
+            <input type="text" id="promotion_academic_year" placeholder="2025/2026">
+          </div>
+
+          <button type="button" class="primary-btn danger-btn" id="promoteStudentsBtn">
+            Promote Selected Student(s)
+          </button>
+        </div>
+
+
+        <div class="student-search-box" style="margin: 15px 0;">
+          <input type="text" id="promotionSearchInput" placeholder="Search by student name or admission number">
+          <button type="button" id="promotionSearchBtn">Search</button>
+          <button type="button" id="promotionClearBtn">Clear</button>
+        </div>
+
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Select</th>
+                <th>Admission No.</th>
+                <th>Full Name</th>
+                <th>Current Class</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="promotionTableBody">
+              <tr>
+                <td colspan="5">Select branch and current class to show students.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    
+      <section class="dashboard-section">
+        <h2>Promotion History</h2>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Student</th>
+                <th>Admission No.</th>
+                <th>Branch</th>
+                <th>From Class</th>
+                <th>To Class</th>
+                <th>Academic Year</th>
+                <th>Promoted By</th>
+              </tr>
+            </thead>
+
+            <tbody id="promotionHistoryTableBody">
+              <tr>
+                <td colspan="8">Loading promotion history...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/admin-guard.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/promotion-loader-final.js?v=1"></script>
+  <script src="../js/promotion-direct-final.js?v=2"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/admin-sidebar-picture-final.js?v=1"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+</body>
+</html>

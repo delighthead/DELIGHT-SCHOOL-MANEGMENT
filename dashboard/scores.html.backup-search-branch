@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scores and Results - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Admin Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="admin.html">Dashboard Overview</a>
+      <a href="admin-profile.html">My Profile</a>
+      <a href="students.html">Add / Manage Students</a>
+      <a href="promote-students.html">Promote Students</a>
+      <a href="scores.html" class="active">Scores and Results</a>
+      <a href="fees.html">Fees Management</a>
+      <a href="attendance.html">Attendance</a>
+      <a href="announcements.html">Announcements</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">System Settings</a>
+      <a href="edit-pages.html">Edit Website Pages</a>
+      <a href="teachers.html">Add / Assign Teachers</a>
+      <a href="parents.html">Add Parents</a>
+      <a href="accounts.html">Lock / Disable Accounts</a>
+      <a href="activities.html">Recent Activities</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Scores and Results</h1>
+
+<section class="dashboard-section">
+        <h2>Excel Score Sheet</h2>
+
+        <div class="admin-form">
+          <div class="form-group">
+            
+          </div>
+
+          <div class="form-group">
+            <label for="admin_excel_class_id">Class</label>
+            <select id="admin_excel_class_id">
+              <option value="">Select class</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="admin_excel_subject">Subject</label>
+            <input type="text" id="admin_excel_subject" placeholder="e.g. Mathematics">
+          </div>
+
+          <div class="form-group">
+            <label for="admin_excel_term">Term</label>
+            <select id="admin_excel_term">
+              <option value="">Select term</option>
+              <option value="Term 1">Term 1</option>
+              <option value="Term 2">Term 2</option>
+              <option value="Term 3">Term 3</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="admin_excel_academic_year">Academic Year</label>
+            <input type="text" id="admin_excel_academic_year" placeholder="2025/2026">
+          </div>
+
+          <button type="button" class="primary-btn" id="adminDownloadScoreTemplateBtn">
+            Download Excel Template
+          </button>
+        </div>
+
+        <hr>
+
+        <div class="admin-form">
+          <div class="form-group">
+            <label for="admin_score_excel_file">Upload Filled Excel File</label>
+            <input type="file" id="admin_score_excel_file" accept=".xlsx,.xls">
+          </div>
+
+          <button type="button" class="primary-btn" id="adminUploadScoreExcelBtn">
+            Upload Excel Scores
+          </button>
+        </div>
+      </section>
+
+      <p>Enter, review, approve, and manage student scores by branch.</p>
+
+      <section class="dashboard-section">
+        <h2>Add Score</h2>
+
+        <form class="admin-form" id="scoreForm">
+          <div>
+            <label>Branch / Location</label>
+            <select id="score_branch_id" required>
+              <option value="">Loading branches...</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Student</label>
+            <select id="score_student_id" required>
+              <option value="">Select branch first</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Subject</label>
+            <input type="text" id="score_subject" placeholder="Example: Mathematics" required>
+          </div>
+
+          <div>
+            <label>Term</label>
+            <select id="score_term">
+              <option value="">Select term</option>
+              <option>Term 1</option>
+              <option>Term 2</option>
+              <option>Term 3</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Academic Year</label>
+            <input type="text" id="score_academic_year" value="2025/2026">
+          </div>
+
+          <div>
+            <label>Assessment Score</label>
+            <input type="number" id="assessment_score" step="0.1" placeholder="Example: 30">
+          </div>
+
+          <div>
+            <label>Examination Score</label>
+            <input type="number" id="examination_score" step="0.1" placeholder="Example: 60">
+          </div>
+
+          <div>
+            <label>Position</label>
+            <input type="text" id="score_position" placeholder="Example: 1st">
+          </div>
+
+          <div>
+            <label>Approval Status</label>
+            <select id="score_approval_status">
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Remarks</label>
+            <input type="text" id="score_remarks" placeholder="Enter remarks">
+          </div>
+
+          <button type="submit">Add Score</button>
+        </form>
+      </section>
+
+      
+      <section class="dashboard-section">
+        <h2>Search Scores</h2>
+
+        <div class="admin-form">
+          <div class="form-group">
+            
+          </div>
+
+          <div class="form-group">
+            <label for="score_filter_class_id">Class</label>
+            <select id="score_filter_class_id">
+              <option value="">Select class</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="score_filter_subject">Subject</label>
+            <select id="score_filter_subject">
+              <option value="">Select subject</option>
+              <option>ENGLISH</option>
+              <option>MATHEMATICS</option>
+              <option>INTEGRATED SCIENCE</option>
+              <option>SOCIAL STUDIES</option>
+              <option>R.M.E</option>
+              <option>CAREER TECHNOLOGY</option>
+              <option>COMPUTING</option>
+              <option>FRENCH</option>
+              <option>GHANAIAN LANGUAGE</option>
+              <option>CREATIVE ARTS</option>
+              <option>GHANA HISTORY</option>
+              <option>PHYSICAL EDUCATION</option>
+              <option>OUR WORLD OUR PEOPLE</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="score_filter_term">Term</label>
+            <select id="score_filter_term">
+              <option value="">Select term</option>
+              <option value="Term 1">Term 1</option>
+              <option value="Term 2">Term 2</option>
+              <option value="Term 3">Term 3</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="score_filter_academic_year">Academic Year</label>
+            <input type="text" id="score_filter_academic_year" placeholder="2025/2026">
+          </div>
+
+          <div class="form-group">
+            <label for="score_filter_approval_status">Approval Status</label>
+            <select id="score_filter_approval_status">
+              <option value="">All</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <button type="button" class="primary-btn" id="searchScoresBtn">
+            Search Scores
+          </button>
+
+          <button type="button" class="primary-btn danger-btn" id="clearScoresSearchBtn">
+            Clear
+          </button>
+        </div>
+      </section>
+
+<section class="dashboard-section">
+        <h2>Scores List</h2>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Branch</th>
+              <th>Student</th>
+              <th>Admission No.</th>
+              <th>Class</th>
+              <th>Subject</th>
+              <th>Term</th>
+              <th>Academic Year</th>
+              <th>Assessment</th>
+              <th>Exam</th>
+              <th>Total</th>
+              <th>Grade</th>
+              <th>Position</th>
+              <th>Entry Method</th>
+                <th>Approval</th>
+            </tr>
+          </thead>
+
+          <tbody id="scoreTableBody">
+            <tr>
+              <td colspan="13">Loading scores...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/dashboard-actions.js?v=104"></script>
+  <script src="../js/admin-panel-title.js?v=1"></script>
+  <script src="../js/subjects-dropdown.js?v=1"></script>
+  <script src="../js/scores-api.js?v=170"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/admin-guard.js?v=1"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/academic-session.js?v=1"></script>
+  <script src="../js/grading-settings.js?v=1"></script>
+  <script src="../js/admin-common-polish.js?v=2"></script>
+  <script src="../js/scores-search-final.js?v=50"></script>
+  <script src="../js/scores-search-button-final.js?v=1"></script>
+  <script src="../js/score-excel-buttons-final.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/admin-sidebar-picture-final.js?v=1"></script>
+  <script src="../js/teacher-scores-class-fix.js?v=1"></script>
+  <script src="../js/branch-dropdowns-superadmin-final.js?v=1"></script>
+</body>
+</html>

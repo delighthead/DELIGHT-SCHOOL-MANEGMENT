@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Dashboard - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Teacher Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="teacher.html" class="active">Dashboard Overview</a>
+      <a href="teacher-profile.html">My Profile</a>
+      <a href="teacher-class.html">Assigned Class</a>
+      <a href="teacher-students.html">Students</a>
+      <a href="teacher-scores.html">Scores & Uploads</a>
+      <a href="teacher-attendance.html">Mark Attendance</a>
+      <a href="teacher-announcements.html">Announcements</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Teacher Dashboard</h1>
+      <p>Welcome, Teacher. View your profile, branch, and assigned students.</p>
+
+      <section class="dashboard-section">
+        <h2>Overview</h2>
+
+        <div class="dashboard-cards" id="teacherDashboardCards">
+          <div class="dashboard-card">
+            <h2>Loading Teacher Dashboard...</h2>
+            <p>Please wait while teacher information is loaded.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="../js/dashboard-actions.js"></script>
+  <script src="../js/teacher-dashboard-api.js?v=2"></script>
+  <script src="../js/panel-title.js?v=1"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/teacher-guard.js?v=1"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/auth-token-fix.js?v=1"></script>
+  <script src="../js/teacher-token-check.js?v=1"></script>
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/teacher-dashboard-picture-final.js?v=1"></script>
+  <script src="../js/teacher-scores-class-fix.js?v=1"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+</body>
+</html>

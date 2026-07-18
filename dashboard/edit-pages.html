@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Website Pages</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../images/delight_international_school_transparent.png" alt="School Logo">
+      <h3>Delight<br>International<br>School</h3>
+    </div>
+
+    <h2>Admin Panel</h2>
+
+    <nav>
+      <a href="../index.html">Website Home</a>
+      <a href="admin.html">Dashboard Overview</a>
+      <a href="admin-profile.html">My Profile</a>
+      <a href="students.html">Students</a>
+      <a href="teachers.html">Add / Assign Teachers</a>
+      <a href="parents.html">Add Parents</a>
+      <a href="fees.html">Fees</a>
+      <a href="attendance.html">Attendance</a>
+      <a href="scores.html">Scores & Results</a>
+      <a href="reports.html">Reports</a>
+      <a href="promote-students.html">Promote Students</a>
+      <a href="accounts.html">Accounts</a>
+      <a href="edit-pages.html" class="active">Edit Website Pages</a>
+      <a href="settings.html">System Settings</a>
+      <button id="logoutBtn">Logout</button>
+    </nav>
+  </aside>
+
+  <main class="dashboard-main">
+    <h1>Edit Website Pages</h1>
+    <p>Update writings that appear on the public website pages.</p>
+
+    <section class="dashboard-card">
+      <h2>Select Page</h2>
+
+      <div class="form-row">
+        <div>
+          <label>Website Page</label>
+          <select id="page_key">
+            <option value="">Select page</option>
+            <option value="home">Home Page</option>
+            <option value="about">About Page</option>
+            <option value="admission">Admission Page</option>
+            <option value="events">Events Page</option>
+            <option value="gallery">Gallery Page</option>
+            <option value="contact">Contact Page</option>
+          </select>
+        </div>
+
+        <div style="display:flex; align-items:end;">
+          <button type="button" class="btn" id="loadPageBtn">Load Page</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="dashboard-card">
+      <h2>Edit Content</h2>
+
+      <form class="admin-form" id="websitePageForm">
+        <div class="form-row">
+          <div>
+            <label>Page Title</label>
+            <input type="text" id="page_title" placeholder="Enter page title">
+          </div>
+
+          <div>
+            <label>Section Title</label>
+            <input type="text" id="section_title" placeholder="Enter section title">
+          </div>
+        </div>
+
+        <div>
+          <label>Page Content / Writing</label>
+          <textarea id="section_content" rows="8" placeholder="Enter page writing here"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div>
+            <label>Button Text</label>
+            <input type="text" id="button_text" placeholder="Example: Apply Now">
+          </div>
+
+          <div>
+            <label>Button Link</label>
+            <input type="text" id="button_link" placeholder="Example: admission.html">
+          </div>
+        </div>
+
+        <button type="submit" class="btn">Update Website Page</button>
+      </form>
+    </section>
+
+
+<section class="dashboard-card" id="galleryAdminSection" style="display:none;">
+  <h2>Gallery Picture Upload</h2>
+  <p>Upload pictures for each gallery section.</p>
+
+  <form class="admin-form" id="galleryUploadForm" enctype="multipart/form-data">
+    <div class="form-row">
+      <div>
+        <label>Gallery Category</label>
+        <select id="gallery_category" required>
+          <option value="">Select category</option>
+          <option value="school_building">School Building</option>
+          <option value="cultural_day">Cultural Day</option>
+          <option value="sports_day">Sports Day</option>
+          <option value="graduation">Graduation</option>
+          <option value="excursion">Excursion</option>
+          <option value="clubs">Clubs</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Select Picture</label>
+        <input type="file" id="gallery_image_file" accept="image/*" required>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>Image Title</label>
+        <input type="text" id="gallery_image_title" placeholder="Example: Cultural Day">
+      </div>
+
+      <div>
+        <label>Image Caption</label>
+        <input type="text" id="gallery_image_caption" placeholder="Short picture description">
+      </div>
+    </div>
+
+    <button type="submit" class="btn">Upload Gallery Picture</button>
+  </form>
+
+  <h2 style="margin-top:30px;">Current Gallery Pictures</h2>
+  <div id="adminGalleryList" class="gallery-admin-grid"></div>
+</section>
+
+</main>
+</div>
+
+<script src="../js/api-helper.js?v=2"></script>
+<script src="../js/admin-guard.js"></script>
+<script src="../js/logout.js"></script>
+<script src="../js/edit-pages-api.js?v=40"></script>
+  <script src="../js/gallery-admin-api.js?v=3"></script>
+  <script src="../js/parent-scores-print-final.js?v=1"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+</body>
+</html>

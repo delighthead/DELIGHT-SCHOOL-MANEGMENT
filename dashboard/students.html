@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Students - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <h2>Admin Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="admin.html">Dashboard Overview</a>
+      <a href="admin-profile.html">My Profile</a>
+      <a href="students.html" class="active">Add / Manage Students</a>
+      <a href="promote-students.html">Promote Students</a>
+      <a href="scores.html">Scores & Results</a>
+      <a href="fees.html">Fees Management</a>
+      <a href="attendance.html">Attendance</a>
+      <a href="announcements.html">Announcements</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">System Settings</a>
+      <a href="edit-pages.html">Edit Website Pages</a>
+      <a href="teachers.html">Add / Assign Teachers</a>
+      <a href="parents.html">Add Parents</a>
+      <a href="accounts.html">Lock / Disable Accounts</a>
+      <a href="activities.html">Recent Activities</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Add / Manage Students</h1>
+      <p>Register students and save parent or guardian details.</p>
+
+      <section class="dashboard-section">
+        <h2>Add New Student</h2>
+
+        <form class="admin-form" id="studentForm" enctype="multipart/form-data">
+          <div>
+            <label for="admission_number">Admission Number</label>
+            <input type="text" id="admission_number" placeholder="Example: ADM001" required>
+          </div>
+
+          <div>
+            <label for="student_branch_id">Branch / Location</label>
+            <select id="student_branch_id">
+              <option value="">Select branch</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="full_name">Full Name</label>
+            <input type="text" id="full_name" placeholder="Enter full name" required>
+          </div>
+
+          <div>
+            <label for="sex">Sex</label>
+            <select id="sex" required>
+              <option value="">Select sex</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="date_of_birth">Date of Birth</label>
+            <input type="date" id="date_of_birth">
+          </div>
+
+          <div>
+            <label for="place_of_birth">Place of Birth</label>
+            <input type="text" id="place_of_birth" placeholder="Enter place of birth">
+          </div>
+
+          <div>
+            <label for="nationality">Nationality</label>
+            <select id="nationality">
+              <option value="">Select nationality</option>
+              <option value="Ghanaian" selected>Ghanaian</option>
+              <option value="Beninese">Beninese</option>
+              <option value="Burkinabe">Burkinabe</option>
+              <option value="Cape Verdean">Cape Verdean</option>
+              <option value="Ivorian">Ivorian</option>
+              <option value="Gambian">Gambian</option>
+              <option value="Guinean">Guinean</option>
+              <option value="Guinea-Bissauan">Guinea-Bissauan</option>
+              <option value="Liberian">Liberian</option>
+              <option value="Malian">Malian</option>
+              <option value="Mauritanian">Mauritanian</option>
+              <option value="Nigerien">Nigerien</option>
+              <option value="Nigerian">Nigerian</option>
+              <option value="Senegalese">Senegalese</option>
+              <option value="Sierra Leonean">Sierra Leonean</option>
+              <option value="Togolese">Togolese</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="language_spoken">Language Spoken</label>
+            <input type="text" id="language_spoken" placeholder="Example: English, Twi">
+          </div>
+
+          <div>
+            <label for="class_name">Class Admitted</label>
+            <select id="class_name">
+              <option value="">Loading classes...</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="mother_name">Mother's Name</label>
+            <input type="text" id="mother_name" placeholder="Enter mother's name">
+          </div>
+
+          <div>
+            <label for="mother_ghana_card">Mother's Ghana Card Number</label>
+            <input type="text" id="mother_ghana_card" placeholder="Example: GHA-000000000-0">
+          </div>
+
+          <div>
+            <label for="mother_phone">Mother's Phone Number</label>
+            <input type="text" id="mother_phone" placeholder="Example: 0240000000">
+          </div>
+
+          <div>
+            <label for="father_name">Father's Name</label>
+            <input type="text" id="father_name" placeholder="Enter father's name">
+          </div>
+
+          <div>
+            <label for="father_ghana_card">Father's Ghana Card Number</label>
+            <input type="text" id="father_ghana_card" placeholder="Example: GHA-000000000-0">
+          </div>
+
+          <div>
+            <label for="father_phone">Father's Phone Number</label>
+            <input type="text" id="father_phone" placeholder="Example: 0200000000">
+          </div>
+
+          <div>
+            <label for="student_status">Student Status</label>
+            <select id="student_status">
+              <option value="active" selected>Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="stopped">Stopped</option>
+              <option value="completed">Completed</option>
+              <option value="transferred">Transferred</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="student_profile_picture">Student Picture</label>
+            <input type="file" id="student_profile_picture" accept="image/*">
+          </div>
+
+          <input type="hidden" id="student_id">
+
+          <button type="submit">Add Student</button>
+        </form>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Student List</h2>
+
+        <div class="student-list-tools">
+          <p id="studentCountText" class="count-text">Showing 0 out of 0 students</p>
+
+          <div class="student-search-box">
+            <input type="text" id="studentSearchInput" placeholder="Search by student name or phone number">
+            <button type="button" id="studentSearchBtn">Search</button>
+            <button type="button" id="studentClearBtn">Clear</button>
+          </div>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Admission No.</th>
+              <th>Full Name</th>
+              <th>Branch</th>
+              <th>Class Admitted</th>
+              <th>Mother Phone</th>
+              <th>Father Phone</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="studentTableBody">
+            <tr>
+              <td colspan="8">Loading students...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script src="../js/admin-guard.js?v=1"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/admin-panel-title.js?v=2"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/students-api.js?v=2"></script>
+  <script src="../js/student-search-fix.js?v=1"></script>
+  <script src="../js/student-branch-dropdown-fix.js?v=1"></script>
+  <script src="../js/admin-sidebar-picture-final.js?v=1"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+  <script>
+    (function () {
+      const DEFAULT_CLASSES = [
+        "Nursery 1",
+        "Nursery 2",
+        "Kindergarten 1",
+        "Kindergarten 2",
+        "Basic 1",
+        "Basic 2",
+        "Basic 3",
+        "Basic 4",
+        "Basic 5",
+        "Basic 6",
+        "Basic 7",
+        "Basic 8",
+        "Basic 9"
+      ];
+
+      function applyFallbackIfStuck() {
+        const select = document.getElementById("class_name");
+        if (!select) return;
+
+        const firstText = (select.options[0] && select.options[0].textContent || "").trim().toLowerCase();
+        if (!firstText.includes("loading classes")) return;
+
+        select.innerHTML = '<option value="">Select class</option>';
+
+        DEFAULT_CLASSES.forEach(function (className) {
+          const option = document.createElement("option");
+          option.value = className;
+          option.textContent = className;
+          select.appendChild(option);
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        setTimeout(applyFallbackIfStuck, 1200);
+      });
+    })();
+  </script>
+</body>
+</html>
