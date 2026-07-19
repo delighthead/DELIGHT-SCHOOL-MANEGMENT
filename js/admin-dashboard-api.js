@@ -1,6 +1,16 @@
 document.addEventListener("DOMContentLoaded", function () {
   const dashboardCards = document.getElementById("adminDashboardCards");
 
+  function getApiBase() {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") {
+      return "http://127.0.0.1:5000";
+    }
+    return "";
+  }
+
+  const API_BASE = getApiBase();
+
   function getLoggedInUser() {
     const storedUser = localStorage.getItem("user");
     if (!storedUser) return null;
@@ -54,7 +64,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!dashboardCards) return;
 
     try {
-      let url = "http://127.0.0.1:5000/api/dashboard/admin-summary";
+      let url = `${API_BASE}/api/dashboard/admin-summary`;
 
       if (isAdmin()) {
         url += `?branch_id=${getAdminId()}`;

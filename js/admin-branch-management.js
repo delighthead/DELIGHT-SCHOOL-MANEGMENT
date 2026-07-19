@@ -6,6 +6,16 @@ document.addEventListener("DOMContentLoaded", function () {
   const cancelEditBtn = document.getElementById("cancelBranchEditBtn");
   const editIdInput = document.getElementById("branch_edit_id");
 
+  function getApiBase() {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") {
+      return "http://127.0.0.1:5000";
+    }
+    return "";
+  }
+
+  const API_BASE = getApiBase();
+
   function getLoggedInUser() {
     const storedUser = localStorage.getItem("user");
     if (!storedUser) return null;
@@ -101,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function loadBranches() {
     try {
-      const response = await fetch("http://127.0.0.1:5000/api/branches?include_inactive=true", {
+      const response = await fetch(`${API_BASE}/api/branches?include_inactive=true`, {
         headers: getAuthOnlyHeaders()
       });
 
@@ -152,8 +162,8 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const response = await fetch(
         isEditMode
-          ? `http://127.0.0.1:5000/api/branches/${branchId}`
-          : "http://127.0.0.1:5000/api/branches",
+          ? `${API_BASE}/api/branches/${branchId}`
+          : `${API_BASE}/api/branches`,
         {
         method: isEditMode ? "PUT" : "POST",
         headers: getAuthHeaders(),
@@ -189,7 +199,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!id) return;
 
       try {
-        const response = await fetch("http://127.0.0.1:5000/api/branches?include_inactive=true", {
+        const response = await fetch(`${API_BASE}/api/branches?include_inactive=true`, {
           headers: getAuthOnlyHeaders()
         });
 

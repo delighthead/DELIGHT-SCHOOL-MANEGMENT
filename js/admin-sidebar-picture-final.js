@@ -1,5 +1,13 @@
 (function () {
-  const API = "http://127.0.0.1:5000";
+  function getApiBase() {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") {
+      return "http://127.0.0.1:5000";
+    }
+    return "";
+  }
+
+  const API = getApiBase();
 
   function token() {
     return localStorage.getItem("token") || "";
