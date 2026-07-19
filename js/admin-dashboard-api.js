@@ -60,6 +60,25 @@ document.addEventListener("DOMContentLoaded", function () {
     }).join('<span style="display:inline-block; width:20px;"></span>');
   }
 
+  async function fetchWithRetry(url, options, retries) {
+    let lastError = null;
+
+    for (let i = 0; i <= retries; i += 1) {
+      try {
+        return await fetch(url, options);
+      } catch (error) {
+        lastError = error;
+        if (i < retries) {
+          await new Promise(function (resolve) {
+            setTimeout(resolve, 350);
+          });
+        }
+      }
+    }
+
+    throw lastError || new Error("Network request failed");
+  }
+
   async function loadDashboardSummary() {
     if (!dashboardCards) return;
 
@@ -70,9 +89,9 @@ document.addEventListener("DOMContentLoaded", function () {
         url += `?branch_id=${getAdminId()}`;
       }
 
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         headers: getAuthOnlyHeaders()
-      });
+      }, 2);
 
       const data = await response.json();
 
