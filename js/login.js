@@ -40,7 +40,16 @@ document.addEventListener("DOMContentLoaded", function () {
           body: JSON.stringify(payload)
         });
 
-        const data = await response.json();
+        const contentType = (response.headers.get("content-type") || "").toLowerCase();
+        let data = {};
+
+        if (contentType.includes("application/json")) {
+          data = await response.json();
+        } else {
+          const rawText = await response.text();
+          lastErrorMessage = rawText || `Login failed (${response.status})`;
+          continue;
+        }
 
         if (!response.ok) {
           lastErrorMessage = data.message || "Login failed";
@@ -60,7 +69,11 @@ document.addEventListener("DOMContentLoaded", function () {
     event.preventDefault();
 
     const role = document.getElementById("role").value;
-    const username = document.getElementById("username").value.trim();
+    const username = document
+      .getElementById("username")
+      .value
+      .trim()
+      .toUpperCase();
     const password = document.getElementById("password").value.trim();
 
     if (!role || !username || !password) {
