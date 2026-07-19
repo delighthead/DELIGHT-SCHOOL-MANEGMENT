@@ -1,5 +1,4 @@
 const db = require("../config/database");
-const bcrypt = require("bcryptjs");
 
 function getLoggedInUserId(req) {
   return (
@@ -92,33 +91,12 @@ exports.updateMyProfile = async (req, res) => {
       profilePicture = "/uploads/admins/" + req.file.filename;
     }
 
-    // If admin changes phone number, update login password to the new phone number
-    let hashedPassword = null;
-
-    if (phone && String(phone).trim() !== "") {
-      hashedPassword = await bcrypt.hash(String(phone).trim(), 10);
-    }
-
-    if (profilePicture && hashedPassword) {
-      await db.query(
-        `UPDATE users
-         SET phone = ?, email = ?, profile_picture = ?, password = ?
-         WHERE id = ?`,
-        [phone, email, profilePicture, hashedPassword, userId]
-      );
-    } else if (profilePicture) {
+    if (profilePicture) {
       await db.query(
         `UPDATE users
          SET phone = ?, email = ?, profile_picture = ?
          WHERE id = ?`,
         [phone, email, profilePicture, userId]
-      );
-    } else if (hashedPassword) {
-      await db.query(
-        `UPDATE users
-         SET phone = ?, email = ?, password = ?
-         WHERE id = ?`,
-        [phone, email, hashedPassword, userId]
       );
     } else {
       await db.query(
