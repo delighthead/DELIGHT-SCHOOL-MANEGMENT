@@ -1,8 +1,83 @@
 document.addEventListener("DOMContentLoaded", function () {
+  function createPromptShell() {
+    const overlay = document.createElement("div");
+    overlay.className = "web-prompt-overlay";
+
+    const box = document.createElement("div");
+    box.className = "web-prompt-box";
+
+    const title = document.createElement("h3");
+    title.className = "web-prompt-title";
+
+    const message = document.createElement("p");
+    message.className = "web-prompt-message";
+
+    const actions = document.createElement("div");
+    actions.className = "web-prompt-actions";
+
+    box.appendChild(title);
+    box.appendChild(message);
+    box.appendChild(actions);
+    overlay.appendChild(box);
+
+    return { overlay, title, message, actions };
+  }
+
+  function showWebAlert(text, kind) {
+    return new Promise(function (resolve) {
+      const ui = createPromptShell();
+      ui.title.textContent = kind === "warning" ? "Notice" : "Message";
+      ui.message.textContent = text;
+
+      const okBtn = document.createElement("button");
+      okBtn.className = "web-prompt-btn primary";
+      okBtn.textContent = "OK";
+      okBtn.addEventListener("click", function () {
+        ui.overlay.remove();
+        resolve();
+      });
+
+      ui.actions.appendChild(okBtn);
+      document.body.appendChild(ui.overlay);
+      okBtn.focus();
+    });
+  }
+
+  function showWebConfirm(text) {
+    return new Promise(function (resolve) {
+      const ui = createPromptShell();
+      ui.title.textContent = "Please Confirm";
+      ui.message.textContent = text;
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "web-prompt-btn ghost";
+      cancelBtn.textContent = "Cancel";
+
+      const yesBtn = document.createElement("button");
+      yesBtn.className = "web-prompt-btn danger";
+      yesBtn.textContent = "Delete";
+
+      cancelBtn.addEventListener("click", function () {
+        ui.overlay.remove();
+        resolve(false);
+      });
+
+      yesBtn.addEventListener("click", function () {
+        ui.overlay.remove();
+        resolve(true);
+      });
+
+      ui.actions.appendChild(cancelBtn);
+      ui.actions.appendChild(yesBtn);
+      document.body.appendChild(ui.overlay);
+      cancelBtn.focus();
+    });
+  }
+
   const buttons = document.querySelectorAll("button");
 
   buttons.forEach(function (button) {
-    button.addEventListener("click", function (event) {
+    button.addEventListener("click", async function (event) {
       const type = button.getAttribute("type");
 
       // Allow real form submit buttons to work
@@ -38,15 +113,15 @@ document.addEventListener("DOMContentLoaded", function () {
       const text = button.innerText.trim();
 
       if (text === "Edit") {
-        alert("Edit form will open here. Backend will be added later.");
+        await showWebAlert("Edit form will open here. Backend will be added later.");
       }
 
       else if (text === "Open Report" || text === "View") {
-        alert("Report preview will open here. Backend report data will be added later.");
+        await showWebAlert("Report preview will open here. Backend report data will be added later.");
       }
 
       else if (text === "Generate Report") {
-        alert("Report generated on frontend. Backend will generate real report later.");
+        await showWebAlert("Report generated on frontend. Backend will generate real report later.");
       }
 
       else if (text === "Print" || text.includes("Print")) {
@@ -54,19 +129,19 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       else if (text.includes("Download")) {
-        alert("Download PDF/Excel feature will be connected later.");
+        await showWebAlert("Download PDF/Excel feature will be connected later.");
       }
 
       else if (text === "Manage") {
-        alert("Manage page/item selected. Backend will manage records later.");
+        await showWebAlert("Manage page/item selected. Backend will manage records later.");
       }
 
       else if (text === "Delete") {
-        const confirmDelete = confirm("Are you sure you want to delete this record?");
+        const confirmDelete = await showWebConfirm("Are you sure you want to delete this record?");
         if (confirmDelete) {
           const row = button.closest("tr");
           if (row) row.remove();
-          alert("Record removed from frontend. Backend will delete permanently later.");
+          await showWebAlert("Record removed from frontend. Backend will delete permanently later.", "warning");
         }
       }
 
@@ -85,7 +160,7 @@ document.addEventListener("DOMContentLoaded", function () {
           return;
         }
 
-        alert(text + " clicked. Backend function will be added later.");
+        await showWebAlert(text + " clicked. Backend function will be added later.");
       }
     });
   });
