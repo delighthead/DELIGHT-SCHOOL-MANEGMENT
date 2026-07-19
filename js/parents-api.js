@@ -1,5 +1,13 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const API = "";
+  function getApiBase() {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") {
+      return "";
+    }
+    return "";
+  }
+
+  const API = getApiBase();
 
   const parentForm = document.getElementById("parentForm");
   const parentTableBody = document.getElementById("parentTableBody");
@@ -41,17 +49,49 @@ document.addEventListener("DOMContentLoaded", function () {
     return [];
   }
 
+  async function fetchJsonWithRetry(url, options, retries) {
+    let lastError = null;
+
+    for (let i = 0; i <= retries; i += 1) {
+      try {
+        const res = await fetch(url, options);
+        const raw = await res.text();
+        let data = {};
+
+        try {
+          data = raw ? JSON.parse(raw) : {};
+        } catch (error) {
+          data = { message: raw || "Unexpected server response" };
+        }
+
+        return { res, data };
+      } catch (error) {
+        lastError = error;
+        if (i < retries) {
+          await new Promise(function (resolve) {
+            setTimeout(resolve, 300);
+          });
+        }
+      }
+    }
+
+    throw lastError || new Error("Network request failed");
+  }
+
   async function loadBranches() {
     if (!branchSelect) return;
 
     branchSelect.innerHTML = `<option value="">Loading branches...</option>`;
 
     try {
-      const res = await fetch(`${API}/api/branches`, {
+      const { res, data } = await fetchJsonWithRetry(`${API}/api/branches`, {
         headers: authHeaders()
-      });
+      }, 2);
 
-      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to load branches");
+      }
+
       const branches = pickArray(data, "branches");
 
       branchSelect.innerHTML = `<option value="">Select branch</option>`;
@@ -71,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     } catch (error) {
       console.error("Branches load error:", error);
-      branchSelect.innerHTML = `<option value="">Failed to load branches</option>`;
+      branchSelect.innerHTML = `<option value="">${error.message || "Failed to load branches"}</option>`;
     }
   }
 
