@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parent Announcements - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+
+<style>
+  .parent-announcement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+    margin-top: 20px;
+  }
+
+  .parent-announcement-card {
+    background: #f8fbff;
+    border-left: 6px solid #ffcc00;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  }
+
+  .announcement-card-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .announcement-card-header h3 {
+    margin: 0;
+    color: #073b70;
+    font-size: 20px;
+  }
+
+  .announcement-card-header span {
+    background: #073b70;
+    color: #fff;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .parent-announcement-card p {
+    margin: 0;
+    line-height: 1.6;
+    color: #222;
+  }
+</style>
+
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Parent Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="parent.html">Dashboard Overview</a>
+      <a href="parent-profile.html">Child Profile</a>
+      <a href="parent-results.html">Scores & Results</a>
+      <a href="parent-fees.html">Fees Status</a>
+      <a href="parent-attendance.html">Attendance</a>
+      <a href="parent-announcements.html" class="active">Announcements</a>
+      <a href="parent-reports.html">Reports</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Announcements</h1>
+      <p>View announcements for parents.</p>
+
+      <section class="dashboard-section">
+        <h2>Parent Announcements</h2>
+
+        <div id="parentAnnouncementsBox">
+          <p>Loading announcements...</p>
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <script src="../js/panel-title.js?v=1"></script>
+  <script src="../js/parent-announcements-api.js?v=20"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/parent-guard.js?v=1"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/parent-scores-print-final.js?v=1"></script>
+  <script src="../js/parent-print-tab-final.js?v=1"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+</body>
+</html>

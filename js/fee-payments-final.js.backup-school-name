@@ -1,0 +1,476 @@
+document.addEventListener("DOMContentLoaded", function () {
+  function getToken() {
+    return localStorage.getItem("token");
+  }
+
+  function money(value) {
+    return `GHS ${Number(value || 0).toFixed(2)}`;
+  }
+
+  function getFeeFromButton(button) {
+    const sourceBtn =
+      button.closest("td")?.querySelector(".print-fee-receipt-btn") ||
+      button.closest("td")?.querySelector(".edit-fee-btn");
+
+    if (!sourceBtn || !sourceBtn.dataset.fee) return null;
+
+    return JSON.parse(decodeURIComponent(sourceBtn.dataset.fee));
+  }
+
+  async function fetchPayments(feeId) {
+    const res = await fetch(`http://127.0.0.1:5000/api/fees/${feeId}/payments`, {
+      headers: {
+        Authorization: `Bearer ${getToken()}`
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Could not load payment history.");
+    }
+
+    return data;
+  }
+
+  async function addFeePayment(fee) {
+    const amount = prompt("Enter payment amount:");
+
+    if (!amount || Number(amount) <= 0) {
+      alert("Please enter a valid payment amount.");
+      return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const paymentDate = prompt("Enter payment date:", today);
+
+    if (!paymentDate) {
+      alert("Payment date is required.");
+      return;
+    }
+
+    const note = prompt("Payment note optional:", "");
+
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/api/fees/${fee.id}/payments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`
+        },
+        body: JSON.stringify({
+          payment_amount: amount,
+          payment_date: paymentDate,
+          payment_note: note || ""
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Could not add payment.");
+      }
+
+      alert(
+        `Payment added successfully.\nTotal Paid: ${money(data.total_paid)}\nBalance: ${money(data.balance)}\nStatus: ${data.payment_status}`
+      );
+
+      location.reload();
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  }
+
+  async function showPaymentHistory(fee) {
+    try {
+      const data = await fetchPayments(fee.id);
+      const payments = data.payments || [];
+
+      let rows = "";
+
+      if (payments.length === 0) {
+        rows = `
+          <tr>
+            <td colspan="4">No payment history found.</td>
+          </tr>
+        `;
+      } else {
+        payments.forEach((payment, index) => {
+          rows += `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${payment.payment_date ? String(payment.payment_date).slice(0, 10) : ""}</td>
+              <td>${money(payment.payment_amount)}</td>
+              <td>${payment.payment_note || ""}</td>
+            </tr>
+          `;
+        });
+      }
+
+      const win = window.open("", "_blank");
+
+      win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Fee Payment History</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              color: #222;
+            }
+
+            h2, h3 {
+              color: #073d73;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 15px;
+            }
+
+            th {
+              background: #073d73;
+              color: #fff;
+              padding: 10px;
+              text-align: left;
+            }
+
+            td {
+              border-bottom: 1px solid #ddd;
+              padding: 10px;
+            }
+
+            .summary {
+              margin-top: 20px;
+              padding: 12px;
+              border: 1px solid #ccc;
+              background: #f8fafc;
+            }
+
+            .print-btn {
+              background: #073d73;
+              color: white;
+              border: none;
+              padding: 10px 15px;
+              border-radius: 6px;
+              cursor: pointer;
+              margin-bottom: 15px;
+            }
+
+            @media print {
+              .print-btn {
+                display: none;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <button class="print-btn" onclick="window.print()">Print Payment History</button>
+
+          <h2>Fee Payment History</h2>
+
+          <p><strong>Student:</strong> ${fee.student_name || ""}</p>
+          <p><strong>Admission No.:</strong> ${fee.admission_number || ""}</p>
+          <p><strong>Class:</strong> ${fee.class_name || ""}</p>
+          <p><strong>Term:</strong> ${fee.term || ""}</p>
+          <p><strong>Academic Year:</strong> ${fee.academic_year || ""}</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>No.</th>
+                <th>Payment Date</th>
+                <th>Amount Paid</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+
+          <div class="summary">
+            <p><strong>Amount Payable:</strong> ${money(fee.amount_payable)}</p>
+            <p><strong>Total Paid:</strong> ${money(data.total_paid)}</p>
+            <p><strong>Balance:</strong> ${money(Number(fee.amount_payable || 0) - Number(data.total_paid || 0))}</p>
+          </div>
+        </body>
+        </html>
+      `);
+
+      win.document.close();
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  }
+
+  async function printFullReceipt(fee) {
+    try {
+      const settingsResponse = await fetch("http://127.0.0.1:5000/api/settings");
+      const settingsData = await settingsResponse.json();
+      const settings = settingsData.settings || {};
+
+      const paymentData = await fetchPayments(fee.id);
+      const payments = paymentData.payments || [];
+      const totalPaid = Number(paymentData.total_paid || 0);
+      const balance = Number(fee.amount_payable || 0) - totalPaid;
+
+      const logo = settings.school_logo
+        ? `<img src="http://127.0.0.1:5000${settings.school_logo}" style="width:70px;height:70px;object-fit:contain;">`
+        : "";
+
+      let paymentRows = "";
+
+      if (payments.length === 0) {
+        paymentRows = `
+          <tr>
+            <td colspan="3">No payment history found.</td>
+          </tr>
+        `;
+      } else {
+        payments.forEach((payment, index) => {
+          paymentRows += `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${payment.payment_date ? String(payment.payment_date).slice(0, 10) : ""}</td>
+              <td>${money(payment.payment_amount)}</td>
+            </tr>
+          `;
+        });
+      }
+
+      const win = window.open("", "_blank");
+
+      win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Fee Receipt</title>
+          <style>
+            @page {
+              size: A5 portrait;
+              margin: 10mm;
+            }
+
+            body {
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 0;
+              color: #222;
+              font-size: 13px;
+            }
+
+            .receipt {
+              border: 2px solid #111;
+              padding: 15px;
+              max-width: 520px;
+              margin: auto;
+            }
+
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #111;
+              padding-bottom: 8px;
+              margin-bottom: 12px;
+            }
+
+            .header h2 {
+              margin: 4px 0;
+              font-size: 20px;
+            }
+
+            .header p {
+              margin: 2px 0;
+              font-size: 12px;
+            }
+
+            .title {
+              text-align: center;
+              font-weight: bold;
+              font-size: 18px;
+              margin: 10px 0;
+              text-decoration: underline;
+            }
+
+            .row {
+              display: grid;
+              grid-template-columns: 130px 1fr;
+              gap: 8px;
+              margin: 6px 0;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 10px;
+            }
+
+            th {
+              background: #073d73;
+              color: white;
+              padding: 6px;
+              text-align: left;
+            }
+
+            td {
+              border-bottom: 1px solid #ddd;
+              padding: 6px;
+            }
+
+            .amount-box {
+              border: 1px solid #333;
+              padding: 8px;
+              margin-top: 10px;
+            }
+
+            .amount-row {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              margin: 6px 0;
+            }
+
+            .print-btn {
+              margin-bottom: 10px;
+              padding: 8px 14px;
+              background: #073d73;
+              color: white;
+              border: none;
+              border-radius: 5px;
+              cursor: pointer;
+            }
+
+            @media print {
+              .print-btn {
+                display: none;
+              }
+            }
+          </style>
+        </head>
+
+        <body>
+          <button class="print-btn" onclick="window.print()">Print Receipt</button>
+
+          <div class="receipt">
+            <div class="header">
+              ${logo}
+              <h2>${settings.school_name || "Delight International School"}</h2>
+              <p>${settings.school_motto || ""}</p>
+              <p>${settings.school_address || ""}</p>
+              <p>${settings.school_phone || ""}</p>
+            </div>
+
+            <div class="title">FEES RECEIPT</div>
+
+            <div class="row"><strong>Receipt No:</strong> FEE-${fee.id || ""}</div>
+            <div class="row"><strong>Student:</strong> ${fee.student_name || ""}</div>
+            <div class="row"><strong>Admission No:</strong> ${fee.admission_number || ""}</div>
+            <div class="row"><strong>Class:</strong> ${fee.class_name || ""}</div>
+            <div class="row"><strong>Term:</strong> ${fee.term || ""}</div>
+            <div class="row"><strong>Academic Year:</strong> ${fee.academic_year || ""}</div>
+
+            <h3>Payment Dates</h3>
+
+            <table>
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${paymentRows}
+              </tbody>
+            </table>
+
+            <div class="amount-box">
+              <div class="amount-row"><strong>Amount Payable:</strong> ${money(fee.amount_payable)}</div>
+              <div class="amount-row"><strong>Total Paid:</strong> ${money(totalPaid)}</div>
+              <div class="amount-row"><strong>Balance:</strong> ${money(balance)}</div>
+              <div class="amount-row"><strong>Status:</strong> ${
+                balance <= 0 ? "Paid" : totalPaid > 0 ? "Part Payment" : "Unpaid"
+              }</div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+
+      win.document.close();
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  }
+
+  function addPaymentButtons() {
+    document.querySelectorAll("#feeTableBody tr").forEach(row => {
+      const actionCell = row.querySelector("td:last-child");
+      const printBtn = row.querySelector(".print-fee-receipt-btn");
+
+      if (!actionCell || !printBtn) return;
+      if (actionCell.querySelector(".add-fee-payment-btn")) return;
+
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "small-btn add-fee-payment-btn";
+      addBtn.textContent = "Add Payment";
+
+      const historyBtn = document.createElement("button");
+      historyBtn.type = "button";
+      historyBtn.className = "small-btn view-fee-payments-btn";
+      historyBtn.textContent = "Payment History";
+
+      actionCell.appendChild(document.createTextNode(" "));
+      actionCell.appendChild(addBtn);
+      actionCell.appendChild(document.createTextNode(" "));
+      actionCell.appendChild(historyBtn);
+    });
+  }
+
+  document.addEventListener("click", function (event) {
+    const addBtn = event.target.closest(".add-fee-payment-btn");
+    const historyBtn = event.target.closest(".view-fee-payments-btn");
+    const receiptBtn = event.target.closest(".print-fee-receipt-btn");
+
+    if (addBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+      const fee = getFeeFromButton(addBtn);
+      if (!fee) return alert("Could not read fee record.");
+      addFeePayment(fee);
+      return;
+    }
+
+    if (historyBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+      const fee = getFeeFromButton(historyBtn);
+      if (!fee) return alert("Could not read fee record.");
+      showPaymentHistory(fee);
+      return;
+    }
+
+    if (receiptBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      const fee = getFeeFromButton(receiptBtn) || JSON.parse(decodeURIComponent(receiptBtn.dataset.fee));
+      printFullReceipt(fee);
+      return;
+    }
+  }, true);
+
+  const observer = new MutationObserver(addPaymentButtons);
+
+  const tableBody = document.getElementById("feeTableBody");
+  if (tableBody) {
+    observer.observe(tableBody, { childList: true, subtree: true });
+    setTimeout(addPaymentButtons, 1000);
+  }
+});

@@ -1,0 +1,567 @@
+document.addEventListener("DOMContentLoaded", function () {
+  const feeTableBody = document.getElementById("feeTableBody");
+  const feeForm = document.getElementById("feeForm");
+  const branchSelect = document.getElementById("fee_branch_id");
+  const studentSelect = document.getElementById("fee_student_id");
+
+  function getAuthOnlyHeaders() {
+    const token = localStorage.getItem("token");
+    return token ? { "Authorization": `Bearer ${token}` } : {};
+  }
+
+  function getAuthHeaders() {
+    const token = localStorage.getItem("token");
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {})
+    };
+  }
+
+  function getLoggedInUser() {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return null;
+
+    try {
+      return JSON.parse(storedUser);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function isAdmin() {
+    const user = getLoggedInUser();
+    return user && user.role === "branch_admin";
+  }
+
+  function isBranchAdmin() {
+    const user = getLoggedInUser();
+    return user && user.role === "branch_admin";
+  }
+
+  function getAdminId() {
+    const user = getLoggedInUser();
+    return user ? user.branch_id : null;
+  }
+
+  function money(value) {
+    return `GHS ${Number(value || 0).toFixed(2)}`;
+  }
+
+
+  function calculateFeeStatus(amountPayable, amountPaid) {
+    const payable = Number(amountPayable || 0);
+    const paid = Number(amountPaid || 0);
+    const balance = Math.max(payable - paid, 0);
+
+    let paymentStatus = "unpaid";
+
+    if (paid <= 0) {
+      paymentStatus = "unpaid";
+    } else if (paid >= payable && payable > 0) {
+      paymentStatus = "paid";
+    } else {
+      paymentStatus = "part_payment";
+    }
+
+    return {
+      balance,
+      paymentStatus
+    };
+  }
+
+  function updateFeePreview() {
+    const amountPayableInput = document.getElementById("amount_payable");
+    const amountPaidInput = document.getElementById("amount_paid");
+    const balancePreview = document.getElementById("fee_balance_preview");
+    const statusPreview = document.getElementById("fee_status_preview");
+
+    if (!amountPayableInput || !amountPaidInput) return;
+
+    const result = calculateFeeStatus(amountPayableInput.value, amountPaidInput.value);
+
+    if (balancePreview) {
+      balancePreview.value = result.balance.toFixed(2);
+    }
+
+    if (statusPreview) {
+      statusPreview.value = formatStatus(result.paymentStatus);
+    }
+  }
+
+
+  function formatStatus(status) {
+    if (status === "paid") return "Paid";
+    if (status === "part_payment") return "Part Payment";
+    if (status === "unpaid") return "Unpaid";
+    return status || "";
+  }
+
+  async function loadBranches() {
+    if (!branchSelect) return;
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/branches", { headers: getAuthOnlyHeaders() });
+      const data = await response.json();
+
+      branchSelect.innerHTML = '<option value="">Select branch</option>';
+
+      data.branches.forEach(function (branch) {
+        const option = document.createElement("option");
+        option.value = branch.id;
+        option.textContent = branch.branch_name;
+        branchSelect.appendChild(option);
+      });
+
+      if (isAdmin()) {
+        branchSelect.value = getAdminId();
+        branchSelect.disabled = true;
+      }
+
+      loadStudents();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadStudents() {
+    if (!studentSelect) return;
+
+    try {
+      let studentsUrl = "http://127.0.0.1:5000/api/students";
+
+      const selected = isAdmin() ? getAdminId() : branchSelect.value;
+
+      if (selected) {
+        studentsUrl += `?branch_id=${selected}`;
+      }
+
+      const response = await fetch(studentsUrl, { headers: getAuthOnlyHeaders() });
+      const data = await response.json();
+
+      studentSelect.innerHTML = '<option value="">Select student</option>';
+
+      (data.students || []).forEach(function (student) {
+        const option = document.createElement("option");
+        option.value = student.id;
+        option.textContent = `${student.full_name || ""} - ${student.admission_number || ""} - ${student.class_name || ""}`;
+        studentSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadFees() {
+    if (!feeTableBody) return;
+
+    try {
+      let feesUrl = "http://127.0.0.1:5000/api/fees";
+
+      if (isAdmin()) {
+        feesUrl += `?branch_id=${getAdminBranchId()}`;
+      }
+
+      const response = await fetch(feesUrl, { headers: getAuthOnlyHeaders() });
+      const data = await response.json();
+
+      feeTableBody.innerHTML = "";
+
+      if (!data.fees || data.fees.length === 0) {
+        feeTableBody.innerHTML = `
+          <tr>
+            <td colspan="10">No fees records found.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      data.fees.forEach(function (fee) {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td>${fee.branch_name || ""}</td>
+          <td>${fee.student_name || ""}</td>
+          <td>${fee.admission_number || ""}</td>
+          <td>${fee.class_name || ""}</td>
+          <td>${fee.term || ""}</td>
+          <td>${fee.academic_year || ""}</td>
+          <td>${money(fee.amount_payable)}</td>
+          <td>${money(fee.amount_paid)}</td>
+          <td>${money(fee.balance)}</td>
+          <td>${formatStatus(fee.payment_status)}</td>
+          <td>
+            <button class="small-btn edit-fee-btn"
+              data-fee="${encodeURIComponent(JSON.stringify(fee))}">
+              Edit
+            </button>
+
+            <button class="small-btn success print-fee-receipt-btn"
+              data-fee="${encodeURIComponent(JSON.stringify(fee))}">
+              Print Receipt
+            </button>
+          </td>
+        `;
+
+        feeTableBody.appendChild(row);
+      });
+    } catch (error) {
+      console.error(error);
+      feeTableBody.innerHTML = `
+        <tr>
+          <td colspan="10">Could not load fees. Make sure backend is running.</td>
+        </tr>
+      `;
+    }
+  }
+
+  if (branchSelect) {
+    branchSelect.addEventListener("change", loadStudents);
+  }
+
+
+  const amountPayableInput = document.getElementById("amount_payable");
+  const amountPaidInput = document.getElementById("amount_paid");
+
+  if (amountPayableInput) {
+    amountPayableInput.addEventListener("input", updateFeePreview);
+  }
+
+  if (amountPaidInput) {
+    amountPaidInput.addEventListener("input", updateFeePreview);
+  }
+
+  updateFeePreview();
+
+
+
+  async function printFeeReceipt(fee) {
+    try {
+      const settingsResponse = await fetch("http://127.0.0.1:5000/api/settings");
+      const settingsData = await settingsResponse.json();
+      const settings = settingsData.settings || {};
+
+      const logo = settings.school_logo
+        ? `<img src="http://127.0.0.1:5000${settings.school_logo}" style="width:70px;height:70px;object-fit:contain;">`
+        : "";
+
+      const receiptNo = `FEE-${fee.id || Date.now()}`;
+      const today = new Date().toLocaleDateString();
+
+      const win = window.open("", "_blank");
+
+      win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Fee Receipt</title>
+          <style>
+            @page {
+              size: A5 portrait;
+              margin: 10mm;
+            }
+
+            body {
+              font-family: Arial, sans-serif;
+              margin: 0;
+              padding: 0;
+              color: #222;
+              font-size: 13px;
+            }
+
+            .receipt {
+              border: 2px solid #111;
+              padding: 15px;
+              max-width: 520px;
+              margin: auto;
+            }
+
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #111;
+              padding-bottom: 8px;
+              margin-bottom: 12px;
+            }
+
+            .header h2 {
+              margin: 4px 0;
+              font-size: 20px;
+            }
+
+            .header p {
+              margin: 2px 0;
+              font-size: 12px;
+            }
+
+            .title {
+              text-align: center;
+              font-weight: bold;
+              font-size: 18px;
+              margin: 10px 0;
+              text-decoration: underline;
+            }
+
+            .row {
+              display: grid;
+              grid-template-columns: 150px 1fr;
+              gap: 8px;
+              margin: 7px 0;
+            }
+
+            .amount-box {
+              border: 1px solid #333;
+              padding: 8px;
+              margin-top: 10px;
+            }
+
+            .amount-row {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              margin: 6px 0;
+            }
+
+            .signatures {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 30px;
+              margin-top: 35px;
+              text-align: center;
+            }
+
+            .line {
+              border-top: 1px solid #333;
+              padding-top: 5px;
+            }
+
+            .print-btn {
+              margin-bottom: 10px;
+              padding: 8px 14px;
+              background: #111827;
+              color: white;
+              border: none;
+              border-radius: 5px;
+              cursor: pointer;
+            }
+
+            @media print {
+              .print-btn {
+                display: none;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <button class="print-btn" >Print Receipt</button>
+
+          <div class="receipt">
+            <div class="header">
+              ${logo}
+              <h2>${settings.school_name || "Delight International School"}</h2>
+              <p>${settings.school_motto || ""}</p>
+              <p>${settings.school_address || ""}</p>
+              <p>${settings.school_phone || ""} ${settings.school_email ? " | " + settings.school_email : ""}</p>
+            </div>
+
+            <div class="title">OFFICIAL FEE RECEIPT</div>
+
+            <div class="row"><strong>Receipt No.:</strong><span>${receiptNo}</span></div>
+            <div class="row"><strong>Date Printed:</strong><span>${today}</span></div>
+            <div class="row"><strong>Student Name:</strong><span>${fee.student_name || ""}</span></div>
+            <div class="row"><strong>Admission No.:</strong><span>${fee.admission_number || ""}</span></div>
+            <div class="row"><strong>Class:</strong><span>${fee.class_name || ""}</span></div>
+            <div class="row"><strong>:</strong><span>${fee.branch_name || ""}</span></div>
+            <div class="row"><strong>Term:</strong><span>${fee.term || ""}</span></div>
+            <div class="row"><strong>Academic Year:</strong><span>${fee.academic_year || ""}</span></div>
+            <div class="row"><strong>Payment Date:</strong><span>${fee.payment_date ? String(fee.payment_date).slice(0, 10) : ""}</span></div>
+
+            <div class="amount-box">
+              <div class="amount-row"><strong>Amount Payable:</strong><span>GHS ${money(fee.amount_payable)}</span></div>
+              <div class="amount-row"><strong>Amount Paid:</strong><span>GHS ${money(fee.amount_paid)}</span></div>
+              <div class="amount-row"><strong>Balance:</strong><span>GHS ${money(fee.balance)}</span></div>
+              <div class="amount-row"><strong>Payment Status:</strong><span>${formatStatus(fee.payment_status)}</span></div>
+            </div>
+
+            <div class="signatures">
+              <div>
+                <div class="line">Received By</div>
+              </div>
+              <div>
+                <div class="line">Parent / Guardian</div>
+              </div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+
+      win.document.close();
+    } catch (error) {
+      console.error(error);
+      alert("Could not print receipt.");
+    }
+  }
+
+
+  if (feeForm) {
+    feeForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const amountPayable = Number(document.getElementById("amount_payable").value || 0);
+      const amountPaid = Number(document.getElementById("amount_paid").value || 0);
+
+      let paymentStatus = "unpaid";
+      if (amountPaid >= amountPayable && amountPayable > 0) paymentStatus = "paid";
+      else if (amountPaid > 0) paymentStatus = "part_payment";
+
+      const editingFeeId = document.getElementById("fee_id") ? document.getElementById("fee_id").value : "";
+
+      const feeData = {
+        branch_id: isBranchAdmin() ? getAdminBranchId() : document.getElementById("fee_branch_id").value,
+        student_id: document.getElementById("fee_student_id").value,
+        term: document.getElementById("term").value,
+        academic_year: document.getElementById("academic_year").value.trim(),
+        amount_payable: amountPayable,
+        amount_paid: amountPaid,
+        payment_date: document.getElementById("payment_date").value,
+        payment_status: paymentStatus
+      };
+
+      try {
+        const feeUrl = editingFeeId
+          ? `http://127.0.0.1:5000/api/fees/${editingFeeId}`
+          : "http://127.0.0.1:5000/api/fees";
+
+        const response = await fetch(feeUrl, {
+          method: editingFeeId ? "PUT" : "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(feeData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Failed to add fee record");
+          return;
+        }
+
+        alert("Fee record added successfully");
+        feeForm.reset();
+      
+  if (feeTableBody) {
+    feeTableBody.addEventListener("click", function (event) {
+      const btn = event.target.closest(".print-fee-receipt-btn");
+      if (!btn) return;
+
+      try {
+        const fee = JSON.parse(decodeURIComponent(btn.dataset.fee));
+        printFeeReceipt(fee);
+      } catch (error) {
+        console.error(error);
+        alert("Could not open fee receipt.");
+      }
+    });
+  }
+
+
+
+  if (feeTableBody) {
+    feeTableBody.addEventListener("click", function (event) {
+      const btn = event.target.closest(".edit-fee-btn");
+      if (!btn) return;
+
+      try {
+        const fee = JSON.parse(decodeURIComponent(btn.dataset.fee));
+
+        if (document.getElementById("fee_id")) document.getElementById("fee_id").value = fee.id || "";
+        if (document.getElementById("fee_branch_id")) document.getElementById("fee_branch_id").value = fee.branch_id || "";
+        if (document.getElementById("fee_student_id")) document.getElementById("fee_student_id").value = fee.student_id || "";
+        if (document.getElementById("fee_term")) document.getElementById("fee_term").value = fee.term || "";
+        if (document.getElementById("fee_academic_year")) document.getElementById("fee_academic_year").value = fee.academic_year || "";
+        if (document.getElementById("amount_payable")) document.getElementById("amount_payable").value = fee.amount_payable || 0;
+        if (document.getElementById("amount_paid")) document.getElementById("amount_paid").value = fee.amount_paid || 0;
+        if (document.getElementById("payment_date")) document.getElementById("payment_date").value = fee.payment_date ? String(fee.payment_date).slice(0, 10) : "";
+
+        const submitBtn = feeForm ? feeForm.querySelector("button[type='submit']") : null;
+        if (submitBtn) {
+          submitBtn.textContent = "Update Fee";
+        }
+
+        updateFeePreview();
+
+        if (feeForm) {
+          feeForm.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Could not load fee record for editing.");
+      }
+    });
+  }
+
+
+  loadBranches();
+        loadFees();
+      } catch (error) {
+        console.error(error);
+        alert("Cannot connect to backend.");
+      }
+    });
+  }
+
+
+  if (feeTableBody) {
+    feeTableBody.addEventListener("click", function (event) {
+      const btn = event.target.closest(".print-fee-receipt-btn");
+      if (!btn) return;
+
+      try {
+        const fee = JSON.parse(decodeURIComponent(btn.dataset.fee));
+        printFeeReceipt(fee);
+      } catch (error) {
+        console.error(error);
+        alert("Could not open fee receipt.");
+      }
+    });
+  }
+
+
+
+  if (feeTableBody) {
+    feeTableBody.addEventListener("click", function (event) {
+      const btn = event.target.closest(".edit-fee-btn");
+      if (!btn) return;
+
+      try {
+        const fee = JSON.parse(decodeURIComponent(btn.dataset.fee));
+
+        if (document.getElementById("fee_id")) document.getElementById("fee_id").value = fee.id || "";
+        if (document.getElementById("fee_branch_id")) document.getElementById("fee_branch_id").value = fee.branch_id || "";
+        if (document.getElementById("fee_student_id")) document.getElementById("fee_student_id").value = fee.student_id || "";
+        if (document.getElementById("fee_term")) document.getElementById("fee_term").value = fee.term || "";
+        if (document.getElementById("fee_academic_year")) document.getElementById("fee_academic_year").value = fee.academic_year || "";
+        if (document.getElementById("amount_payable")) document.getElementById("amount_payable").value = fee.amount_payable || 0;
+        if (document.getElementById("amount_paid")) document.getElementById("amount_paid").value = fee.amount_paid || 0;
+        if (document.getElementById("payment_date")) document.getElementById("payment_date").value = fee.payment_date ? String(fee.payment_date).slice(0, 10) : "";
+
+        const submitBtn = feeForm ? feeForm.querySelector("button[type='submit']") : null;
+        if (submitBtn) {
+          submitBtn.textContent = "Update Fee";
+        }
+
+        updateFeePreview();
+
+        if (feeForm) {
+          feeForm.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Could not load fee record for editing.");
+      }
+    });
+  }
+
+
+  loadBranches();
+  loadFees();
+});
+
+

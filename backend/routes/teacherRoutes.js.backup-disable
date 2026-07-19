@@ -1,0 +1,97 @@
+const express = require("express");
+const router = express.Router();
+const multer = require("multer");
+const path = require("path");
+
+const teacherController = require("../controllers/teacherController");
+
+const {
+  verifyToken,
+  requireAdmin,
+  requireAdminOrTeacher,
+  applyBranchSecurity,
+  applyUserBranchSecurity
+} = require("../middleware/authMiddleware");
+
+// Teacher profile picture upload
+const teacherProfileStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/teachers");
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    cb(null, `teacher-profile-${Date.now()}${ext}`);
+  }
+});
+
+const uploadTeacherProfile = multer({ storage: teacherProfileStorage });
+
+// Teacher self/profile routes
+router.get(
+  "/by-user/:userId",
+  verifyToken,
+  requireAdminOrTeacher,
+  applyUserBranchSecurity,
+  teacherController.getTeacherByUserId
+);
+
+router.get(
+  "/:teacherId/students",
+  verifyToken,
+  requireAdminOrTeacher,
+  applyUserBranchSecurity,
+  teacherController.getTeacherStudents
+);
+
+router.patch(
+  "/:teacherId/profile",
+  verifyToken,
+  requireAdminOrTeacher,
+  applyUserBranchSecurity,
+  uploadTeacherProfile.single("profile_picture"),
+  teacherController.updateTeacherProfile
+);
+
+// Admin / branch admin teacher management
+router.get(
+  "/",
+  verifyToken,
+  requireAdmin,
+  applyBranchSecurity,
+  teacherController.getTeachers
+);
+
+router.post(
+  "/",
+  verifyToken,
+  requireAdmin,
+  applyBranchSecurity,
+  teacherController.createTeacher
+);
+
+router.put(
+  "/:id",
+  verifyToken,
+  requireAdmin,
+  applyBranchSecurity,
+  teacherController.updateTeacher
+);
+
+
+router.patch(
+  "/:id/make-admin",
+  verifyToken,
+  requireAdmin,
+  applyBranchSecurity,
+  teacherController.makeTeacherAdmin
+);
+
+router.post(
+  "/assign",
+  verifyToken,
+  requireAdmin,
+  applyBranchSecurity,
+  teacherController.assignTeacher
+);
+
+module.exports = router;

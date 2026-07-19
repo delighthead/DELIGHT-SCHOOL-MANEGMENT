@@ -1,0 +1,644 @@
+document.addEventListener("DOMContentLoaded", function () {
+  const attendanceForm = document.getElementById("attendanceForm");
+  const attendanceTableBody = document.getElementById("attendanceTableBody");
+  const branchSelect = document.getElementById("attendance_branch_id");
+  const studentSelect = document.getElementById("attendance_student_id");
+  const classSelect = document.getElementById("attendance_class_id");
+
+  let allAttendanceRecords = [];
+
+  function getToken() {
+    return localStorage.getItem("token");
+  }
+
+  function getAuthOnlyHeaders() {
+    const token = getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  function getLoggedInUser() {
+    try {
+      return JSON.parse(localStorage.getItem("user")) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function isAdmin() {
+    return getLoggedInUser().role === "branch_admin";
+  }
+
+  function getAdminId() {
+    return getLoggedInUser().branch_id;
+  }
+
+  function formatStatus(status) {
+    const text = status || "";
+    return text.replace("_", " ").replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  async function loadAcademicSession() {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/settings");
+      const data = await response.json();
+      const settings = data.settings || {};
+
+      const termInput = document.getElementById("attendance_term");
+      const yearInput = document.getElementById("attendance_academic_year");
+
+      if (termInput && !termInput.value) termInput.value = settings.current_term || "";
+      if (yearInput && !yearInput.value) yearInput.value = settings.academic_year || "";
+    } catch (error) {
+      console.error("Could not load academic session:", error);
+    }
+  }
+
+  async function loades() {
+    if (!branchSelect) return;
+
+    if (isAdmin()) {
+      branchSelect.innerHTML = `<option value="${getAdminBranchId()}">My Branch</option>`;
+      branchSelect.value = getAdminId();
+      branchSelect.disabled = true;
+      await loadStudents();
+      return;
+    }
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/branches", {
+        headers: getAuthOnlyHeaders()
+      });
+
+      const data = await response.json();
+      const branches = data.branches || [];
+
+      branchSelect.innerHTML = '<option value=""></option>';
+
+      branches.forEach(branch => {
+        const option = document.createElement("option");
+        option.value = branch.id;
+        option.textContent = branch.branch_name;
+        branchSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error("Could not load branches:", error);
+    }
+  }
+
+  async function loadStudents() {
+    if (!studentSelect) return;
+
+    try {
+      let url = "http://127.0.0.1:5000/api/students";
+      const branchId = isAdmin() ? getAdminId() : branchSelect?.value;
+
+      if (branchId) {
+        url += `?branch_id=${branchId}`;
+      }
+
+      const response = await fetch(url, {
+        headers: getAuthOnlyHeaders()
+      });
+
+      const data = await response.json();
+      const students = data.students || [];
+
+      studentSelect.innerHTML = '<option value="">Select student</option>';
+
+      students.forEach(student => {
+        const option = document.createElement("option");
+        option.value = student.id;
+        option.textContent = `${student.full_name || student.student_name || ""} - ${student.admission_number || ""}`;
+        option.dataset.classId = student.class_id || "";
+        studentSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error("Could not load students:", error);
+    }
+  }
+
+  async function loadClasses() {
+    if (!classSelect) return;
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/classes", {
+        headers: getAuthOnlyHeaders()
+      });
+
+      const data = await response.json();
+      const classes = data.classes || [];
+
+      classSelect.innerHTML = '<option value="">Select class</option>';
+
+      classes.forEach(cls => {
+        const option = document.createElement("option");
+        option.value = cls.id;
+        option.textContent = cls.class_name;
+        classSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error("Could not load classes:", error);
+    }
+  }
+
+  function updateSummary(records) {
+    const present = records.filter(r => r.status === "present").length;
+    const absent = records.filter(r => r.status === "absent").length;
+    const total = records.length;
+
+    const presentBox = document.getElementById("attendancePresentCount");
+    const absentBox = document.getElementById("attendanceAbsentCount");
+    const totalBox = document.getElementById("attendanceTotalCount");
+
+    if (presentBox) presentBox.textContent = present;
+    if (absentBox) absentBox.textContent = absent;
+    if (totalBox) totalBox.textContent = total;
+  }
+
+  async function loadAttendance() {
+    if (!attendanceTableBody) return;
+
+    try {
+      let url = "http://127.0.0.1:5000/api/attendance";
+
+      if (isAdmin()) {
+        url += `?branch_id=${getAdminBranchId()}`;
+      }
+
+      const response = await fetch(url, {
+        headers: getAuthOnlyHeaders()
+      });
+
+      const data = await response.json();
+      const records = data.attendance || data.records || [];
+
+      allAttendanceRecords = records;
+      updateSummary(records);
+
+      attendanceTableBody.innerHTML = "";
+
+      if (records.length === 0) {
+        attendanceTableBody.innerHTML = `
+          <tr>
+            <td colspan="10">No attendance records found.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      records.forEach(record => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td>${record.branch_name || ""}</td>
+          <td>${record.student_name || ""}</td>
+          <td>${record.admission_number || ""}</td>
+          <td>${record.class_name || ""}</td>
+          <td>${record.attendance_date ? String(record.attendance_date).slice(0, 10) : ""}</td>
+          <td>${record.term || ""}</td>
+          <td>${record.academic_year || ""}</td>
+          <td>${formatStatus(record.status)}</td>
+          <td>${record.remarks || ""}</td>
+          <td>
+            <button class="small-btn edit-attendance-btn"
+              data-record="${encodeURIComponent(JSON.stringify(record))}">
+              Edit
+            </button>
+          </td>
+        `;
+
+        attendanceTableBody.appendChild(row);
+      });
+    } catch (error) {
+      console.error(error);
+      attendanceTableBody.innerHTML = `
+        <tr>
+          <td colspan="10">Could not load attendance. Make sure backend is running.</td>
+        </tr>
+      `;
+    }
+  }
+
+  async function saveAttendance(event) {
+    event.preventDefault();
+
+    const editingId = document.getElementById("attendance_id")?.value || "";
+
+    const selectedStudent = studentSelect?.selectedOptions[0];
+
+    const attendanceData = {
+      branch_id: isAdmin() ? getAdminId() : document.getElementById("attendance_branch_id").value,
+      student_id: document.getElementById("attendance_student_id").value,
+      class_id: document.getElementById("attendance_class_id") ? document.getElementById("attendance_class_id").value : selectedStudent?.dataset.classId || null,
+      teacher_id: null,
+      attendance_date: document.getElementById("attendance_date").value,
+      term: document.getElementById("attendance_term").value,
+      academic_year: document.getElementById("attendance_academic_year").value.trim(),
+      status: document.getElementById("attendance_status").value,
+      remarks: document.getElementById("attendance_remarks").value.trim()
+    };
+
+    try {
+      const url = editingId
+        ? `http://127.0.0.1:5000/api/attendance/${editingId}`
+        : "http://127.0.0.1:5000/api/attendance";
+
+      const response = await fetch(url, {
+        method: editingId ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthOnlyHeaders()
+        },
+        body: JSON.stringify(attendanceData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Failed to save attendance.");
+        return;
+      }
+
+      alert(editingId ? "Attendance updated successfully." : "Attendance saved successfully.");
+
+      attendanceForm.reset();
+
+      if (document.getElementById("attendance_id")) {
+        document.getElementById("attendance_id").value = "";
+      }
+
+      const submitBtn = attendanceForm.querySelector("button[type='submit']");
+      if (submitBtn) submitBtn.textContent = "Save Attendance";
+
+      await loadAcademicSession();
+      await loadAttendance();
+    } catch (error) {
+      console.error(error);
+      alert("Cannot connect to backend.");
+    }
+  }
+
+  function editAttendance(record) {
+    if (document.getElementById("attendance_id")) document.getElementById("attendance_id").value = record.id || "";
+    if (document.getElementById("attendance_branch_id")) document.getElementById("attendance_branch_id").value = record.branch_id || "";
+    if (document.getElementById("attendance_student_id")) document.getElementById("attendance_student_id").value = record.student_id || "";
+    if (document.getElementById("attendance_class_id")) document.getElementById("attendance_class_id").value = record.class_id || "";
+    if (document.getElementById("attendance_date")) document.getElementById("attendance_date").value = record.attendance_date ? String(record.attendance_date).slice(0, 10) : "";
+    if (document.getElementById("attendance_term")) document.getElementById("attendance_term").value = record.term || "";
+    if (document.getElementById("attendance_academic_year")) document.getElementById("attendance_academic_year").value = record.academic_year || "";
+    if (document.getElementById("attendance_status")) document.getElementById("attendance_status").value = record.status || "";
+    if (document.getElementById("attendance_remarks")) document.getElementById("attendance_remarks").value = record.remarks || "";
+
+    const submitBtn = attendanceForm?.querySelector("button[type='submit']");
+    if (submitBtn) submitBtn.textContent = "Update Attendance";
+
+    attendanceForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function printAttendanceSheet() {
+    try {
+      const settingsResponse = await fetch("http://127.0.0.1:5000/api/settings");
+      const settingsData = await settingsResponse.json();
+      const settings = settingsData.settings || {};
+
+      const present = allAttendanceRecords.filter(r => r.status === "present").length;
+      const absent = allAttendanceRecords.filter(r => r.status === "absent").length;
+      const total = allAttendanceRecords.length;
+
+      const logo = settings.school_logo
+        ? `<img src="http://127.0.0.1:5000${settings.school_logo}" style="width:65px;height:65px;object-fit:contain;">`
+        : "";
+
+      let rows = "";
+
+      allAttendanceRecords.forEach(record => {
+        rows += `
+          <tr>
+            <td>${record.student_name || ""}</td>
+            <td>${record.admission_number || ""}</td>
+            <td>${record.class_name || ""}</td>
+            <td>${record.attendance_date ? String(record.attendance_date).slice(0, 10) : ""}</td>
+            <td>${record.term || ""}</td>
+            <td>${record.academic_year || ""}</td>
+            <td>${formatStatus(record.status)}</td>
+            <td>${record.remarks || ""}</td>
+          </tr>
+        `;
+      });
+
+      const win = window.open("", "_blank");
+
+      win.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Attendance Sheet</title>
+          <style>
+            @page { size: A4 portrait; margin: 10mm; }
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #222; }
+            .header { text-align: center; border-bottom: 2px solid #111; padding-bottom: 8px; margin-bottom: 10px; }
+            .header h2 { margin: 3px 0; font-size: 20px; }
+            .header p { margin: 2px 0; }
+            .summary { display: flex; gap: 15px; margin: 10px 0; font-weight: bold; }
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+            th, td { border: 1px solid #333; padding: 5px; font-size: 11px; word-wrap: break-word; }
+            th { background: #f0f0f0; }
+            .print-btn { margin-bottom: 10px; padding: 8px 14px; background: #111827; color: white; border: none; border-radius: 5px; }
+            @media print { .print-btn { display: none; } }
+          </style>
+        </head>
+        <body>
+          <button class="print-btn" >Print Attendance Sheet</button>
+
+          <div class="header">
+            ${logo}
+            <h2>${settings.school_name || "Delight International School"}</h2>
+            <p>${settings.school_motto || ""}</p>
+            <p>${settings.school_address || ""}</p>
+            <h3>Attendance Sheet</h3>
+          </div>
+
+          <div class="summary">
+            <div>Total Records: ${total}</div>
+            <div>Present: ${present}</div>
+            <div>Absent: ${absent}</div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Admission No.</th>
+                <th>Class</th>
+                <th>Date</th>
+                <th>Term</th>
+                <th>Academic Year</th>
+                <th>Status</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>${rows || '<tr><td colspan="8">No attendance records found.</td></tr>'}</tbody>
+          </table>
+        </body>
+        </html>
+      `);
+
+      win.document.close();
+    } catch (error) {
+      console.error(error);
+      alert("Could not print attendance sheet.");
+    }
+  }
+
+  if (attendanceForm) {
+    attendanceForm.addEventListener("submit", saveAttendance);
+  }
+
+  if (attendanceTableBody) {
+    attendanceTableBody.addEventListener("click", function (event) {
+      const btn = event.target.closest(".edit-attendance-btn");
+      if (!btn) return;
+
+      const record = JSON.parse(decodeURIComponent(btn.dataset.record));
+      editAttendance(record);
+    });
+  }
+
+  const printBtn = document.getElementById("printAttendanceBtn");
+  if (printBtn) {
+    printBtn.addEventListener("click", printAttendanceSheet);
+  }
+
+  if (branchSelect) {
+    branchSelect.addEventListener("change", loadStudents);
+  }
+
+  loadAcademicSession();
+  loades();
+  loadClasses();
+  loadStudents();
+  loadAttendance();
+});
+
+// Quick Mark Attendance
+document.addEventListener("DOMContentLoaded", function () {
+  const quick = document.getElementById("quick_branch_id");
+  const quickClass = document.getElementById("quick_class_id");
+  const quickDate = document.getElementById("quick_attendance_date");
+  const quickTerm = document.getElementById("quick_term");
+  const quickYear = document.getElementById("quick_academic_year");
+  const loadBtn = document.getElementById("loadQuickStudentsBtn");
+  const saveBtn = document.getElementById("saveQuickAttendanceBtn");
+  const quickBox = document.getElementById("quickAttendanceBox");
+
+  let quickStudents = [];
+
+  function tokenHeaders() {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  async function loadQuickSettings() {
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/settings");
+      const data = await res.json();
+      const settings = data.settings || {};
+
+      if (quickTerm && !quickTerm.value) quickTerm.value = settings.current_term || "";
+      if (quickYear && !quickYear.value) quickYear.value = settings.academic_year || "";
+      if (quickDate && !quickDate.value) quickDate.value = new Date().toISOString().slice(0, 10);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function loadQuickes() {
+    if (!quick) return;
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/branches", {
+        headers: tokenHeaders()
+      });
+
+      const data = await res.json();
+      const branches = data.branches || [];
+
+      quick.innerHTML = '<option value=""></option>';
+
+      branches.forEach(branch => {
+        const opt = document.createElement("option");
+        opt.value = branch.id;
+        opt.textContent = branch.branch_name;
+        quick.appendChild(opt);
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function loadQuickClasses() {
+    if (!quickClass) return;
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/classes", {
+        headers: tokenHeaders()
+      });
+
+      const data = await res.json();
+      const classes = data.classes || [];
+
+      quickClass.innerHTML = '<option value="">Select class</option>';
+
+      classes.forEach(cls => {
+        const opt = document.createElement("option");
+        opt.value = cls.id;
+        opt.textContent = cls.class_name;
+        quickClass.appendChild(opt);
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function loadQuickStudents() {
+    if (!quick.value || !quickClass.value) {
+      alert("Please select branch and class.");
+      return;
+    }
+
+    try {
+      let url = `http://127.0.0.1:5000/api/students?branch_id=${quickBranch.value}`;
+
+      const res = await fetch(url, {
+        headers: tokenHeaders()
+      });
+
+      const data = await res.json();
+      const students = data.students || [];
+
+      quickStudents = students.filter(stu => String(stu.class_id || "") === String(quickClass.value));
+
+      if (quickStudents.length === 0) {
+        quickBox.innerHTML = "<p>No students found for selected class.</p>";
+        saveBtn.style.display = "none";
+        return;
+      }
+
+      let html = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Admission No.</th>
+              <th>Status</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      quickStudents.forEach(stu => {
+        html += `
+          <tr>
+            <td>${stu.full_name || stu.student_name || ""}</td>
+            <td>${stu.admission_number || ""}</td>
+            <td>
+              <select class="quick-status" data-student-id="${stu.id}">
+                <option value="present">Present</option>
+                <option value="absent">Absent</option>
+              </select>
+            </td>
+            <td>
+              <input type="text" class="quick-remarks" data-student-id="${stu.id}" placeholder="Optional">
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `
+          </tbody>
+        </table>
+      `;
+
+      quickBox.innerHTML = html;
+      saveBtn.style.display = "inline-block";
+    } catch (err) {
+      console.error(err);
+      alert("Could not load students.");
+    }
+  }
+
+  async function saveQuickAttendance() {
+    if (!quickDate.value || !quickTerm.value || !quickYear.value) {
+      alert("Please enter date, term, and academic year.");
+      return;
+    }
+
+    const statuses = document.querySelectorAll(".quick-status");
+
+    if (statuses.length === 0) {
+      alert("No students loaded.");
+      return;
+    }
+
+    const confirmSave = confirm("Save attendance for all loaded students?");
+    if (!confirmSave) return;
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
+
+    try {
+      const records = [];
+
+      statuses.forEach(statusSelect => {
+        const studentId = statusSelect.dataset.studentId;
+        const remarkInput = document.querySelector(`.quick-remarks[data-student-id="${studentId}"]`);
+
+        records.push({
+          branch_id: quickBranch.value,
+          student_id: studentId,
+          class_id: quickClass.value,
+          teacher_id: null,
+          attendance_date: quickDate.value,
+          term: quickTerm.value,
+          academic_year: quickYear.value,
+          status: statusSelect.value,
+          remarks: remarkInput ? remarkInput.value.trim() : ""
+        });
+      });
+
+      const res = await fetch("http://127.0.0.1:5000/api/attendance/bulk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...tokenHeaders()
+        },
+        body: JSON.stringify({ records })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to save attendance records");
+      }
+
+      alert("Quick attendance saved successfully.");
+      location.reload();
+    } catch (err) {
+      console.error(err);
+      alert("Could not save quick attendance: " + err.message);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Save Quick Attendance";
+    }
+  }
+
+  if (loadBtn) loadBtn.addEventListener("click", loadQuickStudents);
+  if (saveBtn) saveBtn.addEventListener("click", saveQuickAttendance);
+
+  loadQuickSettings();
+  loadQuickBranches();
+  loadQuickClasses();
+});
+
+

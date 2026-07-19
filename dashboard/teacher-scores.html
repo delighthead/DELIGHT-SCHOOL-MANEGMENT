@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Scores - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Teacher Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="teacher.html">Dashboard Overview</a>
+      <a href="teacher-profile.html">My Profile</a>
+      <a href="teacher-class.html">Assigned Class</a>
+      <a href="teacher-students.html">Students</a>
+      <a href="teacher-scores.html" class="active">Scores & Uploads</a>
+      <a href="teacher-attendance.html">Mark Attendance</a>
+      <a href="teacher-announcements.html">Announcements</a>
+      <a href="teacher-reports.html">Reports</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Scores & Uploads</h1>
+
+      <section class="dashboard-section">
+        <h2>Excel Score Sheet</h2>
+
+        <div class="admin-form">
+          <div class="form-group">
+            
+          </div>
+
+          <div class="form-group">
+            <label for="excel_class_id">Class</label>
+            <select id="excel_class_id">
+              <option value="">Select class</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="excel_subject">Subject</label>
+            <input type="text" id="excel_subject" placeholder="e.g. Mathematics">
+          </div>
+
+          <div class="form-group">
+            <label for="excel_term">Term</label>
+            <select id="excel_term">
+              <option value="">Select term</option>
+              <option value="Term 1">Term 1</option>
+              <option value="Term 2">Term 2</option>
+              <option value="Term 3">Term 3</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="excel_academic_year">Academic Year</label>
+            <input type="text" id="excel_academic_year" placeholder="2025/2026">
+          </div>
+
+          <button type="button" class="primary-btn" id="downloadScoreTemplateBtn">
+            Download Excel Template
+          </button>
+        </div>
+
+        <hr>
+
+        <div class="admin-form">
+          <div class="form-group">
+            <label for="score_excel_file">Upload Filled Excel File</label>
+            <input type="file" id="score_excel_file" accept=".xlsx,.xls">
+          </div>
+
+          <button type="button" class="primary-btn" id="uploadScoreExcelBtn">
+            Upload Excel Scores
+          </button>
+        </div>
+      </section>
+
+      <p>Upload scores for your assigned students. Scores remain pending until admin approval.</p>
+
+      <section class="dashboard-section">
+        <h2>Upload Score</h2>
+
+        <form class="admin-form" id="teacherScoreForm">
+          <div>
+            <label>Student</label>
+            <select id="teacher_score_student_id" required>
+              <option value="">Loading students...</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Subject</label>
+            <input type="text" id="teacher_score_subject" placeholder="Example: Mathematics" required>
+          </div>
+
+          <div>
+            <label>Term</label>
+            <select id="teacher_score_term" required>
+              <option>Term 1</option>
+              <option>Term 2</option>
+              <option>Term 3</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Academic Year</label>
+            <input type="text" id="teacher_score_academic_year" value="2025/2026" required>
+          </div>
+
+          <div>
+            <label>Assessment Score</label>
+            <input type="number" id="teacher_assessment_score" step="0.1" required>
+          </div>
+
+          <div>
+            <label>Examination Score</label>
+            <input type="number" id="teacher_examination_score" step="0.1" required>
+          </div>
+
+          <div>
+            <label>Remarks</label>
+            <input type="text" id="teacher_score_remarks" placeholder="Optional remarks">
+          </div>
+
+          <button type="submit">Upload Score</button>
+        </form>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Uploaded Scores</h2>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Admission No.</th>
+              <th>Class</th>
+              <th>Subject</th>
+              <th>Term</th>
+              <th>Assessment</th>
+              <th>Exam</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody id="teacherScoreTableBody">
+            <tr>
+              <td colspan="9">Loading scores...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="../js/subjects-dropdown.js?v=1"></script>
+  <script src="../js/teacher-scores-api.js?v=5"></script>
+  <script src="../js/panel-title.js?v=1"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/teacher-guard.js?v=1"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/academic-session.js?v=1"></script>
+  <script src="../js/grading-settings.js?v=1"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/auth-token-fix.js?v=1"></script>
+  <script src="../js/teacher-token-check.js?v=1"></script>
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/teacher-scores-class-fix.js?v=1"></script>
+  <script src="../js/teacher-scores-branch-disable.js?v=2"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+  <script src="../js/score-excel-buttons-final.js?v=20"></script>
+</body>
+</html>

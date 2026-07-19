@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Attendance - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Teacher Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="teacher.html">Dashboard Overview</a>
+      <a href="teacher-profile.html">My Profile</a>
+      <a href="teacher-class.html">Assigned Class</a>
+      <a href="teacher-students.html">Students</a>
+      <a href="teacher-scores.html">Scores & Uploads</a>
+      <a href="teacher-attendance.html" class="active">Mark Attendance</a>
+      <a href="teacher-announcements.html">Announcements</a>
+      <a href="teacher-reports.html">Reports</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Mark Attendance</h1>
+      <p>Mark Present or Absent for your assigned students only.</p>
+
+      <section class="dashboard-section">
+        <h2>Attendance Details</h2>
+
+        <form id="teacherAttendanceForm">
+          <div class="admin-form">
+            <div>
+              <label>Attendance Date</label>
+              <input type="date" id="teacher_attendance_date" required>
+            </div>
+
+            <div>
+              <label>Term</label>
+              <select id="teacher_attendance_term">
+                <option>Term 1</option>
+                <option>Term 2</option>
+                <option>Term 3</option>
+              </select>
+            </div>
+
+            <div>
+              <label>Academic Year</label>
+              <input type="text" id="teacher_academic_year" value="2025/2026">
+            </div>
+          </div>
+
+          <section class="dashboard-section">
+            <h2>Assigned Students Attendance</h2>
+
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Student ID</th>
+                  <th>Admission No.</th>
+                  <th>Student Name</th>
+                  <th>Class</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+
+              <tbody id="teacherAttendanceTableBody">
+                <tr>
+                  <td colspan="5">Loading assigned students...</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <button type="submit" style="margin-top: 20px;">Save Attendance</button>
+          </section>
+        </form>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="../js/teacher-attendance-api.js?v=3"></script>
+  <script src="../js/panel-title.js?v=1"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/teacher-guard.js?v=1"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/academic-session.js?v=1"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/auth-token-fix.js?v=1"></script>
+  <script src="../js/teacher-token-check.js?v=1"></script>
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/teacher-scores-class-fix.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+(function () {
+  function getToken() {
+    return localStorage.getItem("token");
+  }
+
+  function authHeaders() {
+    return {
+      Authorization: `Bearer ${getToken()}`
+    };
+  }
+
+  function getField(id1, id2) {
+    return document.getElementById(id1) || document.getElementById(id2);
+  }
+
+  function getAutoBranchField() {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      return { value: user.branch_id || "" };
+    } catch (e) {
+      return { value: "" };
+    }
+  }
+
+  function getExcelFields() {
+    return {
+      branch:
+        getField("admin_excel_branch_id", "excel_branch_id") ||
+        document.getElementById("teacher_excel_branch_id") ||
+        document.getElementById("score_branch_id") ||
+        getAutoBranchField(),
+      classId:
+        getField("admin_excel_class_id", "excel_class_id") ||
+        document.getElementById("teacher_excel_class_id") ||
+        document.getElementById("score_class_id"),
+      subject:
+        getField("admin_excel_subject", "excel_subject") ||
+        document.getElementById("teacher_excel_subject") ||
+        document.getElementById("score_subject"),
+      term:
+        getField("admin_excel_term", "excel_term") ||
+        document.getElementById("teacher_excel_term") ||
+        document.getElementById("score_term"),
+      year:
+        getField("admin_excel_academic_year", "excel_academic_year") ||
+        document.getElementById("teacher_excel_academic_year") ||
+        document.getElementById("score_academic_year"),
+      file:
+        getField("admin_score_excel_file", "score_excel_file") ||
+        document.getElementById("teacher_score_excel_file")
+    };
+  }
+
+  window.downloadScoreTemplateNow = async function () {
+    const f = getExcelFields();
+
+    if (!f.classId || !f.subject || !f.term || !f.year) {
+      alert("Excel form is not loaded properly. Refresh the page.");
+      return;
+    }
+
+    if (!f.classId.value || !f.subject.value || !f.term.value || !f.year.value) {
+      alert("Please select class, subject, term, and academic year.");
+      return;
+    }
+
+    const params = new URLSearchParams({
+      class_id: f.classId.value,
+      subject: f.subject.value.trim(),
+      term: f.term.value,
+      academic_year: f.year.value.trim()
+    });
+
+    if (f.branch && f.branch.value) {
+      params.append("branch_id", f.branch.value);
+    }
+
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/api/scores/excel/template?${params.toString()}`, {
+        headers: authHeaders()
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Could not download Excel template.");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `score-template-${f.subject.value}-${f.term.value}-${f.year.value}.xlsx`
+        .replaceAll(" ", "-")
+        .replaceAll("/", "-");
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  };
+
+  window.uploadScoreExcelNow = async function () {
+    const f = getExcelFields();
+
+    if (!f.branch || !f.subject || !f.term || !f.year || !f.file) {
+      alert("Excel upload form is not loaded properly. Refresh the page.");
+      return;
+    }
+
+    if (!f.branch.value || !f.subject.value || !f.term.value || !f.year.value) {
+      alert("Please select branch, subject, term, and academic year.");
+      return;
+    }
+
+    if (!f.file.files || f.file.files.length === 0) {
+      alert("Please select the filled Excel file.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("branch_id", f.branch.value);
+    formData.append("subject", f.subject.value.trim());
+    formData.append("term", f.term.value);
+    formData.append("academic_year", f.year.value.trim());
+    formData.append("score_file", f.file.files[0]);
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/scores/excel/upload", {
+        method: "POST",
+        headers: authHeaders(),
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Could not upload Excel scores.");
+      }
+
+      alert(
+        `Excel upload successful.\nSaved: ${data.saved_count}\nUpdated: ${data.updated_count}\nSkipped: ${data.skipped_count}`
+      );
+
+      location.reload();
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  };
+
+  document.addEventListener("click", function (event) {
+    const downloadBtn = event.target.closest("#adminDownloadScoreTemplateBtn, #downloadScoreTemplateBtn");
+    const uploadBtn = event.target.closest("#adminUploadScoreExcelBtn, #uploadScoreExcelBtn");
+
+    if (downloadBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      window.downloadScoreTemplateNow();
+      return;
+    }
+
+    if (uploadBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      window.uploadScoreExcelNow();
+      return;
+    }
+  }, true);
+})();

@@ -1,0 +1,505 @@
+const db = require("../config/database");
+
+// Get all fees, optionally filtered by branch
+exports.getFees = async (req, res) => {
+  try {
+    const { branch_id } = req.query;
+
+    let sql = `SELECT
+        fees.id,
+        fees.branch_id,
+        branches.branch_name,
+        fees.student_id,
+        students.admission_number,
+        COALESCE(students.full_name, CONCAT(students.first_name, ' ', students.surname)) AS student_name,
+        classes.class_name,
+        fees.term,
+        fees.academic_year,
+        fees.amount_payable,
+        fees.amount_paid,
+        fees.balance,
+        fees.payment_date,
+        fees.payment_status,
+        fees.created_at
+      FROM fees
+      LEFT JOIN branches ON fees.branch_id = branches.id
+      LEFT JOIN students ON fees.student_id = students.id
+      LEFT JOIN classes ON students.class_id = classes.id`;
+
+    const params = [];
+
+    if (branch_id) {
+      sql += " WHERE fees.branch_id = ?";
+      params.push(branch_id);
+    }
+
+    sql += " ORDER BY fees.created_at DESC";
+
+    const [fees] = await db.query(sql, params);
+
+    res.json({
+      message: "Fees retrieved successfully",
+      fees
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to retrieve fees",
+      error: error.message
+    });
+  }
+};
+
+// Add fee record
+exports.createFee = async (req, res) => {
+  try {
+    const {
+      branch_id,
+      student_id,
+      term,
+      academic_year,
+      amount_payable,
+      amount_paid,
+      payment_date,
+      payment_status
+    } = req.body;
+
+    if (!branch_id || !student_id || !term || !academic_year) {
+      return res.status(400).json({
+        message: "Branch, student, term, and academic year are required"
+      });
+    }
+
+    const payable = Number(amount_payable || 0);
+    const paid = Number(amount_paid || 0);
+    const balance = payable - paid;
+
+    let finalStatus = payment_status;
+
+    if (!finalStatus) {
+      if (paid >= payable && payable > 0) finalStatus = "paid";
+      else if (paid > 0) finalStatus = "part_payment";
+      else finalStatus = "unpaid";
+    }
+
+    const [result] = await db.query(
+      `INSERT INTO fees
+      (branch_id, student_id, term, academic_year, amount_payable, amount_paid, balance, payment_date, payment_status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        branch_id,
+        student_id,
+        term,
+        academic_year,
+        payable,
+        paid,
+        balance,
+        payment_date || null,
+        finalStatus
+      ]
+    );
+
+    await db.query(
+      `INSERT INTO activity_logs
+      (branch_id, user_id, action, module, description)
+      VALUES (?, ?, ?, ?, ?)`,
+      [
+        branch_id,
+        req.user ? req.user.id : null,
+        "Fee Recorded",
+        "Fees",
+        `Recorded fee for student ID ${student_id}. Payable: GHS ${payable}, Paid: GHS ${paid}, Balance: GHS ${balance}.`
+      ]
+    );
+
+    res.status(201).json({
+      message: "Fee record added successfully",
+      fee_id: result.insertId
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to add fee record",
+      error: error.message
+    });
+  }
+};
+
+// Update fee record
+exports.updateFee = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const {
+      branch_id,
+      student_id,
+      term,
+      academic_year,
+      amount_payable,
+      amount_paid,
+      payment_date,
+      payment_status
+    } = req.body;
+
+    const payable = Number(amount_payable || 0);
+    const paid = Number(amount_paid || 0);
+    const balance = payable - paid;
+
+    let finalStatus = payment_status;
+
+    if (!finalStatus) {
+      if (paid >= payable && payable > 0) finalStatus = "paid";
+      else if (paid > 0) finalStatus = "part_payment";
+      else finalStatus = "unpaid";
+    }
+
+    const [result] = await db.query(
+      `UPDATE fees SET
+        branch_id = ?,
+        student_id = ?,
+        term = ?,
+        academic_year = ?,
+        amount_payable = ?,
+        amount_paid = ?,
+        balance = ?,
+        payment_date = ?,
+        payment_status = ?
+      WHERE id = ?`,
+      [
+        branch_id,
+        student_id,
+        term,
+        academic_year,
+        payable,
+        paid,
+        balance,
+        payment_date || null,
+        finalStatus,
+        id
+      ]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Fee record not found"
+      });
+    }
+
+    res.json({
+      message: "Fee record updated successfully"
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to update fee record",
+      error: error.message
+    });
+  }
+};
+
+// Get payment history for one fee record
+exports.getFeePayments = async (req, res) => {
+  try {
+    const { fee_id } = req.params;
+
+    const [payments] = await db.query(
+      `SELECT
+        id,
+        fee_id,
+        branch_id,
+        student_id,
+        payment_amount,
+        payment_date,
+        payment_note,
+        created_at
+       FROM fee_payments
+       WHERE fee_id = ?
+       ORDER BY payment_date ASC, id ASC`,
+      [fee_id]
+    );
+
+    const [[summary]] = await db.query(
+      `SELECT
+        COALESCE(SUM(payment_amount), 0) AS total_paid
+       FROM fee_payments
+       WHERE fee_id = ?`,
+      [fee_id]
+    );
+
+    res.json({
+      message: "Fee payments retrieved successfully",
+      payments,
+      total_paid: Number(summary.total_paid || 0)
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to retrieve fee payments",
+      error: error.message
+    });
+  }
+};
+
+
+// Add a new payment to an existing fee record
+exports.addFeePayment = async (req, res) => {
+  try {
+    const { fee_id } = req.params;
+
+    const {
+      payment_amount,
+      payment_date,
+      payment_note
+    } = req.body;
+
+    if (!payment_amount || !payment_date) {
+      return res.status(400).json({
+        message: "Payment amount and payment date are required"
+      });
+    }
+
+    const [feeRows] = await db.query(
+      `SELECT id, branch_id, student_id, amount_payable
+       FROM fees
+       WHERE id = ?
+       LIMIT 1`,
+      [fee_id]
+    );
+
+    if (feeRows.length === 0) {
+      return res.status(404).json({
+        message: "Fee record not found"
+      });
+    }
+
+    const fee = feeRows[0];
+    const amount = Number(payment_amount || 0);
+
+    await db.query(
+      `INSERT INTO fee_payments
+      (
+        fee_id,
+        branch_id,
+        student_id,
+        payment_amount,
+        payment_date,
+        payment_note,
+        created_by
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        fee_id,
+        fee.branch_id,
+        fee.student_id,
+        amount,
+        payment_date,
+        payment_note || null,
+        req.user ? req.user.id : null
+      ]
+    );
+
+    const [[summary]] = await db.query(
+      `SELECT COALESCE(SUM(payment_amount), 0) AS total_paid
+       FROM fee_payments
+       WHERE fee_id = ?`,
+      [fee_id]
+    );
+
+    const totalPaid = Number(summary.total_paid || 0);
+    const payable = Number(fee.amount_payable || 0);
+    const balance = payable - totalPaid;
+
+    let finalStatus = "unpaid";
+
+    if (totalPaid >= payable && payable > 0) {
+      finalStatus = "paid";
+    } else if (totalPaid > 0) {
+      finalStatus = "part_payment";
+    }
+
+    await db.query(
+      `UPDATE fees
+       SET amount_paid = ?,
+           balance = ?,
+           payment_date = ?,
+           payment_status = ?
+       WHERE id = ?`,
+      [
+        totalPaid,
+        balance,
+        payment_date,
+        finalStatus,
+        fee_id
+      ]
+    );
+
+    await db.query(
+      `INSERT INTO activity_logs
+      (branch_id, user_id, action, module, description)
+      VALUES (?, ?, ?, ?, ?)`,
+      [
+        fee.branch_id,
+        req.user ? req.user.id : null,
+        "Fee Payment Added",
+        "Fees",
+        `Added payment of GHS ${amount} for fee ID ${fee_id}. Total paid: GHS ${totalPaid}, Balance: GHS ${balance}.`
+      ]
+    );
+
+    res.status(201).json({
+      message: "Fee payment added successfully",
+      total_paid: totalPaid,
+      balance,
+      payment_status: finalStatus
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to add fee payment",
+      error: error.message
+    });
+  }
+};
+
+
+// Apply a term fee to all active students in a branch and class
+exports.applyClassTermFee = async (req, res) => {
+  try {
+    const {
+      branch_id,
+      class_id,
+      term,
+      academic_year,
+      term_fee
+    } = req.body;
+
+    if (!branch_id || !class_id || !term || !academic_year || term_fee === undefined) {
+      return res.status(400).json({
+        message: "Branch, class, term, academic year, and term fee are required."
+      });
+    }
+
+    const feeAmount = Number(term_fee || 0);
+
+    if (feeAmount <= 0) {
+      return res.status(400).json({
+        message: "Term fee must be greater than 0."
+      });
+    }
+
+    const [students] = await db.query(
+      `SELECT id, admission_number, full_name, first_name, surname
+       FROM students
+       WHERE branch_id = ?
+         AND class_id = ?
+         AND status = 'active'
+       ORDER BY full_name ASC, first_name ASC, surname ASC`,
+      [branch_id, class_id]
+    );
+
+    if (students.length === 0) {
+      return res.status(404).json({
+        message: "No active students found for the selected branch and class."
+      });
+    }
+
+    let created = 0;
+    let updated = 0;
+
+    for (const student of students) {
+      const studentId = student.id;
+
+      const [[previousBalanceRow]] = await db.query(
+        `SELECT COALESCE(SUM(balance), 0) AS previous_balance
+         FROM fees
+         WHERE student_id = ?
+           AND branch_id = ?
+           AND NOT (term = ? AND academic_year = ?)`,
+        [studentId, branch_id, term, academic_year]
+      );
+
+      const previousBalance = Number(previousBalanceRow.previous_balance || 0);
+      const newPayable = feeAmount + previousBalance;
+
+      const [existingRows] = await db.query(
+        `SELECT id, amount_paid
+         FROM fees
+         WHERE student_id = ?
+           AND branch_id = ?
+           AND term = ?
+           AND academic_year = ?
+         LIMIT 1`,
+        [studentId, branch_id, term, academic_year]
+      );
+
+      const amountPaid = existingRows.length ? Number(existingRows[0].amount_paid || 0) : 0;
+      const balance = Math.max(newPayable - amountPaid, 0);
+
+      let paymentStatus = "unpaid";
+
+      if (amountPaid >= newPayable && newPayable > 0) {
+        paymentStatus = "paid";
+      } else if (amountPaid > 0) {
+        paymentStatus = "part_payment";
+      }
+
+      if (existingRows.length) {
+        await db.query(
+          `UPDATE fees
+           SET amount_payable = ?,
+               amount_paid = ?,
+               balance = ?,
+               payment_status = ?
+           WHERE id = ?`,
+          [
+            newPayable,
+            amountPaid,
+            balance,
+            paymentStatus,
+            existingRows[0].id
+          ]
+        );
+
+        updated++;
+      } else {
+        await db.query(
+          `INSERT INTO fees
+           (branch_id, student_id, term, academic_year, amount_payable, amount_paid, balance, payment_date, payment_status)
+           VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
+          [
+            branch_id,
+            studentId,
+            term,
+            academic_year,
+            newPayable,
+            0,
+            newPayable,
+            "unpaid"
+          ]
+        );
+
+        created++;
+      }
+    }
+
+    await db.query(
+      `INSERT INTO activity_logs
+       (branch_id, user_id, action, module, description)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        branch_id,
+        req.user ? req.user.id : null,
+        "Class Term Fee Applied",
+        "Fees",
+        `Applied GHS ${feeAmount} fee to class ID ${class_id} for ${term}, ${academic_year}. Created: ${created}, Updated: ${updated}.`
+      ]
+    );
+
+    res.json({
+      message: "Class term fees applied successfully.",
+      total_students: students.length,
+      created,
+      updated
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to apply class term fees.",
+      error: error.message
+    });
+  }
+};

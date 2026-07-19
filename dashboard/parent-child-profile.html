@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Child Profile - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Parent Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="parent.html">Dashboard Overview</a>
+      <a href="parent-child-profile.html" class="active">Child Profile</a>
+      <a href="parent-results.html">Scores & Results</a>
+      <a href="parent-fees.html">Fees Status</a>
+      <a href="parent-attendance.html">Attendance</a>
+      <a href="parent-announcements.html">Announcements</a>
+      <a href="parent-reports.html">Reports</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Child Profile</h1>
+      <p>View your child’s personal information, class, branch, and parent details.</p>
+
+      <div id="childProfileArea">
+        <section class="dashboard-section">
+          <h2>Loading Child Profile...</h2>
+          <p>Please wait while child information is loaded.</p>
+        </section>
+      </div>
+
+      <section class="dashboard-section">
+        <h2>Quick Actions</h2>
+
+        <div class="quick-actions">
+          <button onclick="location.href='parent-results.html'">View Results</button>
+          <button onclick="location.href='parent-fees.html'">View Fees</button>
+          <button onclick="location.href='parent-attendance.html'">View Attendance</button>
+          <button onclick="location.href='parent-reports.html'">View Reports</button>
+          <button >Print Profile</button>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="../js/dashboard-actions.js?v=4"></script>
+  <script src="../js/parent-child-api.js?v=2"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/parent-scores-print-final.js?v=1"></script>
+  <script src="../js/parent-print-tab-final.js?v=1"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+</body>
+</html>

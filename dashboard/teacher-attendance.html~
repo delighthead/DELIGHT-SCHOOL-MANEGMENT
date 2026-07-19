@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Attendance - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Teacher Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="teacher.html">Dashboard Overview</a>
+      <a href="#">My Profile</a>
+      <a href="#">Assigned Class</a>
+      <a href="#">Students</a>
+      <a href="teacher-scores.html">Scores & Uploads</a>
+      <a href="teacher-attendance.html" class="active">Mark Attendance</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Mark Student Attendance</h1>
+      <p>Mark daily attendance for your assigned class.</p>
+
+      <section class="dashboard-section">
+        <h2>Attendance Details</h2>
+
+        <form class="admin-form">
+          <div>
+            <label>Date</label>
+            <input type="date">
+          </div>
+
+          <div>
+            <label>Assigned Class</label>
+            <select>
+              <option>Select class</option>
+              <option>Basic 1</option>
+              <option>Basic 2</option>
+              <option>Basic 3</option>
+              <option>Basic 4</option>
+              <option>Basic 5</option>
+              <option>Basic 6</option>
+              <option>Basic 7</option>
+              <option>Basic 8</option>
+              <option>Basic 9</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Academic Term</label>
+            <select>
+              <option>Term 1</option>
+              <option>Term 2</option>
+              <option>Term 3</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Academic Year</label>
+            <input type="text" placeholder="Example: 2025/2026">
+          </div>
+
+          <button type="submit">Load Class List</button>
+        </form>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Class Attendance List</h2>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Admission No.</th>
+              <th>Student Name</th>
+              <th>Status</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>STU001</td>
+              <td>ADM001</td>
+              <td>Abena Boateng</td>
+              <td>
+                <select>
+                  <option>Present</option>
+                  <option>Absent</option>
+                  <option>Late</option>
+                  <option>Excused</option>
+                </select>
+              </td>
+              <td><input type="text" placeholder="Optional remark"></td>
+            </tr>
+
+            <tr>
+              <td>STU002</td>
+              <td>ADM002</td>
+              <td>Yaw Addo</td>
+              <td>
+                <select>
+                  <option>Present</option>
+                  <option>Absent</option>
+                  <option>Late</option>
+                  <option>Excused</option>
+                </select>
+              </td>
+              <td><input type="text" placeholder="Optional remark"></td>
+            </tr>
+
+            <tr>
+              <td>STU003</td>
+              <td>ADM003</td>
+              <td>Kojo Asare</td>
+              <td>
+                <select>
+                  <option>Present</option>
+                  <option>Absent</option>
+                  <option>Late</option>
+                  <option>Excused</option>
+                </select>
+              </td>
+              <td><input type="text" placeholder="Optional remark"></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="quick-actions">
+          <button>Save Attendance</button>
+          <button>Submit Attendance</button>
+          <button>Print Attendance Sheet</button>
+        </div>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Submitted Attendance</h2>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Class</th>
+              <th>Present</th>
+              <th>Absent</th>
+              <th>Late</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>2025-06-10</td>
+              <td>Basic 4</td>
+              <td>38</td>
+              <td>2</td>
+              <td>1</td>
+              <td>Submitted</td>
+            </tr>
+
+            <tr>
+              <td>2025-06-09</td>
+              <td>Basic 4</td>
+              <td>39</td>
+              <td>1</td>
+              <td>0</td>
+              <td>Submitted</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="../js/dashboard-actions.js"></script>
+</body>
+</html>

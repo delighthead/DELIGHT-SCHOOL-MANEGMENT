@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <h2>Admin Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="admin.html" class="active">Dashboard Overview</a>
+      <a href="students.html">Add / Manage Students</a>
+      <a href="scores.html">Scores and Results</a>
+      <a href="fees.html">Fees Management</a>
+      <a href="attendance.html">Attendance</a>
+      <a href="announcements.html">Announcements</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">System Settings</a>
+      <a href="edit-pages.html">Edit Website Pages</a>
+      <a href="teachers.html">Add / Assign Teachers</a>
+      <a href="parents.html">Add Parents</a>
+      <a href="accounts.html">Lock / Disable Accounts</a>
+      <a href="activities.html">Recent Activities</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Dashboard Overview</h1>
+      <p>Welcome to the admin dashboard. View branch-based school statistics and system summary.</p>
+
+      <div class="dashboard-cards" id="adminDashboardCards">
+        <div class="dashboard-card">
+          <h2>Loading Dashboard...</h2>
+          <p>Please wait while summary is loaded.</p>
+        </div>
+      </div>
+
+      <section class="dashboard-section" id="system-access">
+        <h2>School System Access</h2>
+        <p>The Super Admin Dashboard allows access to all major school modules.</p>
+
+        <div class="module-access-grid">
+          <a class="module-access-card" href="students.html">Students</a>
+          <a class="module-access-card" href="teachers.html">Teachers</a>
+          <a class="module-access-card" href="parents.html">Parents</a>
+          <a class="module-access-card" href="accounts.html">Accounts</a>
+          <a class="module-access-card" href="fees.html">Fees</a>
+          <a class="module-access-card" href="attendance.html">Attendance</a>
+          <a class="module-access-card" href="scores.html">Scores</a>
+          <a class="module-access-card" href="reports.html">Reports</a>
+          <a class="module-access-card" href="promote-students.html">Promotions</a>
+          <a class="module-access-card" href="settings.html">Settings</a>
+          <a class="module-access-card" href="settings.html#backup-tools">Backup and Restore</a>
+        </div>
+      </section>
+
+      <section class="dashboard-section" id="branch-management">
+        <h2>Branch Management</h2>
+        <p>Create and edit school branches from the super admin dashboard.</p>
+
+        <form class="admin-form" id="branchCreateForm">
+          <input type="hidden" id="branch_edit_id">
+
+          <div>
+            <label for="branch_name">Branch Name</label>
+            <input type="text" id="branch_name" placeholder="Enter branch name" required>
+          </div>
+
+          <div>
+            <label for="branch_location">Location</label>
+            <input type="text" id="branch_location" placeholder="Enter location">
+          </div>
+
+          <div>
+            <label for="branch_phone">Phone</label>
+            <input type="text" id="branch_phone" placeholder="Enter phone number">
+          </div>
+
+          <div>
+            <label for="branch_email">Email</label>
+            <input type="email" id="branch_email" placeholder="Enter email address">
+          </div>
+
+          <div>
+            <label for="branch_status">Status</label>
+            <select id="branch_status">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="branch_address">Address</label>
+            <input type="text" id="branch_address" placeholder="Enter branch address">
+          </div>
+
+          <button type="submit" id="createBranchBtn">Create Branch</button>
+          <button type="button" id="cancelBranchEditBtn" style="display:none;">Cancel Edit</button>
+        </form>
+
+        <p id="branchCreateMessage"></p>
+
+        <table class="data-table" id="branchListTable">
+          <thead>
+            <tr>
+              <th>Branch Name</th>
+              <th>Location</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="branchListBody">
+            <tr>
+              <td colspan="6">Loading branches...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script src="../js/dashboard-actions.js"></script>
+  <script src="../js/admin-panel-title.js?v=2"></script>
+  <script src="../js/admin-dashboard-api.js?v=8"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/admin-guard.js?v=1"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/admin-branch-management.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/admin-sidebar-picture-final.js?v=1"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+</body>
+</html>

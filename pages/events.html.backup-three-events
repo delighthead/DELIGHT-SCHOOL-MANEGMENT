@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Events - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/public.css">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #222;
+    }
+
+    .public-header {
+      background: #073b70;
+      color: #ffffff;
+      padding: 15px 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .public-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .public-logo img {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 5px;
+    }
+
+    .public-logo h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .public-header nav a {
+      color: #ffffff;
+      text-decoration: none;
+      margin-left: 18px;
+      font-weight: bold;
+    }
+
+    .public-header nav a:hover,
+    .public-header nav a.active {
+      color: #ffcc00;
+    }
+
+    .public-hero {
+      background: linear-gradient(rgba(7, 59, 112, 0.88), rgba(7, 59, 112, 0.88));
+      color: #ffffff;
+      text-align: center;
+      padding: 70px 20px;
+    }
+
+    .public-hero h1 {
+      font-size: 42px;
+      margin: 0 0 15px;
+    }
+
+    .public-hero p {
+      font-size: 18px;
+      max-width: 800px;
+      margin: auto;
+      line-height: 1.6;
+    }
+
+    .public-main {
+      max-width: 1150px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .public-section {
+      background: #ffffff;
+      padding: 30px;
+      margin-bottom: 25px;
+      border-radius: 14px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+    }
+
+    .public-section h2 {
+      color: #073b70;
+      margin-top: 0;
+      font-size: 28px;
+    }
+
+    .event-details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .public-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .public-card {
+      border-left: 5px solid #ffcc00;
+      background: #f8fbff;
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    .public-card h3 {
+      margin-top: 0;
+      color: #073b70;
+      font-size: 22px;
+    }
+
+    .public-card p {
+      line-height: 1.6;
+      margin-bottom: 0;
+    }
+
+    .notice-box {
+      border-left: 6px solid #073b70;
+      background: #fff7d6;
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .public-header {
+        padding: 15px 20px;
+      }
+
+      .public-header nav {
+        margin-top: 15px;
+      }
+
+      .public-header nav a {
+        display: inline-block;
+        margin: 5px 10px 5px 0;
+      }
+
+      .event-details,
+      .public-card-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .public-hero h1 {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+
+<body data-page-key="events">
+
+  <header class="public-header">
+    <div class="public-logo">
+      <img src="../images/delight_international_school_transparent.png" alt="School Logo">
+      <h1>Delight International School</h1>
+    </div>
+
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="admission.html">Admission</a>
+      <a href="events.html" class="active">Events</a>
+      <a href="gallery.html">Gallery</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <section class="public-hero">
+    <h1 data-edit-key="events_main_heading">Events</h1>
+    <p data-edit-key="events_intro_text">
+      Stay updated with upcoming school events, programs, meetings, and activities.
+    </p>
+  </section>
+
+  <main class="public-main">
+
+    <section class="public-section">
+      <h2>Upcoming Event Details</h2>
+
+      <div class="event-details">
+        <div class="public-card">
+          <h3>Date</h3>
+          <p data-edit-key="events_date">Enter event date here</p>
+        </div>
+
+        <div class="public-card">
+          <h3>Time</h3>
+          <p data-edit-key="events_time">Enter event time here</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="public-section">
+      <h2>School Activities</h2>
+
+      <div class="public-card-grid">
+        <div class="public-card">
+          <h3 data-edit-key="academic_events_title">Academic Events</h3>
+          <p data-edit-key="academic_events_text">
+            We organize academic programs to support learning and excellence.
+          </p>
+        </div>
+
+        <div class="public-card">
+          <h3 data-edit-key="cultural_events_title">Cultural Events</h3>
+          <p data-edit-key="cultural_events_text">
+            Our learners take part in cultural activities that promote creativity and identity.
+          </p>
+        </div>
+
+        <div class="public-card">
+          <h3 data-edit-key="sports_events_title">Sports Events</h3>
+          <p data-edit-key="sports_events_text">
+            Sports activities help learners build teamwork, discipline, and confidence.
+          </p>
+        </div>
+
+        <div class="public-card">
+          <h3 data-edit-key="parents_events_title">Parents Meetings and Events</h3>
+          <p data-edit-key="parents_events_text">
+            We organize meetings and events to keep parents involved in school development.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="public-section">
+      <div class="notice-box">
+        <h2 data-edit-key="notice_title">Upcoming Notice</h2>
+        <p data-edit-key="notice_text">
+          Upcoming school notices will be displayed here.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/public-pages-loader.js?v=8"></script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Login Management - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Admin Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="admin.html">Dashboard Overview</a>
+      <a href="students.html">Add / Manage Students</a>
+      <a href="scores.html">Scores and Results</a>
+      <a href="fees.html">Fees Management</a>
+      <a href="attendance.html">Attendance</a>
+      <a href="announcements.html">Announcements</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">System Settings</a>
+      <a href="edit-pages.html">Edit Website Pages</a>
+      <a href="teachers.html">Add / Assign Teachers</a>
+      <a href="parents.html">Add Parents</a>
+      <a href="accounts.html" class="active">Lock / Disable Accounts</a>
+      <a href="activities.html">Recent Activities</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+
+      <section class="dashboard-section">
+        <h2>Search Account</h2>
+
+        <div class="student-search-box" style="margin: 15px 0; display:flex; gap:10px;">
+          <input type="text" id="accountSearchInput" placeholder="Search by name, username, phone, or email" style="flex:1;">
+          <button type="button" class="primary-btn" id="accountSearchBtn">Search</button>
+          <button type="button" class="primary-btn danger-btn" id="accountClearSearchBtn">Clear</button>
+        </div>
+      </section>
+
+
+      <h1>Account Login Management</h1>
+      <p>Activate, lock, or disable accounts and manage teacher/parent login status.</p>
+
+      <section class="dashboard-section">
+        <h2>User Accounts</h2>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Branch</th>
+              <th>Full Name</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Login Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody id="accountTableBody">
+            <tr>
+              <td colspan="8">Loading accounts...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="../js/dashboard-actions.js?v=4"></script>
+  <script src="../js/admin-panel-title.js?v=1"></script>
+  <script src="../js/accounts-api.js?v=21"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/admin-guard.js?v=1"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/admin-sidebar-picture-final.js?v=1"></script>
+  <script src="../js/account-search-final.js?v=1"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+</body>
+</html>

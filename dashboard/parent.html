@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parent Dashboard - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Parent Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="parent.html" class="active">Dashboard Overview</a>
+      <a href="parent-profile.html">Child Profile</a>
+      <a href="parent-results.html">Scores & Results</a>
+      <a href="parent-fees.html">Fees Status</a>
+      <a href="parent-attendance.html">Attendance</a>
+      <a href="parent-announcements.html">Announcements</a>
+      <a href="parent-reports.html">Reports</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Parent Dashboard</h1>
+      <p>Welcome, Parent. View your active child or children linked to your account.</p>
+
+      <section class="dashboard-section">
+        <h2>Active Children</h2>
+
+        <div class="dashboard-cards" id="parentChildBox">
+          <div class="dashboard-card">
+            <h2>Loading Children...</h2>
+            <p>Please wait.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <script src="../js/panel-title.js?v=1"></script>
+  <script src="../js/parent-dashboard-api.js?v=4"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/parent-guard.js?v=1"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/parent-scores-print-final.js?v=1"></script>
+  <script src="../js/parent-print-tab-final.js?v=1"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+</body>
+</html>

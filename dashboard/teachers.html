@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teachers - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <h2>Admin Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="admin.html">Dashboard Overview</a>
+      <a href="students.html">Add / Manage Students</a>
+      <a href="scores.html">Scores and Results</a>
+      <a href="fees.html">Fees Management</a>
+      <a href="attendance.html">Attendance</a>
+      <a href="announcements.html">Announcements</a>
+      <a href="reports.html">Reports</a>
+      <a href="settings.html">System Settings</a>
+      <a href="edit-pages.html">Edit Website Pages</a>
+      <a href="teachers.html" class="active">Add / Assign Teachers</a>
+      <a href="parents.html">Add Parents</a>
+      <a href="accounts.html">Lock / Disable Accounts</a>
+      <a href="activities.html">Recent Activities</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Add / Assign Teachers</h1>
+      <p>Register teachers and assign them to classes and subjects.</p>
+
+      <section class="dashboard-section">
+        <h2>Add New Teacher</h2>
+        <form class="admin-form" id="teacherForm">
+          <div>
+            <label for="teacher_branch_id">Branch</label>
+            <select id="teacher_branch_id">
+              <option value="">Select branch</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="teacher_id">Teacher ID</label>
+            <input type="text" id="teacher_id" placeholder="Example: TCH001" required>
+          </div>
+
+          <div>
+            <label for="teacher_full_name">Teacher Full Name</label>
+            <input type="text" id="teacher_full_name" placeholder="Enter teacher full name" required>
+          </div>
+
+          <div>
+            <label for="teacher_phone">Phone Number</label>
+            <input type="text" id="teacher_phone" placeholder="Enter phone number" required>
+          </div>
+
+          <div>
+            <label for="teacher_email">Email Address</label>
+            <input type="email" id="teacher_email" placeholder="Enter email address">
+          </div>
+
+          <div>
+            <label for="teacher_ghana_card_number">Ghana Card Number</label>
+            <input type="text" id="teacher_ghana_card_number" placeholder="Enter Ghana Card number" required>
+          </div>
+
+          <div>
+            <label for="teacher_address">Address</label>
+            <input type="text" id="teacher_address" placeholder="Enter address">
+          </div>
+
+          <div>
+            <label for="teacher_status">Account Status</label>
+            <select id="teacher_status">
+              <option value="active">Active</option>
+              <option value="locked">Locked</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </div>
+
+          <button type="submit">Add Teacher</button>
+        </form>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Assign Teacher to Class / Subject</h2>
+        <form class="admin-form" id="teacherAssignForm">
+          <div>
+            <label for="assign_branch_id">Branch</label>
+            <select id="assign_branch_id">
+              <option value="">Select branch</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="assign_teacher_id">Select Teacher</label>
+            <select id="assign_teacher_id">
+              <option value="">Select teacher</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="assign_class_id">Assign Class</label>
+            <select id="assign_class_id">
+              <option value="">Select class</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="assign_subject">Subject</label>
+            <input type="text" id="assign_subject" placeholder="Example: Mathematics" required>
+          </div>
+
+          <div>
+            <label for="assign_role">Role</label>
+            <input type="text" id="assign_role" placeholder="Example: Subject Teacher">
+          </div>
+
+          <div>
+            <label for="assign_academic_year">Academic Year</label>
+            <input type="text" id="assign_academic_year" placeholder="Example: 2025/2026">
+          </div>
+
+          <button type="submit">Assign Teacher</button>
+        </form>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Teacher List</h2>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Branch</th>
+              <th>Teacher ID</th>
+              <th>Name</th>
+              <th>Ghana Card</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Assigned Classes</th>
+              <th>Assigned Subjects</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="teacherTableBody">
+            <tr>
+              <td colspan="10">Loading teachers...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script src="../js/admin-guard.js?v=1"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/teacher-form-dropdown-fix.js?v=1"></script>
+  <script src="../js/teachers-api.js?v=1"></script>
+  <script src="../js/assign-teacher-submit-final.js?v=1"></script>
+</body>
+</html>

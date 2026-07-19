@@ -1,0 +1,263 @@
+document.addEventListener("DOMContentLoaded", function () {
+  const parentForm = document.getElementById("parentForm");
+  const parentTableBody = document.getElementById("parentTableBody");
+  const branchSelect = document.getElementById("parent_branch_id");
+
+  let parentsCache = [];
+
+  function getLoggedInUser() {
+    try {
+      return JSON.parse(localStorage.getItem("user"));
+    } catch {
+      return null;
+    }
+  }
+
+  function getAuthOnlyHeaders() {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  function getAuthHeaders() {
+    const token = localStorage.getItem("token");
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+  }
+
+  function isAdmin() {
+    const user = getLoggedInUser();
+    return user && user.role === "branch_admin";
+  }
+
+  function getAdminId() {
+    const user = getLoggedInUser();
+    return user ? user.branch_id : null;
+  }
+
+  function getParentNameInput() {
+    return (
+      document.getElementById("parent_full_name") ||
+      document.getElementById("parent_name") ||
+      document.getElementById("parentFullName")
+    );
+  }
+
+  async function loades() {
+    if (!branchSelect) return;
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/branches", {
+        headers: getAuthOnlyHeaders()
+      });
+
+      const data = await response.json();
+
+      branchSelect.innerHTML = '<option value=""></option>';
+
+      (data.branches || []).forEach(function (branch) {
+        const option = document.createElement("option");
+        option.value = branch.id;
+        option.textContent = branch.branch_name;
+        branchSelect.appendChild(option);
+      });
+
+      if (isAdmin()) {
+        branchSelect.value = getAdminId();
+        branchSelect.disabled = true;
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadParents() {
+    if (!parentTableBody) return;
+
+    try {
+      let url = "http://127.0.0.1:5000/api/parents";
+
+      if (isAdmin()) {
+        url += `?branch_id=${getAdminBranchId()}`;
+      }
+
+      const response = await fetch(url, {
+        headers: getAuthOnlyHeaders()
+      });
+
+      const data = await response.json();
+
+      parentTableBody.innerHTML = "";
+
+      if (!response.ok) {
+        parentTableBody.innerHTML = `
+          <tr>
+            <td colspan="7">${data.message || "Failed to load parents."}</td>
+          </tr>
+        `;
+        return;
+      }
+
+      parentsCache = data.parents || [];
+
+      if (parentsCache.length === 0) {
+        parentTableBody.innerHTML = `
+          <tr>
+            <td colspan="7">No parents found.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      parentsCache.forEach(function (parent) {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td>${parent.branch_name || ""}</td>
+          <td>${parent.full_name || ""}</td>
+          <td>${parent.ghana_card_number || ""}</td>
+          <td>${parent.phone || ""}</td>
+          <td>${parent.email || ""}</td>
+          <td>${parent.address || ""}</td>
+          <td>
+            <button type="button" class="small-btn success edit-parent-btn" data-id="${parent.id}">Edit</button>
+            <button type="button" class="small-btn warning view-children-btn" data-id="${parent.id}">View Children</button>
+          </td>
+        `;
+
+        parentTableBody.appendChild(row);
+      });
+    } catch (error) {
+      console.error(error);
+      parentTableBody.innerHTML = `
+        <tr>
+          <td colspan="7">Cannot connect to backend.</td>
+        </tr>
+      `;
+    }
+  }
+
+  function getParentById(id) {
+    return parentsCache.find(p => Number(p.id) === Number(id));
+  }
+
+  document.addEventListener("click", async function (event) {
+    const editBtn = event.target.closest(".edit-parent-btn");
+    const viewChildrenBtn = event.target.closest(".view-children-btn");
+
+    if (editBtn) {
+      const parent = getParentById(editBtn.dataset.id);
+      if (!parent) return;
+
+      if (branchSelect && !branchSelect.disabled) {
+        branchSelect.value = parent.branch_id || "";
+      }
+
+      const nameInput = getParentNameInput();
+      if (nameInput) nameInput.value = parent.full_name || "";
+
+      document.getElementById("parent_ghana_card").value = parent.ghana_card_number || "";
+      document.getElementById("parent_phone").value = parent.phone || "";
+      document.getElementById("parent_email").value = parent.email || "";
+      document.getElementById("parent_address").value = parent.address || "";
+
+      localStorage.setItem("editing_parent_id", parent.id);
+
+      const submitBtn = document.querySelector("#parentForm button[type='submit']");
+      if (submitBtn) submitBtn.textContent = "Update Parent";
+
+      parentForm.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    if (viewChildrenBtn) {
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/parents/${viewChildrenBtn.dataset.id}/children`, {
+          headers: getAuthOnlyHeaders()
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Failed to load children.");
+          return;
+        }
+
+        if (!data.children || data.children.length === 0) {
+          alert("No children linked to this parent.");
+          return;
+        }
+
+        const childList = data.children.map(function (child) {
+          return `${child.full_name} (${child.admission_number}) - ${child.class_name || ""} - ${child.relationship}`;
+        }).join("\n");
+
+        alert(childList);
+      } catch (error) {
+        console.error(error);
+        alert("Cannot connect to backend.");
+      }
+    }
+  });
+
+  if (parentForm) {
+    parentForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const editingParentId = localStorage.getItem("editing_parent_id");
+      const nameInput = getParentNameInput();
+
+      const parentData = {
+        branch_id: isAdmin() ? getAdminId() : document.getElementById("parent_branch_id").value,
+        full_name: nameInput ? nameInput.value.trim() : "",
+        ghana_card_number: document.getElementById("parent_ghana_card").value.trim(),
+        phone: document.getElementById("parent_phone").value.trim(),
+        email: document.getElementById("parent_email").value.trim(),
+        address: document.getElementById("parent_address").value.trim(),
+        status: "active"
+      };
+
+      try {
+        const url = editingParentId
+          ? `http://127.0.0.1:5000/api/parents/${editingParentId}`
+          : "http://127.0.0.1:5000/api/parents";
+
+        const response = await fetch(url, {
+          method: editingParentId ? "PUT" : "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(parentData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Failed to save parent.");
+          return;
+        }
+
+        alert(editingParentId ? "Parent updated successfully." : "Parent added successfully.");
+
+        localStorage.removeItem("editing_parent_id");
+        parentForm.reset();
+
+        const submitBtn = document.querySelector("#parentForm button[type='submit']");
+        if (submitBtn) submitBtn.textContent = "Add Parent";
+
+        await loadBranches();
+        await loadParents();
+      } catch (error) {
+        console.error(error);
+        alert("Cannot connect to backend.");
+      }
+    });
+  }
+
+  async function start() {
+    await loadBranches();
+    await loadParents();
+  }
+
+  start();
+});
+
+

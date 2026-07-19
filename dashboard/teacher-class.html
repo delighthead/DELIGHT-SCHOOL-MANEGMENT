@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assigned Class - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+
+    <aside class="sidebar">
+      <h2>Teacher Panel</h2>
+      <a href="../index.html">Website Home</a>
+      <a href="teacher.html">Dashboard Overview</a>
+      <a href="teacher-profile.html">My Profile</a>
+      <a href="teacher-class.html" class="active">Assigned Class</a>
+      <a href="teacher-students.html">Students</a>
+      <a href="teacher-scores.html">Scores & Uploads</a>
+      <a href="teacher-attendance.html">Mark Attendance</a>
+      <a href="teacher-announcements.html">Announcements</a>
+      <a href="teacher-reports.html">Reports</a>
+      <a href="../pages/login.html">Logout</a>
+    </aside>
+
+    <main class="dashboard-main">
+      <h1>Assigned Class</h1>
+      <p>View your assigned class and students.</p>
+
+      <section class="dashboard-section">
+        <h2>Class Summary</h2>
+
+        <div class="dashboard-cards" id="teacherClassBox">
+          <div class="dashboard-card">
+            <h2>Loading Class...</h2>
+            <p>Please wait.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard-section">
+        <h2>Students in Assigned Class</h2>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Admission No.</th>
+              <th>Student Name</th>
+              <th>Class</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody id="teacherClassStudentTableBody">
+            <tr>
+              <td colspan="5">Loading students...</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="../js/panel-title.js?v=2"></script>
+  <script src="../js/teacher-class-api.js?v=2"></script>
+  <script src="../js/logout.js?v=2"></script>
+  <script src="../js/teacher-guard.js?v=1"></script>
+  <script src="../js/site-footer-settings.js?v=1"></script>
+  <script src="../js/site-settings.js?v=4"></script>
+  <script src="../js/admin-common-polish.js?v=1"></script>
+  <script src="../js/teacher-dropdown-final.js?v=2"></script>
+  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
+  <script src="../js/api-helper.js?v=2"></script>
+  <script src="../js/teacher-scores-class-fix.js?v=1"></script>
+  <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+</body>
+</html>

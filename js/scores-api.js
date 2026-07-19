@@ -1,0 +1,675 @@
+document.addEventListener("DOMContentLoaded", function () {
+  const scoreForm = document.getElementById("scoreForm");
+  const scoreTableBody = document.getElementById("scoreTableBody");
+  const branchSelect = document.getElementById("score_branch_id");
+  const studentSelect = document.getElementById("score_student_id");
+
+  function getLoggedInUser() {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return null;
+
+    try {
+      return JSON.parse(storedUser);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function isBranchAdmin() {
+    const user = getLoggedInUser();
+    return user && user.role === "branch_admin";
+  }
+
+  function getAdminBranchId() {
+    const user = getLoggedInUser();
+    return user ? user.branch_id : null;
+  }
+
+  function oneDecimal(value) {
+    return Number(value || 0).toFixed(1);
+  }
+
+  function calculateAutoRemark(assessment, examination) {
+    const total = Number(assessment || 0) + Number(examination || 0);
+
+    if (total >= 80) return "Excellent";
+    if (total >= 70) return "Very Good";
+    if (total >= 60) return "Good";
+    if (total >= 50) return "Fair";
+    return "Needs Improvement";
+  }
+
+  function setupAutoRemarks() {
+    const assessmentInput = document.getElementById("assessment_score");
+    const examInput = document.getElementById("examination_score");
+    const remarksInput = document.getElementById("score_remarks");
+
+    if (!assessmentInput || !examInput || !remarksInput) return;
+
+    const updateRemarks = function () {
+      remarksInput.value = calculateAutoRemark(assessmentInput.value, examInput.value);
+    };
+
+    assessmentInput.addEventListener("input", updateRemarks);
+    examInput.addEventListener("input", updateRemarks);
+  }
+
+  async function loadBranches() {
+    if (!branchSelect) return;
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/branches", { headers: getAuthOnlyHeaders() });
+      const data = await response.json();
+
+      branchSelect.innerHTML = '<option value="">Select branch</option>';
+
+      data.branches.forEach(function (branch) {
+        const option = document.createElement("option");
+        option.value = branch.id;
+        option.textContent = branch.branch_name;
+        branchSelect.appendChild(option);
+      });
+
+      if (isBranchAdmin()) {
+        branchSelect.value = getAdminBranchId();
+        branchSelect.disabled = true;
+      }
+
+      loadStudents();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadStudents() {
+    if (!studentSelect) return;
+
+    try {
+      let studentsUrl = "http://127.0.0.1:5000/api/students";
+      const selectedBranch = isBranchAdmin() ? getAdminBranchId() : branchSelect.value;
+
+      if (selectedBranch) {
+        studentsUrl += `?branch_id=${selectedBranch}`;
+      }
+
+      const response = await fetch(studentsUrl, { headers: getAuthOnlyHeaders() });
+      const data = await response.json();
+
+      studentSelect.innerHTML = '<option value="">Select student</option>';
+
+      (data.students || []).forEach(function (student) {
+        const option = document.createElement("option");
+        option.value = student.id;
+        option.textContent = `${student.full_name || ""} - ${student.admission_number || ""} - ${student.class_name || ""}`;
+        studentSelect.appendChild(option);
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadScores() {
+    if (!scoreTableBody) return;
+
+    try {
+      let scoresUrl = "http://127.0.0.1:5000/api/scores";
+
+      if (isBranchAdmin()) {
+        scoresUrl += `?branch_id=${getAdminBranchId()}`;
+      }
+
+      const response = await fetch(scoresUrl, { headers: getAuthOnlyHeaders() });
+      const data = await response.json();
+
+      scoreTableBody.innerHTML = "";
+
+      if (!data.scores || data.scores.length === 0) {
+        scoreTableBody.innerHTML = `
+          <tr>
+            <td colspan="13">No scores found.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      const gradingSettings = await getGradingSettings();
+
+      data.scores.forEach(function (score) {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td>${score.branch_name || ""}</td>
+          <td>${score.student_name || ""}</td>
+          <td>${score.admission_number || ""}</td>
+          <td>${score.class_name || ""}</td>
+          <td>${score.subject || ""}</td>
+          <td>${score.term || ""}</td>
+          <td>${score.academic_year || ""}</td>
+          <td>${oneDecimal(score.assessment_score)}</td>
+          <td>${oneDecimal(score.examination_score)}</td>
+          <td>${oneDecimal(score.total_score)}</td>
+          <td>${calculateGradeFromSettings(score.total_score, gradingSettings).grade || score.grade || ""}</td>
+          <td>${score.position || ""}</td>
+          <td>
+            <select class="score-approval-dropdown" data-id="${score.id}">
+              <option value="pending" ${score.approval_status === "pending" ? "selected" : ""}>Pending</option>
+              <option value="approved" ${score.approval_status === "approved" ? "selected" : ""}>Approved</option>
+              <option value="rejected" ${score.approval_status === "rejected" ? "selected" : ""}>Rejected</option>
+            </select>
+          </td>
+        `;
+
+        scoreTableBody.appendChild(row);
+      });
+    } catch (error) {
+      console.error(error);
+      scoreTableBody.innerHTML = `
+        <tr>
+          <td colspan="13">Could not load scores. Make sure backend is running.</td>
+        </tr>
+      `;
+    }
+  }
+
+  if (branchSelect) {
+    branchSelect.addEventListener("change", loadStudents);
+  }
+
+  if (scoreForm) {
+    scoreForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const scoreData = {
+        branch_id: isBranchAdmin() ? getAdminBranchId() : document.getElementById("score_branch_id").value,
+        student_id: document.getElementById("score_student_id").value,
+        subject: document.getElementById("score_subject").value.trim(),
+        term: document.getElementById("score_term").value,
+        academic_year: document.getElementById("score_academic_year").value.trim(),
+        assessment_score: document.getElementById("assessment_score").value,
+        examination_score: document.getElementById("examination_score").value,
+        position: document.getElementById("score_position").value.trim(),
+        remarks: document.getElementById("score_remarks").value.trim(),
+        approval_status: document.getElementById("score_approval_status").value
+      };
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/api/scores", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(scoreData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Failed to add score");
+          return;
+        }
+
+        alert("Score added successfully");
+        scoreForm.reset();
+        loadStudents();
+        loadScores();
+      } catch (error) {
+        console.error(error);
+        alert("Cannot connect to backend.");
+      }
+    });
+  }
+
+  if (scoreTableBody) {
+    scoreTableBody.addEventListener("change", async function (event) {
+      const dropdown = event.target.closest(".score-approval-dropdown");
+      if (!dropdown) return;
+
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/scores/${dropdown.dataset.id}/approval`, {
+          method: "PATCH",
+          headers: getAuthHeaders(),
+          body: JSON.stringify({
+            approval_status: dropdown.value
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Failed to update approval");
+          return;
+        }
+
+        alert("Score approval updated successfully");
+        loadScores();
+      } catch (error) {
+        console.error(error);
+        alert("Cannot connect to backend.");
+      }
+    });
+  }
+
+  setupAutoRemarks();
+  loadStudents();
+  loadScores();
+});
+
+// Admin Excel Score Template Download and Upload
+document.addEventListener("DOMContentLoaded", function () {
+  const branchSelect = document.getElementById("admin_excel_branch_id");
+  const classSelect = document.getElementById("admin_excel_class_id");
+  const subjectInput = document.getElementById("admin_excel_subject");
+  const termInput = document.getElementById("admin_excel_term");
+  const academicYearInput = document.getElementById("admin_excel_academic_year");
+  const downloadBtn = document.getElementById("adminDownloadScoreTemplateBtn");
+  const uploadBtn = document.getElementById("adminUploadScoreExcelBtn");
+  const fileInput = document.getElementById("admin_score_excel_file");
+
+  function getToken() {
+    return localStorage.getItem("token");
+  }
+
+  function getHeaders() {
+    return {
+      Authorization: `Bearer ${getToken()}`
+    };
+  }
+
+  async function loadAdminExcelSettings() {
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/settings");
+      const data = await res.json();
+      const settings = data.settings || {};
+
+      if (termInput && !termInput.value) {
+        termInput.value = settings.current_term || "";
+      }
+
+      if (academicYearInput && !academicYearInput.value) {
+        academicYearInput.value = settings.academic_year || "";
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadAdminExcelBranches() {
+    if (!branchSelect) return;
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/branches", {
+        headers: getHeaders()
+      });
+
+      const data = await res.json();
+      const branches = data.branches || [];
+
+      branchSelect.innerHTML = '<option value="">Select branch</option>';
+
+      branches.forEach(branch => {
+        const opt = document.createElement("option");
+        opt.value = branch.id;
+        opt.textContent = branch.branch_name || branch.name || "";
+        branchSelect.appendChild(opt);
+      });
+    } catch (error) {
+      console.error(error);
+      branchSelect.innerHTML = '<option value="">Cannot load branches</option>';
+    }
+  }
+
+  async function loadAdminExcelClasses() {
+    if (!classSelect) return;
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/classes", {
+        headers: getHeaders()
+      });
+
+      const data = await res.json();
+      const classes = data.classes || [];
+
+      classSelect.innerHTML = '<option value="">Select class</option>';
+
+      classes.forEach(cls => {
+        const opt = document.createElement("option");
+        opt.value = cls.id;
+        opt.textContent = cls.class_name;
+        classSelect.appendChild(opt);
+      });
+    } catch (error) {
+      console.error(error);
+      classSelect.innerHTML = '<option value="">Cannot load classes</option>';
+    }
+  }
+
+  async function downloadAdminTemplate() {
+    if (!branchSelect.value || !classSelect.value || !subjectInput.value || !termInput.value || !academicYearInput.value) {
+      alert("Please select branch, class, subject, term, and academic year.");
+      return;
+    }
+
+    const params = new URLSearchParams({
+      branch_id: branchSelect.value,
+      class_id: classSelect.value,
+      subject: subjectInput.value.trim(),
+      term: termInput.value,
+      academic_year: academicYearInput.value.trim()
+    });
+
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/api/scores/excel/template?${params.toString()}`, {
+        headers: getHeaders()
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Could not download template");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `score-template-${subjectInput.value}-${termInput.value}-${academicYearInput.value}.xlsx`
+        .replaceAll(" ", "-")
+        .replaceAll("/", "-");
+
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  }
+
+  async function uploadAdminExcelScores() {
+    if (!branchSelect.value || !subjectInput.value || !termInput.value || !academicYearInput.value) {
+      alert("Please select branch, subject, term, and academic year.");
+      return;
+    }
+
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert("Please select the filled Excel file.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("branch_id", branchSelect.value);
+    formData.append("subject", subjectInput.value.trim());
+    formData.append("term", termInput.value);
+    formData.append("academic_year", academicYearInput.value.trim());
+    formData.append("score_file", fileInput.files[0]);
+
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = "Uploading...";
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/scores/excel/upload", {
+        method: "POST",
+        headers: getHeaders(),
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Upload failed");
+      }
+
+      alert(
+        `Excel upload successful.\nSaved: ${data.saved_count}\nUpdated: ${data.updated_count}\nSkipped: ${data.skipped_count}`
+      );
+
+      location.reload();
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    } finally {
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = "Upload Excel Scores";
+    }
+  }
+
+  if (downloadBtn) downloadBtn.addEventListener("click", downloadAdminTemplate);
+  if (uploadBtn) uploadBtn.addEventListener("click", uploadAdminExcelScores);
+
+  loadAdminExcelSettings();
+  loadAdminExcelBranches();
+  loadAdminExcelClasses();
+});
+
+// Admin Score Approval Tools
+document.addEventListener("DOMContentLoaded", function () {
+  const filterStatus = document.getElementById("approval_filter_status");
+
+  const bulk = document.getElementById("bulk_approval_branch_id");
+  const bulkClass = document.getElementById("bulk_approval_class_id");
+  const bulkSubject = document.getElementById("bulk_approval_subject");
+  const bulkTerm = document.getElementById("bulk_approval_term");
+  const bulkYear = document.getElementById("bulk_approval_academic_year");
+
+  const approveBtn = document.getElementById("approveBulkScoresBtn");
+  const rejectBtn = document.getElementById("rejectBulkScoresBtn");
+
+  function getToken() {
+    return localStorage.getItem("token");
+  }
+
+  function authHeaders() {
+    return {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`
+    };
+  }
+
+  async function loadApprovalSettings() {
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/settings");
+      const data = await res.json();
+      const settings = data.settings || {};
+
+      if (bulkTerm && !bulkTerm.value) bulkTerm.value = settings.current_term || "";
+      if (bulkYear && !bulkYear.value) bulkYear.value = settings.academic_year || "";
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadApprovales() {
+    if (!bulk) return;
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/branches", {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+
+      const data = await res.json();
+      const branches = data.branches || [];
+
+      bulk.innerHTML = '<option value=""></option>';
+
+      branches.forEach(branch => {
+        const opt = document.createElement("option");
+        opt.value = branch.id;
+        opt.textContent = branch.branch_name || branch.name || "";
+        bulk.appendChild(opt);
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadApprovalClasses() {
+    if (!bulkClass) return;
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/classes", {
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+
+      const data = await res.json();
+      const classes = data.classes || [];
+
+      bulkClass.innerHTML = '<option value="">Select class</option>';
+
+      classes.forEach(cls => {
+        const opt = document.createElement("option");
+        opt.value = cls.id;
+        opt.textContent = cls.class_name;
+        bulkClass.appendChild(opt);
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  function filterScoreRows() {
+    if (!filterStatus) return;
+
+    const status = filterStatus.value.toLowerCase();
+    const rows = document.querySelectorAll("table tbody tr");
+
+    rows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+
+      if (!status || text.includes(status)) {
+        row.style.display = "";
+      } else {
+        row.style.display = "none";
+      }
+    });
+  }
+
+  async function bulkUpdateApproval(newStatus) {
+    if (!bulk.value || !bulkClass.value || !bulkSubject.value || !bulkTerm.value || !bulkYear.value) {
+      alert("Please select branch, class, subject, term, and academic year.");
+      return;
+    }
+
+    const confirmText = newStatus === "approved"
+      ? "Approve all pending scores for this subject/class?"
+      : "Reject all pending scores for this subject/class?";
+
+    if (!confirm(confirmText)) return;
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/api/scores/bulk/approval", {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          branch_id: bulk.value,
+          class_id: bulkClass.value,
+          subject: bulkSubject.value.trim(),
+          term: bulkTerm.value,
+          academic_year: bulkYear.value.trim(),
+          approval_status: newStatus
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Approval update failed");
+      }
+
+      alert(`${data.updated_count || 0} score(s) updated to ${newStatus}.`);
+      location.reload();
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  }
+
+  if (filterStatus) filterStatus.addEventListener("change", filterScoreRows);
+  if (approveBtn) approveBtn.addEventListener("click", () => bulkUpdateApproval("approved"));
+  if (rejectBtn) rejectBtn.addEventListener("click", () => bulkUpdateApproval("rejected"));
+
+  loadApprovalSettings();
+  loadApprovales();
+  loadApprovalClasses();
+});
+
+// FINAL FIX: Real Approve / Reject Pending Scores buttons
+document.addEventListener("DOMContentLoaded", function () {
+  const approveBtn = document.getElementById("approveBulkScoresBtn");
+  const rejectBtn = document.getElementById("rejectBulkScoresBtn");
+
+  const branchInput = document.getElementById("bulk_approval_branch_id");
+  const classInput = document.getElementById("bulk_approval_class_id");
+  const subjectInput = document.getElementById("bulk_approval_subject");
+  const termInput = document.getElementById("bulk_approval_term");
+  const yearInput = document.getElementById("bulk_approval_academic_year");
+
+  function getToken() {
+    return localStorage.getItem("token");
+  }
+
+  async function updatePendingScores(status) {
+    if (!branchInput.value || !classInput.value || !subjectInput.value || !termInput.value || !yearInput.value) {
+      alert("Please select branch, class, subject, term, and academic year.");
+      return;
+    }
+
+    const actionText = status === "approved" ? "approve" : "reject";
+
+    if (!confirm(`Are you sure you want to ${actionText} all pending scores for this class and subject?`)) {
+      return;
+    }
+
+    const btn = status === "approved" ? approveBtn : rejectBtn;
+    const oldText = btn.textContent;
+
+    btn.disabled = true;
+    btn.textContent = "Processing...";
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/scores/bulk/approval", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`
+        },
+        body: JSON.stringify({
+          branch_id: branchInput.value,
+          class_id: classInput.value,
+          subject: subjectInput.value.trim(),
+          term: termInput.value,
+          academic_year: yearInput.value.trim(),
+          approval_status: status
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to update scores.");
+      }
+
+      alert(`${data.updated_count || 0} pending score(s) changed to ${status}.`);
+      location.reload();
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+    }
+  }
+
+  if (approveBtn) {
+    approveBtn.onclick = function () {
+      updatePendingScores("approved");
+    };
+  }
+
+  if (rejectBtn) {
+    rejectBtn.onclick = function () {
+      updatePendingScores("rejected");
+    };
+  }
+});
+
+

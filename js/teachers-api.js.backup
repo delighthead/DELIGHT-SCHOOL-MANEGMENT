@@ -1,0 +1,316 @@
+document.addEventListener("DOMContentLoaded", function () {
+  const teacherForm = document.getElementById("teacherForm");
+  const assignForm = document.getElementById("teacherAssignForm");
+  const teacherTableBody = document.getElementById("teacherTableBody");
+
+  const teacherBranch = document.getElementById("teacher_branch_id");
+  const assignBranch = document.getElementById("assign_branch_id");
+  const assignTeacher = document.getElementById("assign_teacher_id");
+  const assignClass = document.getElementById("assign_class_id");
+
+  let teachersCache = [];
+
+  function getLoggedInUser() {
+    try {
+      return JSON.parse(localStorage.getItem("user"));
+    } catch {
+      return null;
+    }
+  }
+
+  function getAuthOnlyHeaders() {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  function getAuthHeaders() {
+    const token = localStorage.getItem("token");
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+  }
+
+  function isAdmin() {
+    const user = getLoggedInUser();
+    return user && user.role === "branch_admin";
+  }
+
+  function getAdminId() {
+    const user = getLoggedInUser();
+    return user ? user.branch_id : null;
+  }
+
+  async function loades() {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/branches", {
+        headers: getAuthOnlyHeaders()
+      });
+      const data = await response.json();
+
+      [teacher, assign].forEach(function (select) {
+        if (!select) return;
+
+        select.innerHTML = '<option value=""></option>';
+
+        (data.branches || []).forEach(function (branch) {
+          const option = document.createElement("option");
+          option.value = branch.id;
+          option.textContent = branch.branch_name;
+          select.appendChild(option);
+        });
+
+        if (isAdmin()) {
+          select.value = getAdminId();
+          select.disabled = true;
+        }
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadClasses() {
+    try {
+      if (!assignClass) return;
+
+      let url = "http://127.0.0.1:5000/api/classes";
+      if (isAdmin()) {
+        url += `?branch_id=${getAdminBranchId()}`;
+      }
+
+      const response = await fetch(url, {
+        headers: getAuthOnlyHeaders()
+      });
+      const data = await response.json();
+
+      assignClass.innerHTML = '<option value="">Select class</option>';
+
+      (data.classes || []).forEach(function (cls) {
+        const option = document.createElement("option");
+        option.value = cls.id;
+        option.textContent = cls.class_name;
+        assignClass.appendChild(option);
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function loadTeachers() {
+    if (!teacherTableBody) return;
+
+    try {
+      let url = "http://127.0.0.1:5000/api/teachers";
+      if (isAdmin()) {
+        url += `?branch_id=${getAdminBranchId()}`;
+      }
+
+      const response = await fetch(url, {
+        headers: getAuthOnlyHeaders()
+      });
+
+      const data = await response.json();
+
+      teachersCache = data.teachers || [];
+      teacherTableBody.innerHTML = "";
+
+      if (!response.ok) {
+        teacherTableBody.innerHTML = `
+          <tr><td colspan="8">${data.message || "Failed to load teachers."}</td></tr>
+        `;
+        return;
+      }
+
+      if (teachersCache.length === 0) {
+        teacherTableBody.innerHTML = `
+          <tr><td colspan="8">No teachers found.</td></tr>
+        `;
+        return;
+      }
+
+      if (assignTeacher) {
+        assignTeacher.innerHTML = '<option value="">Select teacher</option>';
+      }
+
+      teachersCache.forEach(function (teacher) {
+        if (assignTeacher) {
+          const option = document.createElement("option");
+          option.value = teacher.id;
+          option.textContent = `${teacher.full_name} - ${teacher.teacher_id}`;
+          assignTeacher.appendChild(option);
+        }
+
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td>${teacher.branch_name || ""}</td>
+          <td>${teacher.teacher_id || ""}</td>
+          <td>${teacher.full_name || ""}</td>
+          <td>${teacher.ghana_card_number || ""}</td>
+          <td>${teacher.phone || ""}</td>
+          <td>${teacher.email || ""}</td>
+          <td>${teacher.status || ""}</td>
+          <td>
+            <button type="button" class="small-btn success edit-teacher-btn" data-id="${teacher.id}">Edit</button>
+            <button type="button" class="small-btn warning assign-teacher-btn" data-id="${teacher.id}">Assign</button>
+          </td>
+        `;
+
+        teacherTableBody.appendChild(row);
+      });
+    } catch (error) {
+      console.error(error);
+      teacherTableBody.innerHTML = `
+        <tr><td colspan="8">Cannot connect to backend.</td></tr>
+      `;
+    }
+  }
+
+  function getTeacherById(id) {
+    return teachersCache.find(t => Number(t.id) === Number(id));
+  }
+
+  document.addEventListener("click", function (event) {
+    const editBtn = event.target.closest(".edit-teacher-btn");
+    const assignBtn = event.target.closest(".assign-teacher-btn");
+
+    if (editBtn) {
+      const teacher = getTeacherById(editBtn.dataset.id);
+      if (!teacher) return;
+
+      document.getElementById("teacher_id").value = teacher.teacher_id || "";
+      document.getElementById("teacher_full_name").value = teacher.full_name || "";
+      document.getElementById("teacher_ghana_card_number").value = teacher.ghana_card_number || "";
+      document.getElementById("teacher_phone").value = teacher.phone || "";
+      document.getElementById("teacher_email").value = teacher.email || "";
+      document.getElementById("teacher_address").value = teacher.address || "";
+      document.getElementById("teacher_status").value = teacher.status || "active";
+
+      if (teacher && !teacher.disabled) {
+        teacher.value = teacher.branch_id || "";
+      }
+
+      localStorage.setItem("editing_teacher_id", teacher.id);
+
+      const submitBtn = document.querySelector("#teacherForm button[type='submit']");
+      if (submitBtn) submitBtn.textContent = "Update Teacher";
+
+      teacherForm.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    if (assignBtn) {
+      const teacher = getTeacherById(assignBtn.dataset.id);
+      if (!teacher) return;
+
+      if (assignTeacher) {
+        assignTeacher.value = teacher.id;
+      }
+
+      if (assign && !assign.disabled) {
+        assign.value = teacher.branch_id || "";
+      }
+
+      assignForm.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+
+  if (teacherForm) {
+    teacherForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const editingTeacherId = localStorage.getItem("editing_teacher_id");
+
+      const teacherData = {
+        branch_id: isAdmin() ? getAdminId() : teacher.value,
+        teacher_id: document.getElementById("teacher_id").value.trim(),
+        full_name: document.getElementById("teacher_full_name").value.trim(),
+        ghana_card_number: document.getElementById("teacher_ghana_card_number").value.trim(),
+        phone: document.getElementById("teacher_phone").value.trim(),
+        email: document.getElementById("teacher_email").value.trim(),
+        address: document.getElementById("teacher_address").value.trim(),
+        status: document.getElementById("teacher_status").value
+      };
+
+      try {
+        const url = editingTeacherId
+          ? `http://127.0.0.1:5000/api/teachers/${editingTeacherId}`
+          : "http://127.0.0.1:5000/api/teachers";
+
+        const response = await fetch(url, {
+          method: editingTeacherId ? "PUT" : "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(teacherData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Failed to save teacher.");
+          return;
+        }
+
+        alert(editingTeacherId ? "Teacher updated successfully." : "Teacher added successfully.");
+
+        localStorage.removeItem("editing_teacher_id");
+        teacherForm.reset();
+
+        const submitBtn = document.querySelector("#teacherForm button[type='submit']");
+        if (submitBtn) submitBtn.textContent = "Add Teacher";
+
+        await loadBranches();
+        await loadTeachers();
+      } catch (error) {
+        console.error(error);
+        alert("Cannot connect to backend.");
+      }
+    });
+  }
+
+  if (assignForm) {
+    assignForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const assignmentData = {
+        teacher_id: assignTeacher.value,
+        branch_id: isBranchAdmin() ? getAdminBranchId() : assignBranch.value,
+        class_id: assignClass.value,
+        subject: document.getElementById("assign_subject").value.trim(),
+        role: document.getElementById("assign_role").value,
+        academic_year: document.getElementById("assign_academic_year").value.trim()
+      };
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/api/teachers/assign", {
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(assignmentData)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          alert(data.message || "Failed to assign teacher.");
+          return;
+        }
+
+        alert("Teacher assigned successfully.");
+        assignForm.reset();
+        await loadBranches();
+      } catch (error) {
+        console.error(error);
+        alert("Cannot connect to backend.");
+      }
+    });
+  }
+
+  async function start() {
+    await loadBranches();
+    await loadClasses();
+    await loadTeachers();
+  }
+
+  start();
+});
+
+
