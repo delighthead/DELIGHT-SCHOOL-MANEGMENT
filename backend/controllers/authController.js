@@ -27,14 +27,17 @@ exports.login = async (req, res) => {
     }
 
     const placeholders = allowedRoles.map(() => "?").join(",");
+    const rolePriorityCase = allowedRoles
+      .map((_, index) => `WHEN ? THEN ${index}`)
+      .join(" ");
 
     const [users] = await db.query(
       `SELECT id, branch_id, full_name, username, password, role, status
        FROM users
        WHERE username = ?
          AND role IN (${placeholders})
-       LIMIT 1`,
-      [username, ...allowedRoles]
+       ORDER BY CASE role ${rolePriorityCase} ELSE ${allowedRoles.length} END, id DESC`,
+      [username, ...allowedRoles, ...allowedRoles]
     );
 
     if (users.length === 0) {
@@ -43,17 +46,34 @@ exports.login = async (req, res) => {
       });
     }
 
-    const user = users[0];
+    // Handle duplicated Ghana Card/usernames across different roles by selecting
+    // the first role-priority account that matches the supplied password.
+    let user = null;
+    let matchedInactiveStatus = null;
 
-    if (user.status !== "active") {
+    for (const candidate of users) {
+      const isPasswordValid = await bcrypt.compare(password, candidate.password);
+
+      if (!isPasswordValid) {
+        continue;
+      }
+
+      if (candidate.status !== "active") {
+        matchedInactiveStatus = candidate.status;
+        continue;
+      }
+
+      user = candidate;
+      break;
+    }
+
+    if (!user && matchedInactiveStatus) {
       return res.status(403).json({
-        message: `Access denied. Account is ${user.status}. Please contact the school administrator.`
+        message: `Access denied. Account is ${matchedInactiveStatus}. Please contact the school administrator.`
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
+    if (!user) {
       return res.status(401).json({
         message: "Invalid login details"
       });
