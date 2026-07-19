@@ -2,15 +2,17 @@ document.addEventListener("DOMContentLoaded", function () {
   const loginForm = document.getElementById("loginForm");
   const loginMessage = document.getElementById("loginMessage");
 
-  function getApiBase() {
+  function getApiBases() {
     const host = window.location.hostname;
     if (host === "localhost" || host === "127.0.0.1") {
-      return "";
+      return [""];
     }
-    return "";
+
+    const protocol = window.location.protocol === "http:" ? "http:" : "https:";
+    return ["", `${protocol}//${host}:5000`];
   }
 
-  const API_BASE = getApiBase();
+  const API_BASES = getApiBases();
 
   function showMessage(message, isError = false) {
     if (!loginMessage) return;
@@ -24,6 +26,35 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   if (!loginForm) return;
+
+  async function tryLoginWithFallback(payload) {
+    let lastErrorMessage = "Login failed";
+
+    for (const apiBase of API_BASES) {
+      try {
+        const response = await fetch(`${apiBase}/api/auth/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          lastErrorMessage = data.message || "Login failed";
+          continue;
+        }
+
+        return { ok: true, data };
+      } catch (error) {
+        lastErrorMessage = "Cannot connect to backend.";
+      }
+    }
+
+    return { ok: false, message: lastErrorMessage };
+  }
 
   loginForm.addEventListener("submit", async function (event) {
     event.preventDefault();
@@ -40,24 +71,18 @@ document.addEventListener("DOMContentLoaded", function () {
     clearOldLoginData();
 
     try {
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          role,
-          username,
-          password
-        })
+      const result = await tryLoginWithFallback({
+        role,
+        username,
+        password
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        showMessage(data.message || "Login failed", true);
+      if (!result.ok) {
+        showMessage(result.message || "Login failed", true);
         return;
       }
+
+      const data = result.data;
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
