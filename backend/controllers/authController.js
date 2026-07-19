@@ -19,7 +19,8 @@ exports.login = async (req, res) => {
     } else if (role === "teacher") {
       allowedRoles = ["teacher", "teacher_admin"];
     } else if (role === "parent") {
-      allowedRoles = ["parent"];
+      // Allow super admin to use parent portal when one account serves both identities.
+      allowedRoles = ["parent", "super_admin"];
     } else {
       return res.status(400).json({
         message: "Unknown user role"
@@ -79,6 +80,10 @@ exports.login = async (req, res) => {
       });
     }
 
+    const sessionRole = role === "parent" && user.role === "super_admin"
+      ? "parent"
+      : user.role;
+
     if (user.role === "teacher") {
       const [teacherRows] = await db.query(
         "SELECT status FROM teachers WHERE user_id = ? OR ghana_card_number = ? LIMIT 1",
@@ -98,7 +103,7 @@ exports.login = async (req, res) => {
       }
     }
 
-    if (user.role === "parent") {
+    if (sessionRole === "parent") {
       const [parentRows] = await db.query(
         "SELECT id, status FROM parents WHERE user_id = ? OR ghana_card_number = ? LIMIT 1",
         [user.id, user.username]
@@ -138,7 +143,7 @@ exports.login = async (req, res) => {
     const token = jwt.sign(
       {
         id: user.id,
-        role: user.role,
+        role: sessionRole,
         branch_id: user.branch_id,
         username: user.username
       },
@@ -158,7 +163,7 @@ exports.login = async (req, res) => {
         id: user.id,
         full_name: user.full_name,
         username: user.username,
-        role: user.role,
+        role: sessionRole,
         branch_id: user.branch_id,
         status: user.status
       }
@@ -182,14 +187,28 @@ exports.verifyForgotPassword = async (req, res) => {
       });
     }
 
+    let allowedRoles = [];
+
+    if (role === "admin") {
+      allowedRoles = ["super_admin", "branch_admin", "admin", "teacher_admin"];
+    } else if (role === "teacher") {
+      allowedRoles = ["teacher", "teacher_admin"];
+    } else if (role === "parent") {
+      allowedRoles = ["parent"];
+    } else {
+      allowedRoles = [role];
+    }
+
+    const placeholders = allowedRoles.map(() => "?").join(",");
+
     const [users] = await db.query(
       `SELECT id, full_name, username, role, phone, status
        FROM users
        WHERE username = ?
-         AND role = ?
+         AND role IN (${placeholders})
          AND phone = ?
        LIMIT 1`,
-      [username, role, phone]
+      [username, ...allowedRoles, phone]
     );
 
     if (users.length === 0) {
