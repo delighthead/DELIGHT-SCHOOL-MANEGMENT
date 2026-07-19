@@ -64,8 +64,15 @@ async function getLoggedInParentProfile(user) {
     FROM parents
     LEFT JOIN branches ON parents.branch_id = branches.id
     WHERE parents.user_id = ? OR parents.ghana_card_number = ?
+    ORDER BY
+      CASE
+        WHEN parents.user_id = ? THEN 0
+        WHEN parents.ghana_card_number = ? THEN 1
+        ELSE 2
+      END,
+      parents.id DESC
     LIMIT 1`,
-    [user.id, user.username]
+    [user.id, user.username, user.id, user.username]
   );
 
   return parents.length > 0 ? parents[0] : null;
@@ -373,9 +380,36 @@ exports.updateMyProfile = async (req, res) => {
       });
     }
 
+    let parentUserId = parent.user_id || null;
+
+    if (!parentUserId) {
+      const [parentUsers] = await db.query(
+        `SELECT id
+         FROM users
+         WHERE username = ?
+           AND role = 'parent'
+         ORDER BY id DESC
+         LIMIT 1`,
+        [parent.ghana_card_number]
+      );
+
+      if (parentUsers.length === 0) {
+        return res.status(404).json({
+          message: "Parent login account not found"
+        });
+      }
+
+      parentUserId = parentUsers[0].id;
+
+      await db.query(
+        "UPDATE parents SET user_id = ? WHERE id = ?",
+        [parentUserId, parent.id]
+      );
+    }
+
     const [duplicateUsers] = await db.query(
       "SELECT id FROM users WHERE phone = ? AND id <> ? LIMIT 1",
-      [phone, parent.user_id || 0]
+      [phone, parentUserId]
     );
 
     if (duplicateUsers.length > 0) {
@@ -394,25 +428,15 @@ exports.updateMyProfile = async (req, res) => {
       [phone, email || null, parent.id]
     );
 
-    if (parent.user_id) {
-      await db.query(
-        `UPDATE users
-         SET phone = ?,
-             email = ?,
-             password = ?
-         WHERE id = ?`,
-        [phone, email || null, hashedPassword, parent.user_id]
-      );
-    } else {
-      await db.query(
-        `UPDATE users
-         SET phone = ?,
-             email = ?,
-             password = ?
-         WHERE username = ?`,
-        [phone, email || null, hashedPassword, parent.ghana_card_number]
-      );
-    }
+    await db.query(
+      `UPDATE users
+       SET phone = ?,
+           email = ?,
+           password = ?
+       WHERE id = ?
+         AND role = 'parent'`,
+      [phone, email || null, hashedPassword, parentUserId]
+    );
 
     await db.query(
       `INSERT INTO activity_logs
