@@ -1,5 +1,9 @@
 (function () {
-  const API_BASE = "http://127.0.0.1:5000";
+  const host = window.location.hostname;
+  const API_BASE =
+    host === "localhost" || host === "127.0.0.1"
+      ? "http://127.0.0.1:5000"
+      : "";
 
   window.API_BASE = API_BASE;
 

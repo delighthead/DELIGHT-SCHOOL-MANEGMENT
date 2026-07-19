@@ -1,5 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const API = "http://127.0.0.1:5000";
+  const host = window.location.hostname;
+  const API =
+    host === "localhost" || host === "127.0.0.1"
+      ? "http://127.0.0.1:5000"
+      : "";
 
   async function loadTeacherDropdownOnly() {
     const select = document.getElementById("assign_teacher_id");
