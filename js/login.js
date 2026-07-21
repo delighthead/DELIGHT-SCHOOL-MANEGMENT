@@ -4,12 +4,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function getApiBases() {
     const host = window.location.hostname;
+    const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+    const altProtocol = protocol === "https:" ? "http:" : "https:";
+    const bases = ["", `${protocol}//${host}:5000`];
+
     if (host === "localhost" || host === "127.0.0.1") {
-      return [""];
+      bases.push("http://localhost:5000", "http://127.0.0.1:5000");
+    } else {
+      bases.push(`${altProtocol}//${host}:5000`);
     }
 
-    const protocol = window.location.protocol === "http:" ? "http:" : "https:";
-    return ["", `${protocol}//${host}:5000`];
+    return [...new Set(bases)];
   }
 
   const API_BASES = getApiBases();
