@@ -1,6 +1,55 @@
 document.addEventListener("DOMContentLoaded", function () {
   const API = "";
 
+  function normalizeAssignRoleField() {
+    const byId = document.getElementById("assign_role");
+    const roleField = byId || document.querySelector("#teacherAssignForm input[placeholder*='Subject Teacher']");
+
+    if (!roleField) return;
+
+    const options = [
+      { value: "", label: "Select role" },
+      { value: "Admin", label: "Admin" },
+      { value: "Class Teacher", label: "Class Teacher" },
+      { value: "Subject Teacher", label: "Subject Teacher" }
+    ];
+
+    if (roleField.tagName && roleField.tagName.toLowerCase() === "select") {
+      const existingValues = Array.from(roleField.options || []).map(option => option.value);
+
+      options.forEach(item => {
+        if (!existingValues.includes(item.value)) {
+          const option = document.createElement("option");
+          option.value = item.value;
+          option.textContent = item.label;
+          roleField.appendChild(option);
+        }
+      });
+
+      if (!roleField.value) {
+        roleField.value = "Subject Teacher";
+      }
+
+      return;
+    }
+
+    const select = document.createElement("select");
+    select.id = "assign_role";
+    select.name = roleField.name || "assign_role";
+
+    options.forEach(item => {
+      const option = document.createElement("option");
+      option.value = item.value;
+      option.textContent = item.label;
+      if (item.value === "Subject Teacher") {
+        option.selected = true;
+      }
+      select.appendChild(option);
+    });
+
+    roleField.replaceWith(select);
+  }
+
   async function loadTeacherBranches() {
     const branchSelect = document.getElementById("teacher_branch_id");
     if (!branchSelect) return;
@@ -58,4 +107,5 @@ document.addEventListener("DOMContentLoaded", function () {
 
   loadTeacherBranches();
   loadTeacherStatus();
+  normalizeAssignRoleField();
 });
