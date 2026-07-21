@@ -210,6 +210,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         actionButtons.push(`
           <button type="button" class="small-btn success edit-teacher-btn"
+            style="background:#16a34a;color:#ffffff;opacity:1;border:none;cursor:pointer;"
             data-id="${teacher.id || ""}"
             data-record="${encodeURIComponent(JSON.stringify(teacher))}">
             Edit
