@@ -7,7 +7,7 @@ CREATE TABLE users (
   full_name VARCHAR(150) NOT NULL,
   username VARCHAR(100) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  role ENUM('admin', 'teacher', 'parent') NOT NULL,
+  role ENUM('super_admin', 'branch_admin', 'admin', 'teacher_admin', 'teacher', 'parent') NOT NULL,
   phone VARCHAR(30),
   email VARCHAR(150),
   status ENUM('active', 'locked', 'disabled', 'deleted') DEFAULT 'active',

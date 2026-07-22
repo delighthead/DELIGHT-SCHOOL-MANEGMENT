@@ -28,6 +28,62 @@ const activityRoutes = require("./routes/activityRoutes");
 
 const app = express();
 
+async function ensureUsersRoleCompatibility() {
+  try {
+    const [roleColumnRows] = await db.query(
+      `SELECT COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND TABLE_NAME = 'users'
+         AND COLUMN_NAME = 'role'
+       LIMIT 1`
+    );
+
+    if (roleColumnRows.length === 0) {
+      console.warn("Schema check skipped: users.role column not found.");
+      return;
+    }
+
+    const roleColumn = roleColumnRows[0];
+    const enumDefinition = String(roleColumn.COLUMN_TYPE || "");
+    const enumMatches = [...enumDefinition.matchAll(/'([^']+)'/g)];
+    const existingRoles = enumMatches.map((match) => match[1]);
+
+    const requiredRoles = [
+      "super_admin",
+      "branch_admin",
+      "admin",
+      "teacher_admin",
+      "teacher",
+      "parent"
+    ];
+
+    const mergedRoles = Array.from(new Set([...existingRoles, ...requiredRoles]));
+
+    const hasAllRequiredRoles = requiredRoles.every((role) => mergedRoles.includes(role));
+    if (hasAllRequiredRoles && existingRoles.length === mergedRoles.length) {
+      return;
+    }
+
+    const enumSql = mergedRoles
+      .map((role) => `'${role.replace(/'/g, "''")}'`)
+      .join(", ");
+
+    const nullSql = roleColumn.IS_NULLABLE === "YES" ? "NULL" : "NOT NULL";
+    const defaultSql = roleColumn.COLUMN_DEFAULT
+      ? ` DEFAULT '${String(roleColumn.COLUMN_DEFAULT).replace(/'/g, "''")}'`
+      : "";
+
+    await db.query(
+      `ALTER TABLE users MODIFY COLUMN role ENUM(${enumSql}) ${nullSql}${defaultSql}`
+    );
+
+    console.log("Updated users.role enum to include required application roles.");
+  } catch (error) {
+    console.warn("Schema compatibility check warning:", error.message);
+  }
+}
+
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -80,9 +136,15 @@ const HOST = process.env.HOST || "0.0.0.0";
 
 const server = http.createServer(app);
 
-server.listen(PORT, HOST, () => {
-  console.log(`Server running on http://${HOST}:${PORT}`);
-});
+async function startServer() {
+  await ensureUsersRoleCompatibility();
+
+  server.listen(PORT, HOST, () => {
+    console.log(`Server running on http://${HOST}:${PORT}`);
+  });
+}
+
+startServer();
 
 server.on("error", (error) => {
   console.error("Server error:", error.message);

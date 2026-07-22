@@ -615,6 +615,18 @@ exports.makeTeacherAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error("Make teacher admin error:", error);
+
+    if (
+      error &&
+      (error.code === "WARN_DATA_TRUNCATED" ||
+        error.code === "ER_TRUNCATED_WRONG_VALUE_FOR_FIELD")
+    ) {
+      return res.status(500).json({
+        message: "Database role configuration is outdated. Please restart the backend so role compatibility migration can run, then try again.",
+        error: error.message
+      });
+    }
+
     res.status(500).json({
       message: "Failed to make teacher admin",
       error: error.message
