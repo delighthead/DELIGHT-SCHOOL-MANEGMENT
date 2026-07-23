@@ -661,12 +661,12 @@ exports.makeTeacherAdmin = async (req, res) => {
     }
 
     const { id } = req.params;
-    const requestedRole = String(req.body && req.body.role ? req.body.role : "branch_admin").trim();
-    const allowedRoles = ["branch_admin", "teacher_admin"];
+    const requestedRole = String(req.body && req.body.role ? req.body.role : "teacher_admin").trim();
+    const allowedRoles = ["teacher_admin"];
 
     if (!allowedRoles.includes(requestedRole)) {
       return res.status(400).json({
-        message: "Role must be branch_admin or teacher_admin"
+        message: "Role must be teacher_admin"
       });
     }
 
@@ -702,7 +702,7 @@ exports.makeTeacherAdmin = async (req, res) => {
     );
 
     res.json({
-      message: `${teacher.full_name} is now assigned as ${requestedRole}.`,
+      message: `${teacher.full_name} is now assigned as Teacher Admin.`,
       role: requestedRole
     });
   } catch (error) {

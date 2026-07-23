@@ -230,13 +230,13 @@ document.addEventListener("DOMContentLoaded", function () {
           actionButtons.push(`
             <button type="button" class="small-btn warning make-teacher-admin-btn"
               data-id="${teacher.id || ""}">
-              Make Branch Admin
+              Make Teacher Admin
             </button>
           `);
         } else {
           actionButtons.push(`
             <small style="display:inline-block; margin-left:4px; color:#6b7280; font-weight:600;">
-              Branch Admin: Super Admin only
+              Teacher Admin: Super Admin only
             </small>
           `);
         }

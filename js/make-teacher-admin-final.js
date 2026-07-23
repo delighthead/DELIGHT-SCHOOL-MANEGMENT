@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", function () {
   async function makeTeacherAdmin(teacherId) {
     if (!teacherId) return;
 
-    if (!confirm("Make this teacher a Branch Admin for this branch?")) return;
+    if (!confirm("Make this teacher a Teacher Admin for this branch?")) return;
 
     try {
       const res = await fetch(`${API}/api/teachers/${teacherId}/make-admin`, {
