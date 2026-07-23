@@ -209,6 +209,16 @@ exports.assignTeacher = async (req, res) => {
       });
     }
 
+    const allowedAssignmentRoles = ["Admin", "Class Teacher", "Subject Teacher"];
+    const branchScopedRoles = ["Class Teacher", "Subject Teacher"];
+    const normalizedRole = role || "Subject Teacher";
+
+    if (!allowedAssignmentRoles.includes(normalizedRole)) {
+      return res.status(400).json({
+        message: "Invalid assignment role"
+      });
+    }
+
     const teacher = await getTeacherById(teacher_database_id);
 
     if (!teacher) {
@@ -220,6 +230,12 @@ exports.assignTeacher = async (req, res) => {
     if (isBranchScopedAdmin(req.user) && Number(teacher.branch_id) !== Number(req.user.branch_id)) {
       return res.status(403).json({
         message: "You can only assign teachers in your own branch"
+      });
+    }
+
+    if (isBranchScopedAdmin(req.user) && !branchScopedRoles.includes(normalizedRole)) {
+      return res.status(403).json({
+        message: "Branch admin can only assign Class Teacher or Subject Teacher roles"
       });
     }
 
@@ -238,7 +254,7 @@ exports.assignTeacher = async (req, res) => {
         teacher_database_id,
         class_id,
         subject,
-        role || "Subject Teacher",
+        normalizedRole,
         academic_year || "2025/2026"
       ]
     );

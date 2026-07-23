@@ -2,30 +2,40 @@ document.addEventListener("DOMContentLoaded", function () {
   const roleField = document.getElementById("assign_role");
   if (!roleField) return;
 
+  function getUser() {
+    try {
+      return JSON.parse(localStorage.getItem("user") || "{}");
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function isBranchScopedAdmin() {
+    const role = String(getUser().role || "").toLowerCase();
+    return role === "branch_admin" || role === "teacher_admin";
+  }
+
+  const allowedRoles = isBranchScopedAdmin()
+    ? ["Class Teacher", "Subject Teacher"]
+    : ["Admin", "Class Teacher", "Subject Teacher"];
+
   // If already a select, ensure expected options exist.
   if (roleField.tagName && roleField.tagName.toLowerCase() === "select") {
-    const expected = ["Admin", "Class Teacher", "Subject Teacher"];
-    const existing = Array.from(roleField.options || []).map(option => option.value);
+    roleField.innerHTML = "";
 
-    if (!existing.includes("")) {
-      const first = document.createElement("option");
-      first.value = "";
-      first.textContent = "Select role";
-      roleField.insertBefore(first, roleField.firstChild);
-    }
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = "Select role";
+    roleField.appendChild(first);
 
-    expected.forEach(value => {
-      if (!existing.includes(value)) {
-        const option = document.createElement("option");
-        option.value = value;
-        option.textContent = value;
-        roleField.appendChild(option);
-      }
+    allowedRoles.forEach(value => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      roleField.appendChild(option);
     });
 
-    if (!roleField.value) {
-      roleField.value = "Subject Teacher";
-    }
+    roleField.value = "Subject Teacher";
 
     return;
   }
@@ -37,9 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   [
     { value: "", label: "Select role" },
-    { value: "Admin", label: "Admin" },
-    { value: "Class Teacher", label: "Class Teacher" },
-    { value: "Subject Teacher", label: "Subject Teacher" }
+    ...allowedRoles.map(value => ({ value, label: value }))
   ].forEach(item => {
     const option = document.createElement("option");
     option.value = item.value;
