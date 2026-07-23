@@ -4,6 +4,26 @@ exports.getBranches = async (req, res) => {
   try {
     const includeInactive = req.query.include_inactive === "true";
 
+    const isBranchScopedUser =
+      req.user &&
+      (req.user.role === "branch_admin" ||
+        req.user.role === "teacher_admin" ||
+        req.user.role === "teacher");
+
+    if (isBranchScopedUser) {
+      const [branches] = await db.query(
+        includeInactive
+          ? "SELECT id, branch_name, location, phone, email, address, status FROM branches WHERE id = ? ORDER BY branch_name"
+          : "SELECT id, branch_name, location, phone, email, address, status FROM branches WHERE id = ? AND status = 'active' ORDER BY branch_name",
+        [req.user.branch_id]
+      );
+
+      return res.json({
+        message: "Branches retrieved successfully",
+        branches
+      });
+    }
+
     const [branches] = await db.query(
       includeInactive
         ? "SELECT id, branch_name, location, phone, email, address, status FROM branches ORDER BY branch_name"

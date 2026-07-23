@@ -2,7 +2,14 @@ const db = require("../config/database");
 
 exports.getAdminDashboard = async (req, res) => {
   try {
-    const { branch_id } = req.query;
+    let { branch_id } = req.query;
+
+    if (
+      req.user &&
+      (req.user.role === "branch_admin" || req.user.role === "teacher_admin")
+    ) {
+      branch_id = req.user.branch_id;
+    }
 
     const where = branch_id ? "WHERE branch_id = ?" : "";
     const params = branch_id ? [branch_id] : [];

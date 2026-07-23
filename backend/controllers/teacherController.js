@@ -645,6 +645,14 @@ exports.makeTeacherAdmin = async (req, res) => {
     }
 
     const { id } = req.params;
+    const requestedRole = String(req.body && req.body.role ? req.body.role : "branch_admin").trim();
+    const allowedRoles = ["branch_admin", "teacher_admin"];
+
+    if (!allowedRoles.includes(requestedRole)) {
+      return res.status(400).json({
+        message: "Role must be branch_admin or teacher_admin"
+      });
+    }
 
     const [teacherRows] = await db.query(
       `SELECT id, user_id, full_name, branch_id
@@ -670,16 +678,16 @@ exports.makeTeacherAdmin = async (req, res) => {
 
     await db.query(
       `UPDATE users
-       SET role = 'teacher_admin',
+       SET role = ?,
            branch_id = ?,
            status = 'active'
        WHERE id = ?`,
-      [teacher.branch_id, teacher.user_id]
+      [requestedRole, teacher.branch_id, teacher.user_id]
     );
 
     res.json({
-      message: `${teacher.full_name} is now both Teacher and Branch Admin.`,
-      role: "teacher_admin"
+      message: `${teacher.full_name} is now assigned as ${requestedRole}.`,
+      role: requestedRole
     });
   } catch (error) {
     console.error("Make teacher admin error:", error);
