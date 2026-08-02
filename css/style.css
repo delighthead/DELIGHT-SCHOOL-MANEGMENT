@@ -5,6 +5,27 @@
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.list-view-controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.list-view-controls .list-count-text {
+  font-weight: bold;
+  margin: 0;
+}
+
+.list-view-controls label {
+  font-weight: bold;
+}
+
+.list-view-controls select {
+  max-width: 160px;
+}
+
 body {
   background: #f4f6f9;
   color: #222;
