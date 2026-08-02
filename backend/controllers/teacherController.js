@@ -44,32 +44,10 @@ async function getOrCreateClass(className, branchId = 4) {
 async function getTeacherByUserId(userId) {
   if (!userId) return null;
 
-  const [userRows] = await db.query(
-    "SELECT id, username FROM users WHERE id = ? LIMIT 1",
+  const [rows] = await db.query(
+    "SELECT id, user_id, branch_id FROM teachers WHERE user_id = ? LIMIT 1",
     [userId]
   );
-
-  if (userRows.length === 0) return null;
-
-  const username = userRows[0].username || null;
-
-  const [rows] = await db.query(
-    `SELECT id, user_id, branch_id
-     FROM teachers
-     WHERE user_id = ?
-        OR (? IS NOT NULL AND ghana_card_number = ?)
-     ORDER BY CASE WHEN user_id = ? THEN 0 ELSE 1 END
-     LIMIT 1`,
-    [userId, username, username, userId]
-  );
-
-  if (rows.length > 0 && Number(rows[0].user_id || 0) !== Number(userId)) {
-    await db.query(
-      "UPDATE teachers SET user_id = ? WHERE id = ?",
-      [userId, rows[0].id]
-    );
-    rows[0].user_id = Number(userId);
-  }
 
   return rows.length > 0 ? rows[0] : null;
 }
@@ -367,19 +345,6 @@ exports.getTeacherByUserId = async (req, res) => {
       });
     }
 
-    const [userRows] = await db.query(
-      "SELECT id, username FROM users WHERE id = ? LIMIT 1",
-      [userId]
-    );
-
-    if (userRows.length === 0) {
-      return res.status(404).json({
-        message: "Teacher not found"
-      });
-    }
-
-    const username = userRows[0].username || null;
-
     const [rows] = await db.query(
       `SELECT 
           t.*,
@@ -387,24 +352,14 @@ exports.getTeacherByUserId = async (req, res) => {
        FROM teachers t
        LEFT JOIN branches b ON t.branch_id = b.id
        WHERE t.user_id = ?
-          OR (? IS NOT NULL AND t.ghana_card_number = ?)
-       ORDER BY CASE WHEN t.user_id = ? THEN 0 ELSE 1 END
        LIMIT 1`,
-      [userId, username, username, userId]
+      [userId]
     );
 
     if (rows.length === 0) {
       return res.status(404).json({
         message: "Teacher not found"
       });
-    }
-
-    if (Number(rows[0].user_id || 0) !== Number(userId)) {
-      await db.query(
-        "UPDATE teachers SET user_id = ? WHERE id = ?",
-        [userId, rows[0].id]
-      );
-      rows[0].user_id = Number(userId);
     }
 
     if (isBranchScopedAdmin(req.user) && Number(rows[0].branch_id) !== Number(req.user.branch_id)) {

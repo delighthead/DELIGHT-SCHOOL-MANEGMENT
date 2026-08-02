@@ -49,9 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
 
-      const response = await fetch(`/api/teachers/by-user/${user.id}`, {
-        headers: getAuthOnlyHeaders()
-      });
+      const response = await fetch(`/api/teachers/by-user/${user.id}`);
       const data = await response.json();
 
       if (!response.ok) {
