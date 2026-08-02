@@ -54,11 +54,14 @@ async function loadSchoolHeaderSettings() {
     if (logoBox) {
       const existingImg = logoBox.querySelector("img");
 
-      if (existingImg) {
-        existingImg.alt = `${schoolName} logo`;
-      } else {
+      if (logoUrl) {
         logoBox.innerHTML = "";
         logoBox.appendChild(buildLogoBrand());
+      } else if (!existingImg) {
+        logoBox.innerHTML = "";
+        logoBox.appendChild(buildLogoBrand());
+      } else {
+        existingImg.alt = `${schoolName} logo`;
       }
     }
 

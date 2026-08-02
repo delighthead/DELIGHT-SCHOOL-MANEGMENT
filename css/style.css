@@ -28,14 +28,6 @@ body {
   display: inline-flex;
   align-items: center;
   text-decoration: none;
-  color: white;
-}
-
-.logo:visited,
-.logo:hover,
-.logo:active {
-  color: white;
-  text-decoration: none;
 }
 
 .logo img {
@@ -1648,7 +1640,6 @@ footer p {
   display: inline-flex !important;
   align-items: center !important;
   gap: 10px !important;
-  color: white !important;
 }
 
 .dynamic-school-logo {
@@ -1665,7 +1656,6 @@ footer p {
   align-items: center !important;
   gap: 10px !important;
   font-weight: bold !important;
-  color: white !important;
 }
 
 .dynamic-school-logo {
