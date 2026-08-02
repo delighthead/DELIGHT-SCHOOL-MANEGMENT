@@ -27,7 +27,6 @@ body {
 .logo {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
   text-decoration: none;
   color: white;
 }
@@ -39,11 +38,6 @@ body {
   text-decoration: none;
 }
 
-.logo,
-.logo * {
-  text-decoration: none !important;
-}
-
 .logo span,
 .logo .dynamic-school-brand,
 .logo .dynamic-school-brand span {
@@ -51,11 +45,8 @@ body {
 }
 
 .logo img {
-  height: 48px !important;
-  width: 48px !important;
-  max-width: 48px !important;
-  max-height: 48px !important;
-  object-fit: contain !important;
+  height: 48px;
+  width: auto;
   display: block;
 }
 
