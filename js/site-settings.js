@@ -32,7 +32,6 @@ async function loadSchoolHeaderSettings() {
     function buildLogoBrand() {
       const wrapper = document.createElement("div");
       wrapper.className = "dynamic-school-brand";
-      wrapper.style.setProperty("color", "#ffffff", "important");
 
       if (logoUrl) {
         const img = document.createElement("img");
@@ -44,7 +43,6 @@ async function loadSchoolHeaderSettings() {
 
       const span = document.createElement("span");
       span.textContent = schoolName;
-      span.style.setProperty("color", "#ffffff", "important");
       wrapper.appendChild(span);
 
       return wrapper;
@@ -55,14 +53,9 @@ async function loadSchoolHeaderSettings() {
 
     if (logoBox) {
       const existingImg = logoBox.querySelector("img");
-      logoBox.style.setProperty("color", "#ffffff", "important");
 
       if (existingImg) {
         existingImg.alt = `${schoolName} logo`;
-        const currentName = logoBox.querySelector("span");
-        if (currentName) {
-          currentName.style.setProperty("color", "#ffffff", "important");
-        }
       } else {
         logoBox.innerHTML = "";
         logoBox.appendChild(buildLogoBrand());
