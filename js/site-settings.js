@@ -52,8 +52,17 @@ async function loadSchoolHeaderSettings() {
     const logoBox = document.querySelector(".logo");
 
     if (logoBox) {
-      logoBox.innerHTML = "";
-      logoBox.appendChild(buildLogoBrand());
+      const existingImg = logoBox.querySelector("img");
+
+      if (logoUrl) {
+        logoBox.innerHTML = "";
+        logoBox.appendChild(buildLogoBrand());
+      } else if (!existingImg) {
+        logoBox.innerHTML = "";
+        logoBox.appendChild(buildLogoBrand());
+      } else {
+        existingImg.alt = `${schoolName} logo`;
+      }
     }
 
     // Dashboard/sidebar header
