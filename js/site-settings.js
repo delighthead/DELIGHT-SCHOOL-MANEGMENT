@@ -5,8 +5,8 @@ async function loadSchoolHeaderSettings() {
       ? ""
       : "";
   const FIXED_LOGO_PATH = window.location.protocol === "file:"
-    ? "images/new-logo.png?v=20260803"
-    : "/images/new-logo.png?v=20260803";
+    ? "images/delight%20logo.png?v=20260803"
+    : "/images/delight%20logo.png?v=20260803";
 
   try {
     const response = await fetch(`${API_BASE}/api/settings`);
