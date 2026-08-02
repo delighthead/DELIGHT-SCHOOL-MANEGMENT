@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const loginForm = document.getElementById("loginForm");
   const loginMessage = document.getElementById("loginMessage");
   const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+  const INVALID_LOGIN_MESSAGE = "The selected role, Ghana Card, or Password is incorrect.";
 
   function getApiBases() {
     const host = window.location.hostname;
@@ -104,7 +105,13 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       if (!result.ok) {
-        showMessage(result.message || "Login failed", true);
+        const normalizedMessage = String(result.message || "").toLowerCase();
+        const isInvalidCredentials = normalizedMessage.includes("invalid login details")
+          || normalizedMessage.includes("incorrect password")
+          || normalizedMessage.includes("invalid credentials")
+          || normalizedMessage.includes("wrong password");
+
+        showMessage(isInvalidCredentials ? INVALID_LOGIN_MESSAGE : (result.message || "Login failed"), true);
         return;
       }
 

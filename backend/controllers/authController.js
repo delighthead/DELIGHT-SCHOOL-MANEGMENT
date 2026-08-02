@@ -2,6 +2,8 @@ const db = require("../config/database");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+const INVALID_LOGIN_MESSAGE = "The selected role, Ghana Card, or Password is incorrect.";
+
 exports.login = async (req, res) => {
   try {
     const { username, password, role } = req.body;
@@ -43,7 +45,7 @@ exports.login = async (req, res) => {
 
     if (users.length === 0) {
       return res.status(401).json({
-        message: "Invalid login details"
+        message: INVALID_LOGIN_MESSAGE
       });
     }
 
@@ -76,7 +78,7 @@ exports.login = async (req, res) => {
 
     if (!user) {
       return res.status(401).json({
-        message: "Invalid login details"
+        message: INVALID_LOGIN_MESSAGE
       });
     }
 
