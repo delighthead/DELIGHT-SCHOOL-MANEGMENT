@@ -486,16 +486,6 @@ footer p {
 
   .navbar nav a {
     font-size: 14px;
-    display: inline-flex;
-    align-items: center;
-    min-height: 36px;
-    padding: 4px 8px;
-    border-radius: 6px;
-  }
-
-  .navbar nav .login-btn {
-    min-height: 40px;
-    padding: 8px 12px;
   }
 
   .hero h1 {
@@ -524,16 +514,6 @@ footer p {
 }
 
 @media (max-width: 560px) {
-  .navbar nav {
-    gap: 10px 12px;
-  }
-
-  .navbar nav a {
-    font-size: 13px;
-    min-height: 38px;
-    padding: 6px 9px;
-  }
-
   .hero {
     flex-direction: column;
     align-items: flex-start;
