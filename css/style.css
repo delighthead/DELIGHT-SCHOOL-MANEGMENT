@@ -38,6 +38,12 @@ body {
   text-decoration: none;
 }
 
+.logo span,
+.logo .dynamic-school-brand,
+.logo .dynamic-school-brand span {
+  color: white !important;
+}
+
 .logo img {
   height: 48px;
   width: auto;
