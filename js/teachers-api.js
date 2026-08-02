@@ -4,8 +4,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const teacherForm = document.getElementById("teacherForm");
   const assignForm = document.getElementById("teacherAssignForm");
   const teacherTableBody = document.getElementById("teacherTableBody");
-  const teacherLimitSelect = document.getElementById("teacherLimitSelect");
-  const teacherCountText = document.getElementById("teacherCountText");
 
   const teacherBranch = document.getElementById("teacher_branch_id");
   const assignBranch = document.getElementById("assign_branch_id");
@@ -199,28 +197,14 @@ document.addEventListener("DOMContentLoaded", function () {
         ["full_name", "name", "teacher_name"]
       );
 
-      let visibleTeachers = teachers;
-      const limitValue = teacherLimitSelect ? teacherLimitSelect.value : "5";
-
-      if (limitValue !== "all") {
-        const limit = Number(limitValue);
-        if (!Number.isNaN(limit) && limit > 0) {
-          visibleTeachers = teachers.slice(0, limit);
-        }
-      }
-
-      if (teacherCountText) {
-        teacherCountText.textContent = `${visibleTeachers.length} teacher record(s) shown`;
-      }
-
-      if (visibleTeachers.length === 0) {
+      if (teachers.length === 0) {
         teacherTableBody.innerHTML = `<tr><td colspan="10">No teachers found.</td></tr>`;
         return;
       }
 
       teacherTableBody.innerHTML = "";
 
-      visibleTeachers.forEach(teacher => {
+      teachers.forEach(teacher => {
         const row = document.createElement("tr");
         const actionButtons = [];
 
@@ -456,10 +440,6 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
   });
-
-  if (teacherLimitSelect) {
-    teacherLimitSelect.addEventListener("change", loadTeachers);
-  }
 
   async function start() {
     await loadBranches();
