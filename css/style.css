@@ -81,14 +81,14 @@ body {
   color: white;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 36px;
+  justify-content: flex-start;
+  gap: 0;
   padding: 70px 8%;
 }
 
 .hero-content {
-  max-width: 750px;
-  flex: 1 1 58%;
+  max-width: 900px;
+  flex: 1 1 100%;
 }
 
 .hero-media {
