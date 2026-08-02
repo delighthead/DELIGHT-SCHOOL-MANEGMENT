@@ -25,8 +25,15 @@ body {
 }
 
 .logo {
-  font-size: 24px;
-  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logo img {
+  height: 48px;
+  width: auto;
+  display: block;
 }
 
 .navbar nav {
