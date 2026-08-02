@@ -18,11 +18,11 @@ async function loadSchoolHeaderSettings() {
     const schoolName = settings.school_name || "Delight International School";
     const logoUrl = FIXED_LOGO_PATH;
 
-    document.querySelectorAll("[data-school-name], .school-name, #schoolNameText").forEach((el) => {
+    document.querySelectorAll("[data-school-name], .school-name, #schoolNameText, #sidebarSchoolName").forEach((el) => {
       el.textContent = schoolName;
     });
 
-    document.querySelectorAll("[data-school-logo], .school-logo, #schoolLogoImage").forEach((el) => {
+    document.querySelectorAll("[data-school-logo], .school-logo, #schoolLogoImage, #sidebarSchoolLogo").forEach((el) => {
       if (el.tagName === "IMG") {
         if (logoUrl) {
           el.src = logoUrl;
