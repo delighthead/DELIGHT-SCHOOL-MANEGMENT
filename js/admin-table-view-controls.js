@@ -5,6 +5,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const heading = section.querySelector("h2");
     if (!heading) return "";
 
+    const text = (heading.textContent || "").trim().toLowerCase();
+
+    if (text.includes("account")) return "account";
+    if (text.includes("activity")) return "activity";
+    if (text.includes("student")) return "student";
+    if (text.includes("teacher")) return "teacher";
+    if (text.includes("parent")) return "parent";
+    if (text.includes("score")) return "score";
+    if (text.includes("report")) return "report";
+    if (text.includes("fee")) return "fee";
+    if (text.includes("attendance")) return "attendance";
+    if (text.includes("branch")) return "branch";
+    if (text.includes("announcement")) return "announcement";
+    if (text.includes("promotion")) return "promotion";
+
     const firstWord = (heading.textContent || "")
       .trim()
       .toLowerCase()
