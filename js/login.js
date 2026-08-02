@@ -62,12 +62,12 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
           const rawText = await response.text();
           lastErrorMessage = rawText || `Login failed (${response.status})`;
-          continue;
+          return { ok: false, message: lastErrorMessage };
         }
 
         if (!response.ok) {
           lastErrorMessage = data.message || "Login failed";
-          continue;
+          return { ok: false, message: lastErrorMessage };
         }
 
         return { ok: true, data };
