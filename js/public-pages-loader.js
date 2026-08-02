@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   const API = "";
+  const ADMISSION_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSe0gID4VYQBk6m1ZTvgodypO1bKIYs1m43R22ueAxqXClhK4Q/viewform?usp=header";
 
   function getPageKey() {
     const file = location.pathname.split("/").pop() || "index.html";
@@ -17,6 +18,20 @@ document.addEventListener("DOMContentLoaded", function () {
   async function loadPageContent() {
     const pageKey = getPageKey();
     if (!pageKey) return;
+
+    const forceAdmissionButtonLink = () => {
+      if (pageKey !== "home" && pageKey !== "admission") return;
+
+      const btn = document.querySelector("[data-page-button]");
+      if (!btn) return;
+
+      btn.href = ADMISSION_FORM_URL;
+      btn.target = "_blank";
+      btn.rel = "noopener noreferrer";
+    };
+
+    // Apply immediately in case content API is unavailable.
+    forceAdmissionButtonLink();
 
     try {
       const res = await fetch(`${API}/api/website-pages/${pageKey}`);
@@ -58,10 +73,18 @@ document.addEventListener("DOMContentLoaded", function () {
       const btn = document.querySelector("[data-page-button]");
       if (btn) {
         if (page.button_text) btn.textContent = page.button_text;
-        if (page.button_link) btn.href = page.button_link;
+        if (page.button_link && pageKey !== "home" && pageKey !== "admission") {
+          btn.href = page.button_link;
+        }
       }
+
+      // Enforce required Google Form link for Home and Admission buttons.
+      forceAdmissionButtonLink();
     } catch (error) {
       console.error("Public page content load error:", error);
+
+      // Keep the required button link even if API request fails.
+      forceAdmissionButtonLink();
     }
   }
 
