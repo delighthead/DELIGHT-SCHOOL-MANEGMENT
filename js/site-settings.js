@@ -4,6 +4,9 @@ async function loadSchoolHeaderSettings() {
     host === "localhost" || host === "127.0.0.1"
       ? ""
       : "";
+  const FIXED_LOGO_PATH = window.location.protocol === "file:"
+    ? "images/delight_international_school_transparent.png"
+    : "/images/delight_international_school_transparent.png";
 
   try {
     const response = await fetch(`${API_BASE}/api/settings`);
@@ -13,8 +16,7 @@ async function loadSchoolHeaderSettings() {
 
     const settings = data.settings || {};
     const schoolName = settings.school_name || "Delight International School";
-    const logoPath = settings.school_logo;
-    const logoUrl = logoPath ? `${API_BASE}${logoPath}` : "";
+    const logoUrl = FIXED_LOGO_PATH;
 
     document.querySelectorAll("[data-school-name], .school-name, #schoolNameText").forEach((el) => {
       el.textContent = schoolName;
@@ -34,13 +36,11 @@ async function loadSchoolHeaderSettings() {
       wrapper.className = "dynamic-school-brand";
       wrapper.style.setProperty("color", "#ffffff", "important");
 
-      if (logoUrl) {
-        const img = document.createElement("img");
-        img.src = logoUrl;
-        img.alt = "School Logo";
-        img.className = "dynamic-school-logo";
-        wrapper.appendChild(img);
-      }
+      const img = document.createElement("img");
+      img.src = logoUrl;
+      img.alt = "School Logo";
+      img.className = "dynamic-school-logo";
+      wrapper.appendChild(img);
 
       const span = document.createElement("span");
       span.textContent = schoolName;
@@ -54,19 +54,19 @@ async function loadSchoolHeaderSettings() {
     const logoBox = document.querySelector(".logo");
 
     if (logoBox) {
-      const existingImg = logoBox.querySelector("img");
       logoBox.style.setProperty("color", "#ffffff", "important");
+      logoBox.innerHTML = "";
 
-      if (existingImg) {
-        existingImg.alt = `${schoolName} logo`;
-        const currentName = logoBox.querySelector("span");
-        if (currentName) {
-          currentName.style.setProperty("color", "#ffffff", "important");
-        }
-      } else {
-        logoBox.innerHTML = "";
-        logoBox.appendChild(buildLogoBrand());
-      }
+      const img = document.createElement("img");
+      img.src = logoUrl;
+      img.alt = `${schoolName} logo`;
+      logoBox.appendChild(img);
+
+      const span = document.createElement("span");
+      span.textContent = schoolName;
+      span.className = "header-school-name";
+      span.style.setProperty("color", "#ffffff", "important");
+      logoBox.appendChild(span);
     }
 
     // Dashboard/sidebar header
