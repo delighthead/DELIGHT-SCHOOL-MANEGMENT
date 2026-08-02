@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   const API = "";
+  const ADMISSION_FORM_LINK = "https://docs.google.com/forms/d/e/1FAIpQLSe0gID4VYQBk6m1ZTvgodypO1bKIYs1m43R22ueAxqXClhK4Q/viewform?usp=header";
 
   function getPageKey() {
     const file = location.pathname.split("/").pop() || "index.html";
@@ -58,7 +59,15 @@ document.addEventListener("DOMContentLoaded", function () {
       const btn = document.querySelector("[data-page-button]");
       if (btn) {
         if (page.button_text) btn.textContent = page.button_text;
-        if (page.button_link) btn.href = page.button_link;
+
+        // Keep Home and Admission CTAs pinned to the official Google form.
+        if (pageKey === "home" || pageKey === "admission") {
+          btn.href = ADMISSION_FORM_LINK;
+          btn.target = "_blank";
+          btn.rel = "noopener noreferrer";
+        } else if (page.button_link) {
+          btn.href = page.button_link;
+        }
       }
     } catch (error) {
       console.error("Public page content load error:", error);
