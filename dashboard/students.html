@@ -162,7 +162,17 @@
         <h2>Student List</h2>
 
         <div class="student-list-tools">
-          <p id="studentCountText" class="count-text">Showing 0 out of 0 students</p>
+          <p id="studentCountText" class="count-text">0 student record(s) shown</p>
+
+          <div class="list-view-controls" style="margin-bottom:0;">
+            <label for="studentLimitSelect">View:</label>
+            <select id="studentLimitSelect" data-list-view-select="true">
+              <option value="5">Latest 5</option>
+              <option value="10">Latest 10</option>
+              <option value="20">Latest 20</option>
+              <option value="all">All</option>
+            </select>
+          </div>
 
           <div class="student-search-box">
             <input type="text" id="studentSearchInput" placeholder="Search by student name or phone number">
@@ -198,8 +208,8 @@
   <script src="../js/logout.js?v=2"></script>
   <script src="../js/admin-panel-title.js?v=2"></script>
   <script src="../js/site-settings.js?v=4"></script>
-  <script src="../js/students-api.js?v=2"></script>
-  <script src="../js/student-search-fix.js?v=1"></script>
+  <script src="../js/students-api.js?v=3"></script>
+  <script src="../js/student-search-fix.js?v=2"></script>
   <script src="../js/student-branch-dropdown-fix.js?v=1"></script>
   <script src="../js/admin-sidebar-picture-final.js?v=1"></script>
   <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>

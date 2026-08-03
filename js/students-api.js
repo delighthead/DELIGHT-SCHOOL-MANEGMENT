@@ -242,7 +242,7 @@ document.addEventListener("DOMContentLoaded", function () {
       document.querySelector("#studentTableCount");
 
     if (countText) {
-      countText.textContent = `Showing ${visibleCount} out of ${totalCount} students`;
+      countText.textContent = `${visibleCount} student record(s) shown`;
     }
   }
 

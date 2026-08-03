@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const clearBtn = document.getElementById("studentClearBtn");
   const tableBody = document.getElementById("studentTableBody");
   const countText = document.getElementById("studentCountText");
+  const limitSelect = document.getElementById("studentLimitSelect");
 
   if (!searchInput || !searchBtn || !clearBtn || !tableBody) return;
 
@@ -19,21 +20,37 @@ document.addEventListener("DOMContentLoaded", function () {
     const visibleRows = rows.filter(row => row.style.display !== "none");
 
     if (countText) {
-      countText.textContent = `Showing ${visibleRows.length} out of ${rows.length} students`;
+      countText.textContent = `${visibleRows.length} student record(s) shown`;
     }
+  }
+
+  function getLimit() {
+    if (!limitSelect) return 5;
+    if (limitSelect.value === "all") return "all";
+
+    const parsed = Number(limitSelect.value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 5;
   }
 
   function searchStudents() {
     const keyword = searchInput.value.trim().toLowerCase();
     const rows = getStudentRows();
+    const matchedRows = [];
 
     rows.forEach(row => {
       const rowText = row.textContent.toLowerCase();
-
       if (!keyword || rowText.includes(keyword)) {
+        matchedRows.push(row);
+      }
+      row.style.display = "none";
+    });
+
+    const limit = getLimit();
+    const maxVisible = limit === "all" ? matchedRows.length : limit;
+
+    matchedRows.forEach((row, index) => {
+      if (index < maxVisible) {
         row.style.display = "";
-      } else {
-        row.style.display = "none";
       }
     });
 
@@ -42,16 +59,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function clearSearch() {
     searchInput.value = "";
-
-    getStudentRows().forEach(row => {
-      row.style.display = "";
-    });
-
-    updateCount();
+    searchStudents();
   }
 
   searchBtn.onclick = searchStudents;
   clearBtn.onclick = clearSearch;
+
+  if (limitSelect) {
+    limitSelect.addEventListener("change", searchStudents);
+  }
 
   searchInput.addEventListener("keyup", function (event) {
     if (event.key === "Enter") {
@@ -63,5 +79,5 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  setTimeout(updateCount, 1000);
+  setTimeout(searchStudents, 1000);
 });
