@@ -12,8 +12,59 @@ document.addEventListener("DOMContentLoaded", function () {
   const parentForm = document.getElementById("parentForm");
   const parentTableBody = document.getElementById("parentTableBody");
   const branchSelect = document.getElementById("parent_branch_id");
+  const parentCountText = document.getElementById("parentCountText");
+  const parentLimitSelect = document.getElementById("parentLimitSelect");
 
   let editingParentId = null;
+  let allParents = [];
+
+  function getParentLimitValue() {
+    if (!parentLimitSelect) return 5;
+    if (parentLimitSelect.value === "all") return "all";
+
+    const parsed = Number(parentLimitSelect.value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 5;
+  }
+
+  function renderParentsByLimit() {
+    if (!parentTableBody) return;
+
+    const limitValue = getParentLimitValue();
+    const visibleParents = limitValue === "all"
+      ? allParents
+      : allParents.slice(0, limitValue);
+
+    if (visibleParents.length === 0) {
+      if (parentCountText) parentCountText.textContent = "0 parent record(s) shown";
+      parentTableBody.innerHTML = `<tr><td colspan="8">No parents found.</td></tr>`;
+      return;
+    }
+
+    parentTableBody.innerHTML = "";
+
+    visibleParents.forEach(parent => {
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>${parent.branch_name || parent.branch || ""}</td>
+        <td>${parent.full_name || parent.parent_name || parent.name || ""}</td>
+        <td>${parent.ghana_card_number || parent.ghana_card || ""}</td>
+        <td>${parent.phone || ""}</td>
+        <td>${parent.email || ""}</td>
+        <td>${parent.address || ""}</td>
+        <td>${parent.status || "active"}</td>
+        <td>
+          <button type="button" class="small-btn edit-parent-btn" data-id="${parent.id}">Edit</button>
+        </td>
+      `;
+
+      parentTableBody.appendChild(row);
+    });
+
+    if (parentCountText) {
+      parentCountText.textContent = `${visibleParents.length} parent record(s) shown`;
+    }
+  }
 
   function getUser() {
     try {
@@ -138,34 +189,19 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       const parents = pickArray(data, "parents");
+      allParents = parents;
 
       if (parents.length === 0) {
+        if (parentCountText) parentCountText.textContent = "0 parent record(s) shown";
         parentTableBody.innerHTML = `<tr><td colspan="8">No parents found.</td></tr>`;
         return;
       }
 
-      parentTableBody.innerHTML = "";
-
-      parents.forEach(parent => {
-        const row = document.createElement("tr");
-
-        row.innerHTML = `
-          <td>${parent.branch_name || parent.branch || ""}</td>
-          <td>${parent.full_name || parent.parent_name || parent.name || ""}</td>
-          <td>${parent.ghana_card_number || parent.ghana_card || ""}</td>
-          <td>${parent.phone || ""}</td>
-          <td>${parent.email || ""}</td>
-          <td>${parent.address || ""}</td>
-          <td>${parent.status || "active"}</td>
-          <td>
-            <button type="button" class="small-btn edit-parent-btn" data-id="${parent.id}">Edit</button>
-          </td>
-        `;
-
-        parentTableBody.appendChild(row);
-      });
+      renderParentsByLimit();
     } catch (error) {
       console.error("Parents load error:", error);
+      allParents = [];
+      if (parentCountText) parentCountText.textContent = "0 parent record(s) shown";
       parentTableBody.innerHTML = `<tr><td colspan="8">${error.message}</td></tr>`;
     }
   }
@@ -314,6 +350,12 @@ document.addEventListener("DOMContentLoaded", function () {
       alert("Failed to update parent status.");
     }
   });
+
+  if (parentLimitSelect) {
+    parentLimitSelect.addEventListener("change", function () {
+      renderParentsByLimit();
+    });
+  }
 
   async function start() {
     await loadBranches();

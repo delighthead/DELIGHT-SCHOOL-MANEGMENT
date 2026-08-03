@@ -90,6 +90,17 @@
           <button type="button" class="primary-btn danger-btn" id="parentClearSearchBtn">Clear</button>
         </div>
 
+        <div class="list-view-controls" id="parentListControls">
+          <p id="parentCountText" class="list-count-text">0 parent record(s) shown</p>
+          <label for="parentLimitSelect">View:</label>
+          <select id="parentLimitSelect" data-list-view-select="true">
+            <option value="5">Latest 5</option>
+            <option value="10">Latest 10</option>
+            <option value="20">Latest 20</option>
+            <option value="all">All</option>
+          </select>
+        </div>
+
 
 
         <table class="data-table">
@@ -120,7 +131,7 @@
 
   <script src="../js/api-helper.js?v=4"></script>
   <script src="../js/dashboard-actions.js?v=106"></script>
-  <script src="../js/parents-api.js?v=71"></script>
+  <script src="../js/parents-api.js?v=72"></script>
   <script src="../js/admin-panel-title.js?v=1"></script>
   <script src="../js/logout.js?v=2"></script>
   <script src="../js/admin-guard.js?v=1"></script>
