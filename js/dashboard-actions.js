@@ -155,7 +155,8 @@ document.addEventListener("DOMContentLoaded", function () {
           button.id === "searchScoresBtn" ||
           button.id === "clearScoresSearchBtn" ||
           button.id === "loadQuickStudentsBtn" ||
-          button.id === "saveQuickAttendanceBtn"
+          button.id === "saveQuickAttendanceBtn" ||
+          button.id === "applyClassTermFeeBtn"
         ) {
           return;
         }
