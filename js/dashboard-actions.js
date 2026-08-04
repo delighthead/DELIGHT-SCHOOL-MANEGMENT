@@ -74,6 +74,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  // Expose custom prompt helpers for other dashboard scripts.
+  window.showWebAlert = showWebAlert;
+  window.showWebConfirm = showWebConfirm;
+
   const buttons = document.querySelectorAll("button");
 
   buttons.forEach(function (button) {

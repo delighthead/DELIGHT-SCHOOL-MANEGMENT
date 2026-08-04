@@ -8,6 +8,21 @@ document.addEventListener("DOMContentLoaded", function () {
   const amountInput = document.getElementById("class_fee_amount");
   const applyBtn = document.getElementById("applyClassTermFeeBtn");
 
+  function showAlert(message, kind) {
+    if (typeof window.showWebAlert === "function") {
+      return window.showWebAlert(message, kind);
+    }
+    alert(message);
+    return Promise.resolve();
+  }
+
+  function showConfirm(message) {
+    if (typeof window.showWebConfirm === "function") {
+      return window.showWebConfirm(message);
+    }
+    return Promise.resolve(confirm(message));
+  }
+
   function getToken() {
     return localStorage.getItem("token") || "";
   }
@@ -129,11 +144,11 @@ document.addEventListener("DOMContentLoaded", function () {
     const amount = amountInput ? amountInput.value : "";
 
     if (!branchId || !classId || !term || !academicYear || !amount) {
-      alert("Please select branch, class, term, academic year, and enter the fee amount.");
+      await showAlert("Please select branch, class, term, academic year, and enter the fee amount.", "warning");
       return;
     }
 
-    const confirmApply = confirm(
+    const confirmApply = await showConfirm(
       `Apply GHS ${Number(amount).toFixed(2)} as ${term} fees to all active students in this class?\n\nPrevious balances will be added for each student.`
     );
 
@@ -161,14 +176,14 @@ document.addEventListener("DOMContentLoaded", function () {
         throw new Error(data.message || "Could not apply class term fees.");
       }
 
-      alert(
+      await showAlert(
         `${data.message}\n\nStudents: ${data.total_students}\nCreated: ${data.created}\nUpdated: ${data.updated}`
       );
 
       location.reload();
     } catch (error) {
       console.error(error);
-      alert(error.message);
+      await showAlert(error.message, "warning");
     } finally {
       applyBtn.disabled = false;
       applyBtn.textContent = "Apply Fees to Class";
