@@ -261,9 +261,11 @@ document.addEventListener("DOMContentLoaded", function () {
   async function loadAssignTeachers(selectedBranchId = "") {
     if (!assignTeacher) return;
 
-    const branchId = isBranchAdmin() ? String(getBranchId() || "") : String(selectedBranchId || "");
+    const selectedBranch = String(selectedBranchId || (assignBranch ? assignBranch.value : "") || "");
+    const scopedBranch = String(getBranchId() || "");
+    const branchId = selectedBranch || (isBranchAdmin() ? scopedBranch : "");
 
-    if (!isBranchAdmin() && !branchId) {
+    if (!branchId) {
       assignTeacher.innerHTML = `<option value="">Select branch first</option>`;
       return;
     }
