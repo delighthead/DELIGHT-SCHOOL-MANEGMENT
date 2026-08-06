@@ -290,16 +290,20 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       const teachers = pickArray(data, "teachers");
+      const filteredTeachers = teachers.filter(item => {
+        if (!branchId) return true;
+        return String(item.branch_id || "") === String(branchId);
+      });
 
       setOptions(
         assignTeacher,
-        teachers,
+        filteredTeachers,
         "Select teacher",
         ["id", "teacher_id"],
         ["full_name", "name", "teacher_name"]
       );
 
-      if (teachers.length === 0) {
+      if (filteredTeachers.length === 0) {
         assignTeacher.innerHTML = `<option value="">No teachers found for selected branch</option>`;
       }
     } catch (error) {
