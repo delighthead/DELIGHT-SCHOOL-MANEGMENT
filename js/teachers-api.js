@@ -189,14 +189,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const teachers = pickArray(data, "teachers");
 
-      setOptions(
-        assignTeacher,
-        teachers,
-        "Select teacher",
-        ["id", "teacher_id"],
-        ["full_name", "name", "teacher_name"]
-      );
-
       if (teachers.length === 0) {
         teacherTableBody.innerHTML = `<tr><td colspan="10">No teachers found.</td></tr>`;
         return;
@@ -263,6 +255,54 @@ document.addEventListener("DOMContentLoaded", function () {
       if (assignTeacher) {
         assignTeacher.innerHTML = `<option value="">Failed to load teachers</option>`;
       }
+    }
+  }
+
+  async function loadAssignTeachers(selectedBranchId = "") {
+    if (!assignTeacher) return;
+
+    const branchId = isBranchAdmin() ? String(getBranchId() || "") : String(selectedBranchId || "");
+
+    if (!isBranchAdmin() && !branchId) {
+      assignTeacher.innerHTML = `<option value="">Select branch first</option>`;
+      return;
+    }
+
+    assignTeacher.innerHTML = `<option value="">Loading teachers...</option>`;
+
+    try {
+      let url = `${API}/api/teachers`;
+
+      if (branchId) {
+        url += `?branch_id=${encodeURIComponent(branchId)}`;
+      }
+
+      const res = await fetch(url, {
+        headers: authHeaders()
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to load teachers");
+      }
+
+      const teachers = pickArray(data, "teachers");
+
+      setOptions(
+        assignTeacher,
+        teachers,
+        "Select teacher",
+        ["id", "teacher_id"],
+        ["full_name", "name", "teacher_name"]
+      );
+
+      if (teachers.length === 0) {
+        assignTeacher.innerHTML = `<option value="">No teachers found for selected branch</option>`;
+      }
+    } catch (error) {
+      console.error("Assign teachers load error:", error);
+      assignTeacher.innerHTML = `<option value="">Failed to load teachers</option>`;
     }
   }
 
@@ -445,7 +485,14 @@ document.addEventListener("DOMContentLoaded", function () {
     await loadBranches();
     await loadClasses();
     await loadTeachers();
+    await loadAssignTeachers(assignBranch ? assignBranch.value : "");
     await loadSubjects();
+  }
+
+  if (assignBranch) {
+    assignBranch.addEventListener("change", function () {
+      loadAssignTeachers(assignBranch.value);
+    });
   }
 
   start();
