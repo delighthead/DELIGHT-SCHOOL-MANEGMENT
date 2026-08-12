@@ -2662,8 +2662,67 @@ button,
   align-items: center;
 }
 
+.mobile-header-toggle {
+  display: none;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  color: #ffffff;
+  border-radius: 999px;
+  width: 42px;
+  height: 42px;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.mobile-header-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
 /* Mobile fix for public header and login layout */
 @media (max-width: 768px) {
+  .mobile-header-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+  }
+
+  header.mobile-header-collapsible.mobile-header-collapsed nav,
+  header.mobile-header-collapsible.mobile-header-collapsed .main-nav,
+  header.mobile-header-collapsible.mobile-header-collapsed .header-container nav {
+    display: none !important;
+  }
+
+  header.mobile-header-collapsible:not(.mobile-header-collapsed) nav,
+  header.mobile-header-collapsible:not(.mobile-header-collapsed) .main-nav,
+  header.mobile-header-collapsible:not(.mobile-header-collapsed) .header-container nav {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    width: 100%;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  header.mobile-header-collapsible:not(.mobile-header-collapsed) nav a,
+  header.mobile-header-collapsible:not(.mobile-header-collapsed) .main-nav a,
+  header.mobile-header-collapsible:not(.mobile-header-collapsed) .header-container nav a {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+  }
+
+  header.mobile-header-collapsible.navbar,
+  header.mobile-header-collapsible.main-header,
+  header.mobile-header-collapsible.public-header {
+    padding: 12px 16px !important;
+  }
+
+  header.mobile-header-collapsible .header-container {
+    width: 100% !important;
+  }
+
   .public-header .header-container {
     flex-direction: column;
     align-items: flex-start;
