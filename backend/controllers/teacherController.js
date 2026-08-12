@@ -66,9 +66,19 @@ exports.createTeacher = async (req, res) => {
       status
     } = req.body;
 
+    const effectiveBranchId = isBranchScopedAdmin(req.user)
+      ? req.user.branch_id
+      : branch_id;
+
     if (!teacher_id || !full_name || !ghana_card_number || !phone) {
       return res.status(400).json({
         message: "Teacher ID, full name, Ghana Card number, and phone are required"
+      });
+    }
+
+    if (!effectiveBranchId) {
+      return res.status(400).json({
+        message: "Branch is required"
       });
     }
 
@@ -78,7 +88,7 @@ exports.createTeacher = async (req, res) => {
       `INSERT INTO users (branch_id, full_name, username, password, role, phone, email, status)
        VALUES (?, ?, ?, ?, 'teacher', ?, ?, ?)`,
       [
-        branch_id || 4,
+        effectiveBranchId,
         full_name,
         ghana_card_number,
         hashedPassword,
@@ -94,7 +104,7 @@ exports.createTeacher = async (req, res) => {
       profile_picture, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        branch_id || 4,
+        effectiveBranchId,
         userResult.insertId,
         teacher_id,
         full_name,
@@ -112,7 +122,7 @@ exports.createTeacher = async (req, res) => {
       (branch_id, user_id, action, module, description)
       VALUES (?, ?, ?, ?, ?)`,
       [
-        branch_id,
+        effectiveBranchId,
         req.user ? req.user.id : null,
         "Teacher Added",
         "Teachers",

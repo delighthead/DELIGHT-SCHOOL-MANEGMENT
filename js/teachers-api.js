@@ -9,9 +9,10 @@ document.addEventListener("DOMContentLoaded", function () {
   const assignBranch = document.getElementById("assign_branch_id");
   const assignTeacher = document.getElementById("assign_teacher_id");
   const assignClass = document.getElementById("assign_class_id");
-  const assignSubject = document.getElementById("assign_subject_id");
+  const assignSubject = document.getElementById("assign_subject");
 
   let editingTeacherId = null;
+  let isSavingTeacher = false;
 
   function getUser() {
     try {
@@ -165,7 +166,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  async function loadTeachers() {
+  async function loadTeachers(forceRefresh = false) {
     if (!teacherTableBody) return;
 
     teacherTableBody.innerHTML = `<tr><td colspan="10">Loading teachers...</td></tr>`;
@@ -178,7 +179,12 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       const res = await fetch(url, {
-        headers: authHeaders()
+        headers: {
+          ...authHeaders(),
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache"
+        },
+        cache: forceRefresh ? "reload" : "no-store"
       });
 
       const data = await res.json();
@@ -191,7 +197,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (teachers.length === 0) {
         teacherTableBody.innerHTML = `<tr><td colspan="10">No teachers found.</td></tr>`;
-        return;
+        return teachers;
       }
 
       teacherTableBody.innerHTML = "";
@@ -248,6 +254,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
         teacherTableBody.appendChild(row);
       });
+
+      return teachers;
     } catch (error) {
       console.error("Teachers load error:", error);
       teacherTableBody.innerHTML = `<tr><td colspan="10">${error.message}</td></tr>`;
@@ -255,6 +263,8 @@ document.addEventListener("DOMContentLoaded", function () {
       if (assignTeacher) {
         assignTeacher.innerHTML = `<option value="">Failed to load teachers</option>`;
       }
+
+      return [];
     }
   }
 
@@ -280,7 +290,12 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       const res = await fetch(url, {
-        headers: authHeaders()
+        headers: {
+          ...authHeaders(),
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache"
+        },
+        cache: "no-store"
       });
 
       const data = await res.json();
@@ -362,6 +377,10 @@ document.addEventListener("DOMContentLoaded", function () {
     teacherForm.onsubmit = async function (event) {
       event.preventDefault();
 
+      if (isSavingTeacher) {
+        return;
+      }
+
       const branchId = isBranchAdmin()
         ? getBranchId()
         : (document.getElementById("teacher_branch_id")?.value || "");
@@ -380,6 +399,20 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!payload.branch_id || !payload.teacher_id || !payload.full_name || !payload.ghana_card_number || !payload.phone) {
         alert("Please fill Branch, Teacher ID, Full Name, Ghana Card, and Phone Number.");
         return;
+      }
+
+      if (!isBranchAdmin() && !payload.branch_id) {
+        alert("Please select a branch before adding the teacher.");
+        return;
+      }
+
+      isSavingTeacher = true;
+      const submitBtn = document.querySelector("#teacherForm button[type='submit']");
+      const previousBtnText = submitBtn ? submitBtn.textContent : "";
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Saving...";
       }
 
       try {
@@ -406,17 +439,41 @@ document.addEventListener("DOMContentLoaded", function () {
 
         alert(data.message || (isEditing ? "Teacher updated successfully." : "Teacher added successfully."));
 
+        const expectedTeacherId = String(payload.teacher_id || "").trim().toUpperCase();
+
         teacherForm.reset();
         editingTeacherId = null;
 
-        const submitBtn = document.querySelector("#teacherForm button[type='submit']");
         if (submitBtn) submitBtn.textContent = "Add Teacher";
 
         await loadBranches();
-        await loadTeachers();
+        const teachers = await loadTeachers();
+        await loadAssignTeachers(assignBranch ? assignBranch.value : "");
+
+        // If a stale response is returned, force one more refresh so the new teacher is visible.
+        if (!isEditing && expectedTeacherId) {
+          const found = Array.isArray(teachers) && teachers.some(item => {
+            return String(item.teacher_id || "").trim().toUpperCase() === expectedTeacherId;
+          });
+
+          if (!found) {
+            await loadTeachers(true);
+            await loadAssignTeachers(assignBranch ? assignBranch.value : "");
+          }
+        }
       } catch (error) {
         console.error("Teacher save error:", error);
         alert("Failed to save teacher.");
+      } finally {
+        isSavingTeacher = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          if (editingTeacherId) {
+            submitBtn.textContent = "Update Teacher";
+          } else if (previousBtnText && submitBtn.textContent === "Saving...") {
+            submitBtn.textContent = "Add Teacher";
+          }
+        }
       }
     };
   }
