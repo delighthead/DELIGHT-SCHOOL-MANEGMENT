@@ -2798,3 +2798,1193 @@ button,
 }
 
 
+
+/* ==========================================================
+   DELIGHT PUBLIC WEBSITE MODERN STYLE UPDATE
+   Added: cleaner homepage, better buttons, mobile friendly header,
+   improved login page, cards, shadows and spacing.
+   ========================================================== */
+
+:root {
+  --delight-blue: #003366;
+  --delight-blue-dark: #001f3f;
+  --delight-gold: #ffcc00;
+  --delight-bg: #f4f7fb;
+  --delight-text: #1f2937;
+  --delight-muted: #6b7280;
+  --delight-white: #ffffff;
+  --delight-shadow: 0 12px 35px rgba(0, 0, 0, 0.10);
+}
+
+body {
+  background: var(--delight-bg);
+  color: var(--delight-text);
+}
+
+/* Public Navbar */
+.navbar,
+.main-header.public-header {
+  background: linear-gradient(135deg, var(--delight-blue-dark), var(--delight-blue));
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
+}
+
+.navbar {
+  padding: 16px 7%;
+}
+
+.logo,
+.main-header.public-header h1 {
+  color: var(--delight-white);
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.navbar nav a,
+.main-header.public-header nav a {
+  transition: 0.25s ease;
+}
+
+.navbar nav a:hover,
+.main-header.public-header nav a:hover {
+  color: var(--delight-gold);
+  transform: translateY(-1px);
+}
+
+.login-btn {
+  background: var(--delight-gold) !important;
+  color: var(--delight-blue-dark) !important;
+  border-radius: 999px;
+  padding: 10px 18px !important;
+  box-shadow: 0 8px 18px rgba(255, 204, 0, 0.25);
+}
+
+/* Homepage Hero */
+.hero {
+  min-height: 78vh;
+  background:
+    linear-gradient(120deg, rgba(0, 31, 63, 0.92), rgba(0, 51, 102, 0.82)),
+    url("../images/building.png");
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at right, rgba(255, 204, 0, 0.16), transparent 38%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.hero h1 {
+  font-size: clamp(38px, 6vw, 64px);
+  font-weight: 900;
+  max-width: 850px;
+}
+
+.hero p {
+  max-width: 720px;
+  color: rgba(255,255,255,0.92);
+}
+
+.hero-buttons {
+  flex-wrap: wrap;
+}
+
+.btn,
+.btn-outline,
+.hero-apply-btn {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 13px 25px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: 0.25s ease;
+}
+
+.hero-apply-btn {
+  background: var(--delight-gold);
+  color: var(--delight-blue-dark);
+}
+
+.btn:hover,
+.btn-outline:hover,
+.hero-apply-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.95;
+}
+
+/* Sections */
+.intro,
+.content-section {
+  border-radius: 0;
+}
+
+.intro h2,
+.content-section h2 {
+  font-weight: 900;
+}
+
+.stats div,
+.card,
+.step,
+.login-box {
+  box-shadow: var(--delight-shadow);
+  border: 1px solid rgba(0, 51, 102, 0.06);
+}
+
+.stats div {
+  transition: 0.25s ease;
+}
+
+.stats div:hover,
+.card:hover {
+  transform: translateY(-4px);
+}
+
+.card {
+  border-left: 0;
+  border-top: 5px solid var(--delight-gold);
+  background: var(--delight-white);
+}
+
+.link-card {
+  min-height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Login Page */
+.login-section {
+  min-height: calc(100vh - 160px);
+  background:
+    linear-gradient(120deg, rgba(0, 31, 63, 0.90), rgba(0, 51, 102, 0.78)),
+    url("../images/building.png");
+  background-size: cover;
+  background-position: center;
+  padding: 70px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 460px;
+  background: rgba(255,255,255,0.96);
+  border-radius: 22px;
+  padding: 34px;
+}
+
+.login-box h2 {
+  color: var(--delight-blue);
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.login-box > p {
+  text-align: center;
+  color: var(--delight-muted);
+  margin-bottom: 24px;
+}
+
+.login-box label,
+.school-form label {
+  color: var(--delight-blue-dark);
+  font-weight: 800;
+}
+
+.login-box input,
+.login-box select,
+.school-form input,
+.school-form select,
+.school-form textarea {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 11px 13px;
+  margin-bottom: 14px;
+  outline: none;
+  background: white;
+  color: #111827;
+  font-size: 15px;
+}
+
+.login-box input:focus,
+.login-box select:focus,
+.school-form input:focus,
+.school-form select:focus,
+.school-form textarea:focus {
+  border-color: var(--delight-blue);
+  box-shadow: 0 0 0 4px rgba(0, 51, 102, 0.12);
+}
+
+.login-box button,
+.school-form button {
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 13px 18px;
+  background: var(--delight-blue);
+  color: white;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.login-box button:hover,
+.school-form button:hover {
+  background: var(--delight-blue-dark);
+  transform: translateY(-1px);
+}
+
+.login-footer,
+footer {
+  background: var(--delight-blue-dark);
+  color: white;
+  text-align: center;
+  padding: 22px 8%;
+}
+
+/* Mobile Friendly */
+@media (max-width: 900px) {
+  .navbar,
+  .main-header.public-header .header-container {
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+  }
+
+  .navbar nav,
+  .main-header.public-header nav {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .navbar nav a,
+  .main-header.public-header nav a {
+    font-size: 14px;
+  }
+
+  .stats,
+  .card-grid,
+  .steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hero {
+    min-height: 65vh;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .hero-buttons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar,
+  .main-header.public-header {
+    padding: 14px 5%;
+  }
+
+  .logo,
+  .main-header.public-header h1 {
+    font-size: 20px;
+  }
+
+  .navbar nav,
+  .main-header.public-header nav {
+    gap: 8px;
+  }
+
+  .navbar nav a,
+  .main-header.public-header nav a {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+
+  .login-btn {
+    padding: 8px 12px !important;
+  }
+
+  .hero {
+    padding: 55px 6%;
+  }
+
+  .hero p {
+    font-size: 16px;
+  }
+
+  .hero-buttons a {
+    width: 100%;
+    text-align: center;
+  }
+
+  .intro,
+  .content-section,
+  .stats {
+    padding: 40px 6%;
+  }
+
+  .stats,
+  .card-grid,
+  .steps {
+    grid-template-columns: 1fr;
+  }
+
+  .login-section {
+    padding: 45px 14px;
+  }
+
+  .login-box {
+    padding: 25px 20px;
+  }
+}
+
+/* ==========================================================
+   ABOUT / ADMISSION / CONTACT PUBLIC PAGE UPDATE
+   ========================================================== */
+
+.modern-page-header {
+  background:
+    linear-gradient(120deg, rgba(0, 31, 63, 0.92), rgba(0, 51, 102, 0.82)),
+    url("../images/building.png");
+  background-size: cover;
+  background-position: center;
+  padding: 90px 8%;
+}
+
+.modern-page-header h1 {
+  font-size: clamp(34px, 5vw, 54px);
+  font-weight: 900;
+}
+
+.modern-page-header p {
+  max-width: 780px;
+  margin: 10px auto 0;
+  color: rgba(255,255,255,0.92);
+  font-size: 18px;
+}
+
+.section-title-center {
+  text-align: center;
+  max-width: 850px;
+  margin: 0 auto 35px;
+}
+
+.section-title-center h2,
+.center-heading {
+  text-align: center;
+}
+
+.about-two-column {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin: 30px 0 45px;
+}
+
+.about-card,
+.headteacher-message,
+.admission-modern-box,
+.contact-info-box {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: var(--delight-shadow);
+  border: 1px solid rgba(0, 51, 102, 0.07);
+}
+
+.about-card h2,
+.headteacher-message h2 {
+  color: var(--delight-blue);
+  margin-bottom: 12px;
+}
+
+.values-grid .value-card {
+  text-align: center;
+  font-weight: 900;
+  color: var(--delight-blue);
+  font-size: 18px;
+}
+
+.headteacher-message {
+  margin-top: 40px;
+  border-left: 6px solid var(--delight-gold);
+}
+
+.admission-modern-section,
+.contact-modern-section {
+  padding: 65px 8%;
+  background: var(--delight-bg);
+}
+
+.container {
+  max-width: 1150px;
+  margin: 0 auto;
+}
+
+.admission-modern-box {
+  text-align: center;
+  max-width: 950px;
+  margin: 0 auto;
+}
+
+.admission-modern-box h2 {
+  color: var(--delight-blue);
+  font-size: 34px;
+  margin-bottom: 12px;
+}
+
+.admission-modern-box > p {
+  max-width: 760px;
+  margin: 0 auto 28px;
+  color: var(--delight-muted);
+  font-size: 17px;
+}
+
+.admission-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin: 30px 0;
+}
+
+.online-admission-btn {
+  display: inline-block;
+  background: var(--delight-gold);
+  color: var(--delight-blue-dark);
+  text-decoration: none;
+  padding: 14px 28px;
+  border-radius: 999px;
+  font-weight: 900;
+  transition: 0.25s ease;
+}
+
+.online-admission-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(255, 204, 0, 0.25);
+}
+
+.contact-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: stretch;
+}
+
+.contact-info-box h2 {
+  color: var(--delight-blue);
+  font-size: 30px;
+  margin-bottom: 20px;
+}
+
+.contact-detail {
+  background: #f8fafc;
+  padding: 18px;
+  border-radius: 14px;
+  border-left: 5px solid var(--delight-gold);
+  margin-bottom: 16px;
+}
+
+.contact-detail h3 {
+  color: var(--delight-blue-dark);
+  margin-bottom: 5px;
+}
+
+.contact-detail p {
+  margin: 0;
+}
+
+.school-map-box iframe {
+  border-radius: 16px;
+  box-shadow: var(--delight-shadow);
+}
+
+.social-btn {
+  display: inline-block;
+  text-decoration: none;
+  padding: 11px 18px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.whatsapp-btn {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+@media (max-width: 900px) {
+  .about-two-column,
+  .contact-info-grid,
+  .admission-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .modern-page-header {
+    padding: 70px 6%;
+  }
+
+  .admission-modern-section,
+  .contact-modern-section {
+    padding: 45px 6%;
+  }
+}
+
+@media (max-width: 600px) {
+  .about-card,
+  .headteacher-message,
+  .admission-modern-box,
+  .contact-info-box {
+    padding: 24px 18px;
+  }
+
+  .modern-page-header p {
+    font-size: 16px;
+  }
+
+  .online-admission-btn {
+    width: 100%;
+  }
+}
+
+/* ==========================================================
+   HEADER LOGO IMAGE FIX
+   ========================================================== */
+
+.site-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: white;
+}
+
+.site-logo img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 4px;
+  border-radius: 50%;
+}
+
+.site-logo span {
+  color: white;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+@media (max-width: 600px) {
+  .site-logo {
+    justify-content: center;
+  }
+
+  .site-logo img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .site-logo span {
+    font-size: 18px;
+  }
+}
+
+/* ==========================================================
+   MAKE ALL PUBLIC HEADERS SAME SIZE AS CONTACT PAGE
+   ========================================================== */
+
+.navbar,
+.main-header.public-header {
+  min-height: 86px !important;
+  padding: 16px 7% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.main-header.public-header .header-container {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.site-logo {
+  min-height: 54px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.site-logo img {
+  width: 52px !important;
+  height: 52px !important;
+  object-fit: contain !important;
+}
+
+.site-logo span {
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+}
+
+.navbar nav,
+.main-header.public-header nav {
+  display: flex !important;
+  align-items: center !important;
+  gap: 18px !important;
+  flex-wrap: wrap !important;
+}
+
+.navbar nav a,
+.main-header.public-header nav a {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+}
+
+.login-btn {
+  padding: 10px 18px !important;
+  border-radius: 999px !important;
+}
+
+@media (max-width: 900px) {
+  .navbar,
+  .main-header.public-header,
+  .main-header.public-header .header-container {
+    min-height: auto !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    text-align: center !important;
+  }
+
+  .navbar nav,
+  .main-header.public-header nav {
+    justify-content: center !important;
+    gap: 10px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar,
+  .main-header.public-header {
+    padding: 14px 5% !important;
+  }
+
+  .site-logo img {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .site-logo span {
+    font-size: 18px !important;
+  }
+
+  .navbar nav a,
+  .main-header.public-header nav a {
+    font-size: 13px !important;
+    padding: 6px 8px !important;
+  }
+}
+
+/* ==========================================================
+   FIX HOME PAGE HEADER LOGO TOO LARGE
+   Make all header logos same size as contact page
+   ========================================================== */
+
+.navbar .site-logo {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  text-decoration: none !important;
+  color: #ffffff !important;
+  flex-shrink: 0 !important;
+}
+
+.navbar .site-logo img {
+  width: 52px !important;
+  height: 52px !important;
+  max-width: 52px !important;
+  max-height: 52px !important;
+  object-fit: contain !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  padding: 4px !important;
+  border-radius: 50% !important;
+  display: block !important;
+}
+
+.navbar .site-logo span {
+  color: #ffffff !important;
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  text-decoration: none !important;
+}
+
+.navbar .site-logo:visited,
+.navbar .site-logo:hover,
+.navbar .site-logo:active {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+.navbar {
+  min-height: 86px !important;
+  padding: 16px 7% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.navbar nav {
+  display: flex !important;
+  align-items: center !important;
+  gap: 18px !important;
+}
+
+@media (max-width: 600px) {
+  .navbar .site-logo img {
+    width: 44px !important;
+    height: 44px !important;
+    max-width: 44px !important;
+    max-height: 44px !important;
+  }
+
+  .navbar .site-logo span {
+    font-size: 18px !important;
+  }
+}
+
+/* ==========================================================
+   EVENTS AND GALLERY PUBLIC PAGE UPDATE
+   ========================================================== */
+
+.events-modern-section,
+.gallery-modern-section {
+  padding: 65px 8%;
+  background: var(--delight-bg);
+}
+
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 30px;
+}
+
+.event-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 26px;
+  box-shadow: var(--delight-shadow);
+  border: 1px solid rgba(0, 51, 102, 0.07);
+  display: grid;
+  grid-template-columns: 105px 1fr;
+  gap: 20px;
+  align-items: center;
+  transition: 0.25s ease;
+}
+
+.event-card:hover {
+  transform: translateY(-4px);
+}
+
+.event-date {
+  min-height: 90px;
+  background: linear-gradient(135deg, var(--delight-blue-dark), var(--delight-blue));
+  color: #ffffff;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 5px solid var(--delight-gold);
+  text-align: center;
+  padding: 12px;
+}
+
+.event-date strong {
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.event-date span {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+
+.event-card h3 {
+  color: var(--delight-blue);
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.event-card p {
+  color: var(--delight-muted);
+  margin: 0;
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  margin-top: 30px;
+}
+
+.gallery-card {
+  min-height: 270px;
+  background: #ffffff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--delight-shadow);
+  border: 1px solid rgba(0, 51, 102, 0.07);
+  transition: 0.25s ease;
+}
+
+.gallery-card:hover {
+  transform: translateY(-4px);
+}
+
+.gallery-card img {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-caption {
+  padding: 18px;
+}
+
+.gallery-caption h3,
+.placeholder-gallery h3 {
+  color: var(--delight-blue);
+  margin-bottom: 6px;
+}
+
+.gallery-caption p,
+.placeholder-gallery p {
+  color: var(--delight-muted);
+  margin: 0;
+}
+
+.placeholder-gallery {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  text-align: center;
+  background:
+    linear-gradient(135deg, rgba(0, 51, 102, 0.08), rgba(255, 204, 0, 0.16)),
+    #ffffff;
+  border-top: 5px solid var(--delight-gold);
+}
+
+@media (max-width: 900px) {
+  .event-grid,
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .events-modern-section,
+  .gallery-modern-section {
+    padding: 45px 6%;
+  }
+}
+
+@media (max-width: 600px) {
+  .event-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .event-date {
+    max-width: 150px;
+    margin: 0 auto;
+  }
+
+  .gallery-card {
+    min-height: auto;
+  }
+}
+
+/* ==========================================================
+   BRANCH ADMIN DASHBOARD MODERN STYLE
+   Applies only when body has branch-admin-mode
+   ========================================================== */
+
+.branch-admin-mode .sidebar {
+  background: linear-gradient(180deg, #001f3f, #003366);
+  box-shadow: 10px 0 35px rgba(0, 0, 0, 0.18);
+}
+
+.branch-admin-mode .sidebar h2 {
+  background: rgba(255, 204, 0, 0.12);
+  color: #ffcc00;
+  padding: 16px 14px;
+  border-radius: 14px;
+  text-align: center;
+  font-size: 22px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(255, 204, 0, 0.25);
+}
+
+.branch-admin-mode .sidebar a {
+  border-radius: 12px;
+  margin-bottom: 6px;
+  transition: 0.25s ease;
+}
+
+.branch-admin-mode .sidebar a:hover,
+.branch-admin-mode .sidebar a.active {
+  background: #ffcc00;
+  color: #001f3f !important;
+  transform: translateX(4px);
+}
+
+.branch-admin-mode .dashboard-main {
+  background: #f4f7fb;
+}
+
+.branch-admin-mode .dashboard-main h1 {
+  color: #003366;
+  font-size: 34px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.branch-admin-mode .dashboard-main > p {
+  background: #ffffff;
+  border-left: 6px solid #ffcc00;
+  padding: 16px 18px;
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+}
+
+.branch-admin-mode .dashboard-cards {
+  gap: 22px;
+}
+
+.branch-admin-mode .dashboard-card {
+  border-radius: 18px;
+  border: 1px solid rgba(0, 51, 102, 0.08);
+  border-top: 5px solid #ffcc00;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.10);
+  transition: 0.25s ease;
+}
+
+.branch-admin-mode .dashboard-card:hover {
+  transform: translateY(-4px);
+}
+
+.branch-admin-mode .dashboard-card h2 {
+  color: #003366;
+  font-weight: 900;
+}
+
+.branch-admin-mode .dashboard-section {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.10);
+  border: 1px solid rgba(0, 51, 102, 0.07);
+}
+
+.branch-admin-mode .dashboard-section h2 {
+  color: #003366;
+  font-weight: 900;
+}
+
+.branch-admin-mode .module-access-grid {
+  gap: 18px;
+}
+
+.branch-admin-mode .module-access-card {
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(0, 51, 102, 0.08);
+  border-top: 5px solid #ffcc00;
+  color: #003366;
+  font-weight: 900;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  transition: 0.25s ease;
+}
+
+.branch-admin-mode .module-access-card:hover {
+  background: #ffcc00;
+  color: #001f3f;
+  transform: translateY(-4px);
+}
+
+@media (max-width: 900px) {
+  .branch-admin-mode .dashboard-main h1 {
+    font-size: 28px;
+  }
+
+  .branch-admin-mode .dashboard-section {
+    padding: 22px 16px;
+  }
+}
+
+/* ==========================================================
+   SUPER ADMIN DASHBOARD MODERN STYLE
+   Applies only when body has super-admin-mode
+   ========================================================== */
+
+.super-admin-mode .sidebar {
+  background: linear-gradient(180deg, #0f172a, #003366);
+  box-shadow: 10px 0 35px rgba(0, 0, 0, 0.20);
+}
+
+.super-admin-mode .sidebar h2 {
+  background: rgba(255, 204, 0, 0.14);
+  color: #ffcc00;
+  padding: 16px 14px;
+  border-radius: 14px;
+  text-align: center;
+  font-size: 22px;
+  margin-bottom: 18px;
+  border: 1px solid rgba(255, 204, 0, 0.28);
+}
+
+.super-admin-mode .sidebar a {
+  border-radius: 12px;
+  margin-bottom: 6px;
+  transition: 0.25s ease;
+}
+
+.super-admin-mode .sidebar a:hover,
+.super-admin-mode .sidebar a.active {
+  background: #ffcc00;
+  color: #001f3f !important;
+  transform: translateX(4px);
+}
+
+.super-admin-mode .dashboard-main {
+  background: #f4f7fb;
+}
+
+.super-admin-mode .dashboard-main h1 {
+  color: #003366;
+  font-size: 36px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.super-admin-mode .dashboard-main > p {
+  background: #ffffff;
+  border-left: 6px solid #ffcc00;
+  padding: 16px 18px;
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+  margin-bottom: 24px;
+}
+
+.super-admin-mode .dashboard-card {
+  border-radius: 18px;
+  border: 1px solid rgba(0, 51, 102, 0.08);
+  border-top: 5px solid #ffcc00;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.10);
+  transition: 0.25s ease;
+}
+
+.super-admin-mode .dashboard-card:hover {
+  transform: translateY(-4px);
+}
+
+.super-admin-mode .dashboard-card h2 {
+  color: #003366;
+  font-weight: 900;
+}
+
+.super-admin-mode .dashboard-section {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.10);
+  border: 1px solid rgba(0, 51, 102, 0.07);
+  margin-top: 24px;
+}
+
+.super-admin-mode .dashboard-section h2 {
+  color: #003366;
+  font-weight: 900;
+}
+
+.super-admin-mode .module-access-grid {
+  gap: 18px;
+}
+
+.super-admin-mode .module-access-card {
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(0, 51, 102, 0.08);
+  border-top: 5px solid #ffcc00;
+  color: #003366;
+  font-weight: 900;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  transition: 0.25s ease;
+}
+
+.super-admin-mode .module-access-card:hover {
+  background: #ffcc00;
+  color: #001f3f;
+  transform: translateY(-4px);
+}
+
+.super-admin-mode .admin-form {
+  background: #f8fafc;
+  border-radius: 18px;
+  padding: 22px;
+  border: 1px solid rgba(0, 51, 102, 0.08);
+}
+
+.super-admin-mode .admin-form input,
+.super-admin-mode .admin-form select,
+.super-admin-mode .admin-form textarea {
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  min-height: 44px;
+}
+
+.super-admin-mode .admin-form button {
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.super-admin-mode .data-table {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+}
+
+.super-admin-mode .data-table th {
+  background: #003366;
+  color: #ffffff;
+}
+
+@media (max-width: 900px) {
+  .super-admin-mode .dashboard-main h1 {
+    font-size: 28px;
+  }
+
+  .super-admin-mode .dashboard-section {
+    padding: 22px 16px;
+  }
+}
