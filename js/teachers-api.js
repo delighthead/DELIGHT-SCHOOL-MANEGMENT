@@ -54,6 +54,12 @@ document.addEventListener("DOMContentLoaded", function () {
     return getUser().branch_id || "";
   }
 
+  function addCacheBust(url, forceRefresh) {
+    if (!forceRefresh) return url;
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}_ts=${Date.now()}`;
+  }
+
   function pickArray(data, key) {
     if (Array.isArray(data)) return data;
     if (Array.isArray(data[key])) return data[key];
@@ -178,6 +184,8 @@ document.addEventListener("DOMContentLoaded", function () {
         url += `?branch_id=${getBranchId()}`;
       }
 
+      url = addCacheBust(url, forceRefresh);
+
       const res = await fetch(url, {
         headers: {
           ...authHeaders(),
@@ -289,6 +297,8 @@ document.addEventListener("DOMContentLoaded", function () {
         url += `?branch_id=${encodeURIComponent(branchId)}`;
       }
 
+      url = addCacheBust(url, true);
+
       const res = await fetch(url, {
         headers: {
           ...authHeaders(),
@@ -361,15 +371,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     assignSubject.innerHTML = `
       <option value="">Select subject</option>
-      <option value="English">English</option>
-      <option value="Mathematics">Mathematics</option>
-      <option value="Science">Science</option>
-      <option value="Social Studies">Social Studies</option>
-      <option value="Computing">Computing</option>
-      <option value="RME">RME</option>
-      <option value="Creative Arts">Creative Arts</option>
-      <option value="Ghanaian Language">Ghanaian Language</option>
-      <option value="French">French</option>
+      <option value="ENGLISH">ENGLISH</option>
+      <option value="MATHEMATICS">MATHEMATICS</option>
+      <option value="INTEGRATED SCIENCE">INTEGRATED SCIENCE</option>
+      <option value="SOCIAL STUDIES">SOCIAL STUDIES</option>
+      <option value="R.M.E">R.M.E</option>
+      <option value="CAREER TECHNOLOGY">CAREER TECHNOLOGY</option>
+      <option value="COMPUTING">COMPUTING</option>
+      <option value="FRENCH">FRENCH</option>
+      <option value="GHANAIAN LANGUAGE">GHANAIAN LANGUAGE</option>
+      <option value="CREATIVE ARTS">CREATIVE ARTS</option>
+      <option value="GHANA HISTORY">GHANA HISTORY</option>
+      <option value="PHYSICAL EDUCATION">PHYSICAL EDUCATION</option>
+      <option value="OUR WORLD OUR PEOPLE">OUR WORLD OUR PEOPLE</option>
     `;
   }
 
@@ -447,18 +461,29 @@ document.addEventListener("DOMContentLoaded", function () {
         if (submitBtn) submitBtn.textContent = "Add Teacher";
 
         await loadBranches();
-        const teachers = await loadTeachers();
+        let teachers = await loadTeachers(true);
         await loadAssignTeachers(assignBranch ? assignBranch.value : "");
 
-        // If a stale response is returned, force one more refresh so the new teacher is visible.
+        // If live caching/replication delays visibility, retry a few short refreshes.
         if (!isEditing && expectedTeacherId) {
-          const found = Array.isArray(teachers) && teachers.some(item => {
+          let found = Array.isArray(teachers) && teachers.some(item => {
             return String(item.teacher_id || "").trim().toUpperCase() === expectedTeacherId;
           });
 
           if (!found) {
-            await loadTeachers(true);
-            await loadAssignTeachers(assignBranch ? assignBranch.value : "");
+            for (let attempt = 0; attempt < 2; attempt += 1) {
+              await new Promise(resolve => setTimeout(resolve, 1200));
+              teachers = await loadTeachers(true);
+              await loadAssignTeachers(assignBranch ? assignBranch.value : "");
+              found = Array.isArray(teachers) && teachers.some(item => {
+                return String(item.teacher_id || "").trim().toUpperCase() === expectedTeacherId;
+              });
+              if (found) break;
+            }
+          }
+
+          if (!found) {
+            alert("Teacher was saved, but list refresh is delayed. Please refresh once if still not visible.");
           }
         }
       } catch (error) {
