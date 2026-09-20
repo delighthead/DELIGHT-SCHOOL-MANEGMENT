@@ -113,7 +113,22 @@ async function syncStudentParentLinks(studentDbId, parentIds) {
 // Get all students
 exports.getStudents = async (req, res) => {
   try {
-    const { branch_id } = req.query;
+    let { branch_id } = req.query;
+
+    // Branch-scoped administrators must always use
+    // the branch attached to their authenticated account.
+    if (
+      req.user &&
+      ["branch_admin", "teacher_admin"].includes(req.user.role)
+    ) {
+      if (!req.user.branch_id) {
+        return res.status(403).json({
+          message: "No branch is assigned to this administrator"
+        });
+      }
+
+      branch_id = req.user.branch_id;
+    }
 
     let sql = `SELECT
         students.id,

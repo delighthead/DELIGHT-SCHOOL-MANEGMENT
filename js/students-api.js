@@ -35,9 +35,11 @@ document.addEventListener("DOMContentLoaded", function () {
     return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
-  function isAdmin() {
+  function isBranchScopedAdmin() {
     const user = getLoggedInUser();
-    return user && user.role === "branch_admin";
+    const role = String(user?.role || "").toLowerCase();
+
+    return ["branch_admin", "teacher_admin"].includes(role);
   }
 
   function getAdminId() {
@@ -90,7 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
         branchSelect.appendChild(option);
       });
 
-      if (isAdmin()) {
+      if (isBranchScopedAdmin()) {
         branchSelect.value = getAdminId();
         
         const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -115,7 +117,7 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       let url = "/api/students";
 
-      if (isAdmin()) {
+      if (isBranchScopedAdmin()) {
         url += `?branch_id=${getAdminId()}`;
       }
 
