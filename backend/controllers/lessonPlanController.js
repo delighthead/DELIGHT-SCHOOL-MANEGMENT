@@ -62,58 +62,89 @@ exports.createLessonPlan = async (req, res) => {
 
 exports.getLessonPlans = async (req, res) => {
   try {
-    const { status, teacher_id, class_name, subject, week } = req.query;
+    const {
+      status,
+      teacher_id,
+      class_name,
+      subject,
+      week
+    } = req.query;
 
     const where = [];
     const params = [];
 
     if (status) {
-      where.push("status = ?");
+      where.push("lp.status = ?");
       params.push(status);
     }
 
     if (teacher_id) {
-      where.push("teacher_id = ?");
+      where.push("lp.teacher_id = ?");
       params.push(teacher_id);
     }
 
     if (class_name) {
-      where.push("class_name = ?");
+      where.push("lp.class_name = ?");
       params.push(class_name);
     }
 
     if (subject) {
-      where.push("subject = ?");
+      where.push("lp.subject = ?");
       params.push(subject);
     }
 
     if (week) {
-      where.push("week = ?");
+      where.push("lp.week = ?");
       params.push(week);
     }
 
-    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    // Branch-scoped admins must only see submissions
+    // belonging to teachers in their authenticated branch.
+    if (
+      req.user &&
+      ["branch_admin", "teacher_admin"].includes(req.user.role)
+    ) {
+      if (!req.user.branch_id) {
+        return res.status(403).json({
+          message: "No branch is assigned to this administrator"
+        });
+      }
+
+      where.push("t.branch_id = ?");
+      params.push(req.user.branch_id);
+    }
+
+    const whereSql =
+      where.length ? `WHERE ${where.join(" AND ")}` : "";
 
     const [rows] = await db.query(
-      `SELECT *
-       FROM lesson_plans
+      `SELECT
+         lp.*,
+         COALESCE(t.full_name, u.full_name, 'Unknown Teacher') AS teacher_name,
+         t.teacher_id AS teacher_code,
+         t.branch_id
+       FROM lesson_plans lp
+       LEFT JOIN teachers t ON t.user_id = lp.teacher_id
+       LEFT JOIN users u ON u.id = lp.teacher_id
        ${whereSql}
-       ORDER BY created_at DESC`,
+       ORDER BY lp.created_at DESC`,
       params
     );
 
     res.json({
-      message: "Lesson plans loaded successfully",
+      message: "Lesson Notes loaded successfully",
       lesson_plans: rows
     });
   } catch (error) {
-    console.error("Get lesson plans error:", error);
+    console.error("Get Lesson Notes error:", error);
+
     res.status(500).json({
-      message: "Failed to load lesson plans",
+      message: "Failed to load Lesson Notes",
       error: error.message
     });
   }
 };
+
 
 exports.getMyLessonPlans = async (req, res) => {
   try {

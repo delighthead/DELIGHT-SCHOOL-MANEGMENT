@@ -66,58 +66,89 @@ exports.createWeeklyReport = async (req, res) => {
 
 exports.getWeeklyReports = async (req, res) => {
   try {
-    const { status, teacher_id, class_name, report_type, week } = req.query;
+    const {
+      status,
+      teacher_id,
+      class_name,
+      report_type,
+      week
+    } = req.query;
 
     const where = [];
     const params = [];
 
     if (status) {
-      where.push("status = ?");
+      where.push("wr.status = ?");
       params.push(status);
     }
 
     if (teacher_id) {
-      where.push("teacher_id = ?");
+      where.push("wr.teacher_id = ?");
       params.push(teacher_id);
     }
 
     if (class_name) {
-      where.push("class_name = ?");
+      where.push("wr.class_name = ?");
       params.push(class_name);
     }
 
     if (report_type) {
-      where.push("report_type = ?");
+      where.push("wr.report_type = ?");
       params.push(report_type);
     }
 
     if (week) {
-      where.push("week = ?");
+      where.push("wr.week = ?");
       params.push(week);
     }
 
-    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    // Branch-scoped admins must only see submissions
+    // belonging to teachers in their authenticated branch.
+    if (
+      req.user &&
+      ["branch_admin", "teacher_admin"].includes(req.user.role)
+    ) {
+      if (!req.user.branch_id) {
+        return res.status(403).json({
+          message: "No branch is assigned to this administrator"
+        });
+      }
+
+      where.push("t.branch_id = ?");
+      params.push(req.user.branch_id);
+    }
+
+    const whereSql =
+      where.length ? `WHERE ${where.join(" AND ")}` : "";
 
     const [rows] = await db.query(
-      `SELECT *
-       FROM weekly_reports
+      `SELECT
+         wr.*,
+         COALESCE(t.full_name, u.full_name, 'Unknown Teacher') AS teacher_name,
+         t.teacher_id AS teacher_code,
+         t.branch_id
+       FROM weekly_reports wr
+       LEFT JOIN teachers t ON t.user_id = wr.teacher_id
+       LEFT JOIN users u ON u.id = wr.teacher_id
        ${whereSql}
-       ORDER BY created_at DESC`,
+       ORDER BY wr.created_at DESC`,
       params
     );
 
     res.json({
-      message: "Weekly reports loaded successfully",
+      message: "Handwriting Reports loaded successfully",
       weekly_reports: rows
     });
   } catch (error) {
-    console.error("Get weekly reports error:", error);
+    console.error("Get Handwriting Reports error:", error);
+
     res.status(500).json({
-      message: "Failed to load weekly reports",
+      message: "Failed to load Handwriting Reports",
       error: error.message
     });
   }
 };
+
 
 exports.getMyWeeklyReports = async (req, res) => {
   try {
