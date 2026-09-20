@@ -8,61 +8,61 @@ function getUploadedFilePath(file) {
 exports.createWeeklyReport = async (req, res) => {
   try {
     const {
-      teacher_id,
       class_id,
       class_name,
-      report_type,
-      week,
-      title,
-      activities,
-      learner_participation,
-      progress,
-      challenges,
-      interventions
+      week
     } = req.body;
 
-    if (!class_name || !report_type || !week || !title) {
+    if (!class_name || !week) {
       return res.status(400).json({
-        message: "Class, report type, week and title are required"
+        message: "Class and week are required"
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Handwriting Report document is required"
       });
     }
 
     const filePath = getUploadedFilePath(req.file);
-    const originalName = req.file ? req.file.originalname : null;
+    const originalName = req.file.originalname;
+
+    const reportType = "Handwriting Report";
+    const title = `Handwriting Report - ${week}`;
 
     const [result] = await db.query(
       `INSERT INTO weekly_reports
-       (teacher_id, class_id, class_name, report_type, week, title, activities, learner_participation, progress, challenges, interventions, file_path, file_original_name, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')`,
+       (teacher_id, class_id, class_name, report_type, week, title,
+        activities, learner_participation, progress, challenges,
+        interventions, file_path, file_original_name, status)
+       VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, ?, ?, 'Pending')`,
       [
-        teacher_id || req.user.id || null,
+        req.user.id,
         class_id || null,
         class_name,
-        report_type,
+        reportType,
         week,
         title,
-        activities || null,
-        learner_participation || null,
-        progress || null,
-        challenges || null,
-        interventions || null,
         filePath,
         originalName
       ]
     );
 
     res.status(201).json({
-      message: "Weekly report submitted successfully",
+      message: "Handwriting Report uploaded successfully",
       weekly_report_id: result.insertId
     });
   } catch (error) {
-    console.error("Create weekly report error:", error);
+    console.error("Create handwriting report error:", error);
+
     res.status(500).json({
-      message: "Failed to submit weekly report",
+      message: "Failed to upload Handwriting Report",
       error: error.message
     });
   }
 };
+
 
 exports.getWeeklyReports = async (req, res) => {
   try {

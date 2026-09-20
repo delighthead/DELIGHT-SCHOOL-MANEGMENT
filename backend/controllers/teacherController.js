@@ -861,3 +861,51 @@ exports.disableTeacher = async (req, res) => {
     });
   }
 };
+
+
+// Get logged-in teacher's active class/subject assignments
+exports.getMyAssignments = async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== "teacher") {
+      return res.status(403).json({
+        message: "Teacher access required"
+      });
+    }
+
+    const teacher = await getTeacherByUserId(req.user.id);
+
+    if (!teacher) {
+      return res.status(404).json({
+        message: "Teacher record not found"
+      });
+    }
+
+    const [assignments] = await db.query(
+      `SELECT DISTINCT
+         ta.class_id,
+         c.class_name,
+         ta.subject,
+         ta.role,
+         ta.academic_year
+       FROM teacher_assignments ta
+       INNER JOIN classes c ON c.id = ta.class_id
+       WHERE ta.teacher_id = ?
+         AND ta.status = 'active'
+       ORDER BY c.class_name, ta.subject`,
+      [teacher.id]
+    );
+
+    res.json({
+      message: "Teacher assignments loaded successfully",
+      teacher_id: teacher.id,
+      assignments
+    });
+  } catch (error) {
+    console.error("Get my assignments error:", error);
+
+    res.status(500).json({
+      message: "Failed to load teacher assignments",
+      error: error.message
+    });
+  }
+};

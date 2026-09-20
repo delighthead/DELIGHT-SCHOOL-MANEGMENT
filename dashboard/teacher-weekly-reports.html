@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weekly Reports - Delight International School</title>
+  <title>Handwriting Report - Delight International School</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
@@ -20,144 +20,80 @@
     <a href="teacher-scores.html">Scores & Uploads</a>
     <a href="teacher-attendance.html">Mark Attendance</a>
     <a href="teacher-announcements.html">Announcements</a>
-    <a href="teacher-lesson-plans.html">Lesson Plans</a>
-    <a href="teacher-weekly-reports.html" class="active">Weekly Reports</a>
+    <a href="teacher-lesson-plans.html">Lesson Note</a>
+    <a href="teacher-weekly-reports.html" class="active">Handwriting Report</a>
+    <a href="teacher-reports.html">Reports</a>
     <a href="../pages/login.html">Logout</a>
   </aside>
 
   <main class="dashboard-main">
-    <h1>Weekly Reports</h1>
-    <p>Submit your weekly report and view your previous submissions.</p>
+
+    <h1>Handwriting Report</h1>
+    <p>Upload your weekly Handwriting Report.</p>
 
     <section class="dashboard-section">
-      <h2>Submit Weekly Report</h2>
+      <h2>Upload Handwriting Report</h2>
 
       <form id="weeklyReportForm" enctype="multipart/form-data">
 
         <div class="form-grid">
 
           <div>
-            <label for="weekly_class_name">Class *</label>
-            <input
-              type="text"
-              id="weekly_class_name"
-              name="class_name"
-              placeholder="e.g. Basic 5"
-              required
-            >
-          </div>
-
-          <div>
-            <label for="weekly_report_type">Report Type *</label>
-            <select id="weekly_report_type" name="report_type" required>
-              <option value="">Select Report Type</option>
-              <option value="General Weekly Report">General Weekly Report</option>
-              <option value="Handwriting Practice">Handwriting Practice</option>
-              <option value="Clubs & Societies">Clubs & Societies</option>
-              <option value="Academic Progress">Academic Progress</option>
-              <option value="Attendance">Attendance</option>
-              <option value="Other">Other</option>
+            <label for="handwriting_class">Class *</label>
+            <select id="handwriting_class" required>
+              <option value="">Loading assigned classes...</option>
             </select>
           </div>
 
           <div>
-            <label for="weekly_week">Week *</label>
-            <input
-              type="text"
-              id="weekly_week"
-              name="week"
-              placeholder="e.g. Week 4"
-              required
-            >
+            <label for="handwriting_week">Week *</label>
+            <select id="handwriting_week" required>
+              <option value="">Select Week</option>
+              <option value="Week 1">Week 1</option>
+              <option value="Week 2">Week 2</option>
+              <option value="Week 3">Week 3</option>
+              <option value="Week 4">Week 4</option>
+              <option value="Week 5">Week 5</option>
+              <option value="Week 6">Week 6</option>
+              <option value="Week 7">Week 7</option>
+              <option value="Week 8">Week 8</option>
+              <option value="Week 9">Week 9</option>
+              <option value="Week 10">Week 10</option>
+              <option value="Week 11">Week 11</option>
+              <option value="Week 12">Week 12</option>
+              <option value="Week 13">Week 13</option>
+              <option value="Week 14">Week 14</option>
+              <option value="Week 15">Week 15</option>
+              <option value="Week 16">Week 16</option>
+            </select>
           </div>
 
           <div>
-            <label for="weekly_title">Report Title *</label>
+            <label for="handwriting_file">Handwriting Report Document *</label>
             <input
-              type="text"
-              id="weekly_title"
-              name="title"
-              placeholder="Enter report title"
+              type="file"
+              id="handwriting_file"
+              accept=".pdf,.doc,.docx"
               required
             >
           </div>
 
         </div>
 
-        <div>
-          <label for="weekly_activities">Activities Carried Out</label>
-          <textarea
-            id="weekly_activities"
-            name="activities"
-            rows="4"
-            placeholder="Describe activities carried out during the week..."
-          ></textarea>
-        </div>
+        <p>Accepted formats: PDF, DOC and DOCX. Maximum size: 10 MB.</p>
 
-        <div>
-          <label for="weekly_participation">Learners' Participation</label>
-          <textarea
-            id="weekly_participation"
-            name="learner_participation"
-            rows="4"
-            placeholder="Describe learners' participation..."
-          ></textarea>
-        </div>
-
-        <div>
-          <label for="weekly_progress">Progress</label>
-          <textarea
-            id="weekly_progress"
-            name="progress"
-            rows="4"
-            placeholder="Describe progress made during the week..."
-          ></textarea>
-        </div>
-
-        <div>
-          <label for="weekly_challenges">Challenges Identified</label>
-          <textarea
-            id="weekly_challenges"
-            name="challenges"
-            rows="4"
-            placeholder="State challenges identified..."
-          ></textarea>
-        </div>
-
-        <div>
-          <label for="weekly_interventions">Interventions / Recommendations</label>
-          <textarea
-            id="weekly_interventions"
-            name="interventions"
-            rows="4"
-            placeholder="State interventions or recommendations..."
-          ></textarea>
-        </div>
-
-        <div>
-          <label for="weekly_file">Attach Weekly Report</label>
-          <input
-            type="file"
-            id="weekly_file"
-            name="report_file"
-            accept=".pdf,.doc,.docx"
-          >
-          <small>PDF, DOC or DOCX only. Maximum file size: 10 MB.</small>
-        </div>
-
-        <div style="margin-top:18px;">
-          <button type="submit" id="weeklyReportSubmitBtn">
-            Submit Weekly Report
-          </button>
-        </div>
+        <button type="submit" id="weeklyReportSubmitBtn">
+          Upload Handwriting Report
+        </button>
 
         <p id="weeklyReportMessage"></p>
 
       </form>
     </section>
 
+
     <section class="dashboard-section">
-      <h2>My Submitted Weekly Reports</h2>
+      <h2>My Uploaded Handwriting Reports</h2>
 
       <div style="overflow-x:auto;">
         <table class="data-table">
@@ -165,17 +101,16 @@
             <tr>
               <th>Date</th>
               <th>Class</th>
-              <th>Type</th>
               <th>Week</th>
-              <th>Title</th>
-              <th>File</th>
+              <th>Document</th>
               <th>Status</th>
-              <th>Admin Comment</th>
+              <th>Comment</th>
             </tr>
           </thead>
+
           <tbody id="weeklyReportsTableBody">
             <tr>
-              <td colspan="8">Loading weekly reports...</td>
+              <td colspan="6">Loading Handwriting Reports...</td>
             </tr>
           </tbody>
         </table>
@@ -187,7 +122,7 @@
 
 <script src="../js/teacher-guard.js?v=1"></script>
 <script src="../js/api-helper.js?v=2"></script>
-<script src="../js/teacher-weekly-reports.js?v=1"></script>
+<script src="../js/teacher-weekly-reports.js?v=2"></script>
 <script src="../js/logout.js?v=2"></script>
 <script src="../js/site-footer-settings.js?v=1"></script>
 <script src="../js/site-settings.js?v=4"></script>

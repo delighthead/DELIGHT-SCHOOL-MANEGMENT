@@ -8,55 +8,57 @@ function getUploadedFilePath(file) {
 exports.createLessonPlan = async (req, res) => {
   try {
     const {
-      teacher_id,
       class_id,
       class_name,
       subject,
-      week,
-      topic,
-      objectives,
-      resources
+      week
     } = req.body;
 
-    if (!class_name || !subject || !week || !topic) {
+    if (!class_name || !subject || !week) {
       return res.status(400).json({
-        message: "Class, subject, week and topic are required"
+        message: "Class, subject and week are required"
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Lesson Note document is required"
       });
     }
 
     const filePath = getUploadedFilePath(req.file);
-    const originalName = req.file ? req.file.originalname : null;
+    const originalName = req.file.originalname;
 
     const [result] = await db.query(
       `INSERT INTO lesson_plans
-       (teacher_id, class_id, class_name, subject, week, topic, objectives, resources, file_path, file_original_name, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending')`,
+       (teacher_id, class_id, class_name, subject, week, topic,
+        objectives, resources, file_path, file_original_name, status)
+       VALUES (?, ?, ?, ?, ?, 'Lesson Note', NULL, NULL, ?, ?, 'Pending')`,
       [
-        teacher_id || req.user.id || null,
+        req.user.id,
         class_id || null,
         class_name,
         subject,
         week,
-        topic,
-        objectives || null,
-        resources || null,
         filePath,
         originalName
       ]
     );
 
     res.status(201).json({
-      message: "Lesson plan submitted successfully",
+      message: "Lesson Note uploaded successfully",
       lesson_plan_id: result.insertId
     });
   } catch (error) {
-    console.error("Create lesson plan error:", error);
+    console.error("Create lesson note error:", error);
+
     res.status(500).json({
-      message: "Failed to submit lesson plan",
+      message: "Failed to upload Lesson Note",
       error: error.message
     });
   }
 };
+
 
 exports.getLessonPlans = async (req, res) => {
   try {

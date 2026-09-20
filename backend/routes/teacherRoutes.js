@@ -28,6 +28,14 @@ const uploadTeacherProfile = multer({ storage: teacherProfileStorage });
 
 // Teacher self/profile routes
 router.get(
+  "/my-assignments",
+  verifyToken,
+  requireAdminOrTeacher,
+  teacherController.getMyAssignments
+);
+
+
+router.get(
   "/by-user/:userId",
   verifyToken,
   requireAdminOrTeacher,
