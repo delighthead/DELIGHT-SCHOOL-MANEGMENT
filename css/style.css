@@ -3988,3 +3988,243 @@ footer {
     padding: 22px 16px;
   }
 }
+
+/* ==========================================================
+   HOME PAGE HEADER FINAL CLEAN FIX
+   ========================================================== */
+
+body > header.navbar {
+  min-height: 82px !important;
+  height: auto !important;
+  padding: 14px 7% !important;
+  background: #003b70 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 24px !important;
+}
+
+body > header.navbar .site-logo {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  text-decoration: none !important;
+  color: #ffffff !important;
+  flex-shrink: 0 !important;
+}
+
+body > header.navbar .site-logo img {
+  width: 46px !important;
+  height: 46px !important;
+  min-width: 46px !important;
+  max-width: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+  object-fit: contain !important;
+  background: #ffffff !important;
+  padding: 4px !important;
+  border-radius: 8px !important;
+  display: block !important;
+}
+
+body > header.navbar .site-logo span {
+  color: #ffffff !important;
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  line-height: 1.1 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+body > header.navbar .site-logo:link,
+body > header.navbar .site-logo:visited,
+body > header.navbar .site-logo:hover,
+body > header.navbar .site-logo:active {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+body > header.navbar nav {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 20px !important;
+  flex-wrap: nowrap !important;
+  margin-left: auto !important;
+}
+
+body > header.navbar nav a {
+  color: #ffffff !important;
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+body > header.navbar nav a:hover {
+  color: #ffcc00 !important;
+}
+
+body > header.navbar nav .login-btn {
+  background: #ffcc00 !important;
+  color: #003366 !important;
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+}
+
+/* Remove unwanted purple visited link effect */
+.logo,
+.logo span,
+.site-logo,
+.site-logo span {
+  color: #ffffff !important;
+  text-decoration: none !important;
+}
+
+/* Tablet */
+@media (max-width: 1000px) {
+  body > header.navbar {
+    padding: 14px 5% !important;
+    gap: 16px !important;
+  }
+
+  body > header.navbar .site-logo span {
+    font-size: 19px !important;
+  }
+
+  body > header.navbar nav {
+    gap: 12px !important;
+  }
+
+  body > header.navbar nav a {
+    font-size: 14px !important;
+  }
+}
+
+/* Phone */
+@media (max-width: 760px) {
+  body > header.navbar {
+    flex-direction: column !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 14px 5% !important;
+  }
+
+  body > header.navbar .site-logo {
+    justify-content: center !important;
+  }
+
+  body > header.navbar .site-logo span {
+    white-space: normal !important;
+    font-size: 18px !important;
+  }
+
+  body > header.navbar nav {
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px 12px !important;
+    margin-left: 0 !important;
+  }
+
+  body > header.navbar nav a {
+    font-size: 13px !important;
+  }
+
+  body > header.navbar nav .login-btn {
+    padding: 8px 12px !important;
+  }
+}
+
+
+/* ==========================================================
+   Teacher Assignment - Multi Class / Subject Checkbox Layout
+   ========================================================== */
+
+#teacherAssignForm .assignment-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #d7dde5;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+#teacherAssignForm #assign_class_checkboxes {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+/* Override global .admin-form input width for checkboxes */
+#teacherAssignForm .assignment-checkbox-grid input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px;
+  padding: 0 !important;
+  margin: 0 !important;
+  flex: 0 0 18px;
+  cursor: pointer;
+  accent-color: #003366;
+}
+
+#teacherAssignForm .assignment-checkbox-grid label,
+#teacherAssignForm .assignment-check-item {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  width: 100%;
+  min-height: 42px;
+  margin: 0 !important;
+  padding: 9px 11px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+#teacherAssignForm .assignment-checkbox-grid label:hover,
+#teacherAssignForm .assignment-check-item:hover {
+  background: #eef4fa;
+  border-color: #b8c7d9;
+}
+
+#teacherAssignForm .assignment-checkbox-grid label:has(input:checked),
+#teacherAssignForm .assignment-check-item:has(input:checked) {
+  background: #e8f1fa;
+  border-color: #003366;
+}
+
+#teacherAssignForm .assignment-checkbox-grid span {
+  display: inline-block;
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+#teacherAssignForm .assignment-help {
+  display: block;
+  margin-top: 7px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  #teacherAssignForm .assignment-checkbox-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  #teacherAssignForm {
+    grid-template-columns: 1fr;
+  }
+
+  #teacherAssignForm .assignment-checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

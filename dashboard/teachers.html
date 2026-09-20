@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teachers - Delight International School</title>
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/style.css?v=teacher-assign-2">
 </head>
 <body>
   <div class="dashboard-layout">
@@ -52,6 +52,20 @@
           </div>
 
           <div>
+            <label for="teacher_gender">Gender</label>
+            <select id="teacher_gender">
+              <option value="">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="teacher_date_of_birth">Date of Birth</label>
+            <input type="date" id="teacher_date_of_birth">
+          </div>
+
+          <div>
             <label for="teacher_phone">Phone Number</label>
             <input type="text" id="teacher_phone" placeholder="Enter phone number" required>
           </div>
@@ -67,8 +81,39 @@
           </div>
 
           <div>
-            <label for="teacher_address">Address</label>
-            <input type="text" id="teacher_address" placeholder="Enter address">
+            <label for="teacher_address">Residential Address</label>
+            <input type="text" id="teacher_address" placeholder="Enter residential address">
+          </div>
+
+          <div>
+            <label for="teacher_date_employed">Date Employed</label>
+            <input type="date" id="teacher_date_employed">
+          </div>
+
+          <div>
+            <label for="teacher_qualification">Qualification</label>
+            <select id="teacher_qualification">
+              <option value="">Select qualification</option>
+              <option value="BECE">BECE</option>
+              <option value="WASSCE / SSSCE">WASSCE / SSSCE</option>
+              <option value="Certificate in Education">Certificate in Education</option>
+              <option value="Diploma in Basic Education">Diploma in Basic Education</option>
+              <option value="Diploma in Education">Diploma in Education</option>
+              <option value="Bachelor of Education (B.Ed)">Bachelor of Education (B.Ed)</option>
+              <option value="Bachelor's Degree">Bachelor's Degree</option>
+              <option value="Bachelor's Degree + PGDE">Bachelor's Degree + PGDE</option>
+              <option value="Postgraduate Diploma in Education (PGDE)">Postgraduate Diploma in Education (PGDE)</option>
+              <option value="Master of Education (M.Ed)">Master of Education (M.Ed)</option>
+              <option value="Master's Degree">Master's Degree</option>
+              <option value="PhD / Doctorate">PhD / Doctorate</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div id="teacher_other_qualification_wrap" style="display:none;">
+            <label for="teacher_other_qualification">Other Qualification</label>
+            <input type="text" id="teacher_other_qualification"
+                   placeholder="Enter qualification">
           </div>
 
           <div>
@@ -102,30 +147,94 @@
           </div>
 
           <div>
-            <label for="assign_class_id">Assign Class</label>
-            <select id="assign_class_id">
-              <option value="">Select class</option>
-            </select>
+            <label>Assign Classes</label>
+
+            <div id="assign_class_checkboxes"
+                 class="assignment-checkbox-grid">
+              <p style="margin:0;">Select a branch first to load classes.</p>
+            </div>
+
+            <small class="assignment-help">
+              You can select more than one class.
+            </small>
           </div>
 
           <div>
-            <label for="assign_subject">Subject</label>
-            <select id="assign_subject" required>
-              <option value="">Select subject</option>
-              <option value="ENGLISH">ENGLISH</option>
-              <option value="MATHEMATICS">MATHEMATICS</option>
-              <option value="INTEGRATED SCIENCE">INTEGRATED SCIENCE</option>
-              <option value="SOCIAL STUDIES">SOCIAL STUDIES</option>
-              <option value="R.M.E">R.M.E</option>
-              <option value="CAREER TECHNOLOGY">CAREER TECHNOLOGY</option>
-              <option value="COMPUTING">COMPUTING</option>
-              <option value="FRENCH">FRENCH</option>
-              <option value="GHANAIAN LANGUAGE">GHANAIAN LANGUAGE</option>
-              <option value="CREATIVE ARTS">CREATIVE ARTS</option>
-              <option value="GHANA HISTORY">GHANA HISTORY</option>
-              <option value="PHYSICAL EDUCATION">PHYSICAL EDUCATION</option>
-              <option value="OUR WORLD OUR PEOPLE">OUR WORLD OUR PEOPLE</option>
-            </select>
+            <label>Subjects</label>
+
+            <div id="assign_subject_checkboxes"
+                 class="assignment-checkbox-grid">
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="ENGLISH">
+                ENGLISH
+              </label>
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="MATHEMATICS">
+                MATHEMATICS
+              </label>
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="INTEGRATED SCIENCE">
+                INTEGRATED SCIENCE
+              </label>
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="SOCIAL STUDIES">
+                SOCIAL STUDIES
+              </label>
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="R.M.E">
+                R.M.E
+              </label>
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="CAREER TECHNOLOGY">
+                CAREER TECHNOLOGY
+              </label>
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="COMPUTING">
+                COMPUTING
+              </label>
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="FRENCH">
+                FRENCH
+              </label>
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="GHANAIAN LANGUAGE">
+                GHANAIAN LANGUAGE
+              </label>
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="CREATIVE ARTS">
+                CREATIVE ARTS
+              </label>
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="GHANA HISTORY">
+                GHANA HISTORY
+              </label>
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="PHYSICAL EDUCATION">
+                PHYSICAL EDUCATION
+              </label>
+
+              <label>
+                <input type="checkbox" name="assign_subjects" value="OUR WORLD OUR PEOPLE">
+                OUR WORLD OUR PEOPLE
+              </label>
+
+            </div>
+
+            <small class="assignment-help">
+              Select all subjects taught by this teacher.
+            </small>
           </div>
 
           <div>
@@ -176,12 +285,12 @@
   <script src="../js/admin-guard.js?v=1"></script>
   <script src="../js/logout.js?v=2"></script>
   <script src="../js/api-helper.js?v=2"></script>
-  <script src="../js/teacher-form-dropdown-fix.js?v=1"></script>
+  <script src="../js/teacher-form-dropdown-fix.js?v=2"></script>
   <script src="../js/teacher-edit-button-style.js?v=1"></script>
-  <script src="../js/teachers-api.js?v=7"></script>
+  <script src="../js/teachers-api.js?v=9"></script>
   <script src="../js/make-teacher-admin-final.js?v=2"></script>
   <script src="../js/assign-role-dropdown-force.js?v=1"></script>
-  <script src="../js/assign-teacher-submit-final.js?v=2"></script>
+  <script src="../js/assign-teacher-submit-final.js?v=3"></script>
   <script src="../js/admin-table-view-controls.js?v=1"></script>
 </body>
 </html>

@@ -403,10 +403,17 @@ document.addEventListener("DOMContentLoaded", function () {
         branch_id: branchId,
         teacher_id: document.getElementById("teacher_id")?.value.trim() || "",
         full_name: document.getElementById("teacher_full_name")?.value.trim() || "",
+        gender: document.getElementById("teacher_gender")?.value || "",
+        date_of_birth: document.getElementById("teacher_date_of_birth")?.value || "",
         ghana_card_number: document.getElementById("teacher_ghana_card_number")?.value.trim() || "",
         phone: document.getElementById("teacher_phone")?.value.trim() || "",
         email: document.getElementById("teacher_email")?.value.trim() || "",
         address: document.getElementById("teacher_address")?.value.trim() || "",
+        date_employed: document.getElementById("teacher_date_employed")?.value || "",
+        qualification:
+          document.getElementById("teacher_qualification")?.value === "Other"
+            ? document.getElementById("teacher_other_qualification")?.value.trim() || ""
+            : document.getElementById("teacher_qualification")?.value || "",
         status: String(document.getElementById("teacher_status")?.value || "active").toLowerCase()
       };
 
@@ -522,10 +529,54 @@ document.addEventListener("DOMContentLoaded", function () {
         setValue("teacher_branch_id", teacher.branch_id);
         setValue("teacher_id", teacher.teacher_id);
         setValue("teacher_full_name", teacher.full_name || teacher.name);
+        setValue("teacher_gender", teacher.gender || "");
+        setValue(
+          "teacher_date_of_birth",
+          teacher.date_of_birth ? String(teacher.date_of_birth).slice(0, 10) : ""
+        );
         setValue("teacher_ghana_card_number", teacher.ghana_card_number || teacher.ghana_card);
         setValue("teacher_phone", teacher.phone);
         setValue("teacher_email", teacher.email);
         setValue("teacher_address", teacher.address);
+        setValue(
+          "teacher_date_employed",
+          teacher.date_employed ? String(teacher.date_employed).slice(0, 10) : ""
+        );
+
+        const qualificationSelect = document.getElementById("teacher_qualification");
+        const otherQualificationWrap = document.getElementById("teacher_other_qualification_wrap");
+        const otherQualificationInput = document.getElementById("teacher_other_qualification");
+
+        const qualificationOptions = qualificationSelect
+          ? Array.from(qualificationSelect.options).map(option => option.value)
+          : [];
+
+        if (
+          teacher.qualification &&
+          qualificationSelect &&
+          !qualificationOptions.includes(teacher.qualification)
+        ) {
+          qualificationSelect.value = "Other";
+
+          if (otherQualificationInput) {
+            otherQualificationInput.value = teacher.qualification;
+          }
+
+          if (otherQualificationWrap) {
+            otherQualificationWrap.style.display = "block";
+          }
+        } else {
+          setValue("teacher_qualification", teacher.qualification || "");
+
+          if (otherQualificationInput) {
+            otherQualificationInput.value = "";
+          }
+
+          if (otherQualificationWrap) {
+            otherQualificationWrap.style.display = "none";
+          }
+        }
+
         setValue("teacher_status", teacher.status || "active");
 
         const submitBtn = document.querySelector("#teacherForm button[type='submit']");
@@ -568,6 +619,24 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
   });
+
+  const qualificationSelect = document.getElementById("teacher_qualification");
+  const otherQualificationWrap = document.getElementById("teacher_other_qualification_wrap");
+  const otherQualificationInput = document.getElementById("teacher_other_qualification");
+
+  if (qualificationSelect) {
+    qualificationSelect.addEventListener("change", function () {
+      const isOther = qualificationSelect.value === "Other";
+
+      if (otherQualificationWrap) {
+        otherQualificationWrap.style.display = isOther ? "block" : "none";
+      }
+
+      if (!isOther && otherQualificationInput) {
+        otherQualificationInput.value = "";
+      }
+    });
+  }
 
   async function start() {
     await loadBranches();

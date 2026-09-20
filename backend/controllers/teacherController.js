@@ -53,14 +53,19 @@ async function getTeacherByUserId(userId) {
 }
 
 exports.createTeacher = async (req, res) => {
+  let conn;
   try {
     const {
       teacher_id,
       full_name,
+      gender,
+      date_of_birth,
       ghana_card_number,
       phone,
       email,
       address,
+      date_employed,
+      qualification,
       profile_picture,
       branch_id,
       status
@@ -84,7 +89,10 @@ exports.createTeacher = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(phone, 10);
 
-    const [userResult] = await db.query(
+    conn = await db.getConnection();
+    await conn.beginTransaction();
+
+    const [userResult] = await conn.query(
       `INSERT INTO users (branch_id, full_name, username, password, role, phone, email, status)
        VALUES (?, ?, ?, ?, 'teacher', ?, ?, ?)`,
       [
@@ -98,26 +106,31 @@ exports.createTeacher = async (req, res) => {
       ]
     );
 
-    const [teacherResult] = await db.query(
-      `INSERT INTO teachers 
-      (branch_id, user_id, teacher_id, full_name, ghana_card_number, phone, email, address,
-      profile_picture, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    const [teacherResult] = await conn.query(
+      `INSERT INTO teachers
+      (branch_id, user_id, teacher_id, full_name, gender, date_of_birth,
+       ghana_card_number, phone, email, address, date_employed, qualification,
+       profile_picture, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         effectiveBranchId,
         userResult.insertId,
         teacher_id,
         full_name,
+        gender || null,
+        date_of_birth || null,
         ghana_card_number,
         phone,
         email || null,
         address || null,
+        date_employed || null,
+        qualification || null,
         profile_picture || null,
         status || "active"
       ]
     );
 
-    await db.query(
+    await conn.query(
       `INSERT INTO activity_logs
       (branch_id, user_id, action, module, description)
       VALUES (?, ?, ?, ?, ?)`,
@@ -130,6 +143,8 @@ exports.createTeacher = async (req, res) => {
       ]
     );
 
+    await conn.commit();
+
     res.status(201).json({
       message: "Teacher added successfully",
       teacher_database_id: teacherResult.insertId,
@@ -137,6 +152,14 @@ exports.createTeacher = async (req, res) => {
       login_password: phone
     });
   } catch (error) {
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (rollbackError) {
+        console.error("Failed to rollback teacher create transaction:", rollbackError.message);
+      }
+    }
+
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).json({
         message: "Teacher ID, Ghana Card, or username already exists"
@@ -147,6 +170,10 @@ exports.createTeacher = async (req, res) => {
       message: "Failed to add teacher",
       error: error.message
     });
+  } finally {
+    if (conn) {
+      conn.release();
+    }
   }
 };
 
@@ -165,9 +192,14 @@ exports.getTeachers = async (req, res) => {
         branches.branch_name,
         teachers.teacher_id,
         teachers.full_name,
+        teachers.gender,
+        teachers.date_of_birth,
         teachers.ghana_card_number,
         teachers.phone,
         teachers.email,
+        teachers.address,
+        teachers.date_employed,
+        teachers.qualification,
         teachers.status,
         teachers.created_at,
         GROUP_CONCAT(DISTINCT classes.class_name ORDER BY classes.class_name SEPARATOR ', ') AS assigned_classes,
@@ -254,6 +286,39 @@ exports.assignTeacher = async (req, res) => {
       : (branch_id || teacher.branch_id || 4);
 
     const class_id = await getOrCreateClass(class_name, effectiveBranchId);
+    const finalAcademicYear = academic_year || "2025/2026";
+
+    /*
+     * Prevent duplicate active teacher assignments.
+     * Same teacher + branch + class + subject + academic year
+     * should only have one active assignment.
+     */
+    const [existingAssignments] = await db.query(
+      `SELECT id
+       FROM teacher_assignments
+       WHERE teacher_id = ?
+         AND branch_id = ?
+         AND class_id = ?
+         AND UPPER(TRIM(subject)) = UPPER(TRIM(?))
+         AND academic_year = ?
+         AND status = 'active'
+       LIMIT 1`,
+      [
+        teacher_database_id,
+        effectiveBranchId,
+        class_id,
+        subject,
+        finalAcademicYear
+      ]
+    );
+
+    if (existingAssignments.length > 0) {
+      return res.status(200).json({
+        message: "Teacher assignment already exists",
+        duplicate: true,
+        assignment_id: existingAssignments[0].id
+      });
+    }
 
     const [result] = await db.query(
       `INSERT INTO teacher_assignments
@@ -265,12 +330,13 @@ exports.assignTeacher = async (req, res) => {
         class_id,
         subject,
         normalizedRole,
-        academic_year || "2025/2026"
+        finalAcademicYear
       ]
     );
 
     res.status(201).json({
       message: "Teacher assigned successfully",
+      duplicate: false,
       assignment_id: result.insertId
     });
   } catch (error) {
@@ -520,10 +586,14 @@ exports.updateTeacher = async (req, res) => {
       branch_id,
       teacher_id,
       full_name,
+      gender,
+      date_of_birth,
       ghana_card_number,
       phone,
       email,
       address,
+      date_employed,
+      qualification,
       profile_picture,
       status
     } = req.body;
@@ -566,20 +636,28 @@ exports.updateTeacher = async (req, res) => {
        SET branch_id = ?,
            teacher_id = ?,
            full_name = ?,
+           gender = ?,
+           date_of_birth = ?,
            ghana_card_number = ?,
            phone = ?,
            email = ?,
            address = ?,
+           date_employed = ?,
+           qualification = ?,
            status = ?
        WHERE id = ?`,
       [
         branch_id,
         teacher_id,
         full_name,
+        gender || null,
+        date_of_birth || null,
         ghana_card_number,
         phone,
         email || null,
         address || null,
+        date_employed || null,
+        qualification || null,
         status || "active",
         id
       ]
