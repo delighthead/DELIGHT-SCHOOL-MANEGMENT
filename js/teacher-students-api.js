@@ -61,10 +61,15 @@ document.addEventListener("DOMContentLoaded", function () {
       data.students.forEach(function (student) {
         const row = document.createElement("tr");
 
+        const displayName =
+          student.full_name ||
+          student.student_name ||
+          `${student.first_name || ""} ${student.surname || ""}`.trim();
+
         row.innerHTML = `
           <td>${student.student_id || ""}</td>
           <td>${student.admission_number || ""}</td>
-          <td>${student.full_name || ""}</td>
+          <td>${displayName}</td>
           <td>${student.sex || ""}</td>
           <td>${student.class_name || ""}</td>
           <td>${student.status || ""}</td>
