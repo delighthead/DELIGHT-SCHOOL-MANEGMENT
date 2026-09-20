@@ -266,6 +266,7 @@ document.addEventListener("DOMContentLoaded", function () {
     setValue("full_name", student.full_name);
     setValue("sex", student.sex);
     setValue("date_of_birth", formatDate(student.date_of_birth));
+    setValue("date_of_admission", formatDate(student.date_of_admission));
     setValue("place_of_birth", student.place_of_birth);
     setValue("nationality", student.nationality);
     setValue("language_spoken", student.language_spoken);
@@ -312,6 +313,7 @@ document.addEventListener("DOMContentLoaded", function () {
       formData.append("full_name", getValue("full_name"));
       formData.append("sex", getValue("sex"));
       formData.append("date_of_birth", getValue("date_of_birth"));
+      formData.append("date_of_admission", getValue("date_of_admission"));
       formData.append("place_of_birth", getValue("place_of_birth"));
       formData.append("nationality", getValue("nationality"));
       formData.append("language_spoken", getValue("language_spoken"));

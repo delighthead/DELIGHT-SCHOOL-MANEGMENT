@@ -43,6 +43,7 @@ CREATE TABLE students (
   other_name VARCHAR(100),
   sex ENUM('Male', 'Female') NOT NULL,
   date_of_birth DATE,
+  date_of_admission DATE,
   place_of_birth VARCHAR(150),
   nationality VARCHAR(100),
   class_id INT,
