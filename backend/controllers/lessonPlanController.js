@@ -1,4 +1,5 @@
 const db = require("../config/database");
+const { sendReviewNotification } = require("../utils/reviewNotificationEmail");
 
 function getUploadedFilePath(file) {
   if (!file) return null;
@@ -180,20 +181,96 @@ exports.reviewLessonPlan = async (req, res) => {
       });
     }
 
-    await db.query(
+    const [rows] = await db.query(
+      `SELECT
+         lp.id,
+         lp.teacher_id,
+         lp.class_name,
+         lp.subject,
+         lp.week,
+         t.full_name AS teacher_name,
+         t.email AS teacher_email,
+         t.branch_id
+       FROM lesson_plans lp
+       LEFT JOIN teachers t ON t.user_id = lp.teacher_id
+       WHERE lp.id = ?
+       LIMIT 1`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Lesson Note not found"
+      });
+    }
+
+    const submission = rows[0];
+
+    if (
+      ["branch_admin", "teacher_admin"].includes(req.user.role)
+    ) {
+      if (
+        !req.user.branch_id ||
+        Number(submission.branch_id) !== Number(req.user.branch_id)
+      ) {
+        return res.status(403).json({
+          message: "You can only review submissions from your own branch"
+        });
+      }
+    }
+
+    const [result] = await db.query(
       `UPDATE lesson_plans
        SET status = ?, admin_comment = ?, reviewed_by = ?, reviewed_at = NOW()
        WHERE id = ?`,
       [status, admin_comment || null, req.user.id || null, id]
     );
 
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Lesson Note not found"
+      });
+    }
+
+    let emailNotification = "not_sent";
+
+    if (submission.teacher_email) {
+      try {
+        await sendReviewNotification({
+          teacherEmail: submission.teacher_email,
+          teacherName: submission.teacher_name,
+          submissionType: "Lesson Note",
+          className: submission.class_name,
+          subject: submission.subject,
+          week: submission.week,
+          status,
+          adminComment: admin_comment
+        });
+
+        emailNotification = "sent";
+      } catch (emailError) {
+        emailNotification = "failed";
+        console.error(
+          "Lesson Note review email failed:",
+          emailError.message
+        );
+      }
+    } else {
+      emailNotification = "no_teacher_email";
+      console.warn(
+        `Lesson Note ${id}: teacher has no email address`
+      );
+    }
+
     res.json({
-      message: `Lesson plan ${status.toLowerCase()} successfully`
+      message: `Lesson Note ${status.toLowerCase()} successfully`,
+      email_notification: emailNotification
     });
   } catch (error) {
-    console.error("Review lesson plan error:", error);
+    console.error("Review lesson note error:", error);
+
     res.status(500).json({
-      message: "Failed to review lesson plan",
+      message: "Failed to review Lesson Note",
       error: error.message
     });
   }
