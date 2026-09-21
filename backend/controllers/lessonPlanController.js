@@ -358,3 +358,76 @@ exports.deleteLessonPlan = async (req, res) => {
     });
   }
 };
+
+exports.deleteMyLessonPlan = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.user || req.user.role !== "teacher") {
+      return res.status(403).json({
+        message: "Teacher access required"
+      });
+    }
+
+    const [rows] = await db.query(
+      `SELECT id, file_path
+       FROM lesson_plans
+       WHERE id = ?
+         AND teacher_id = ?
+       LIMIT 1`,
+      [id, req.user.id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "Lesson Note not found or you do not have permission to delete it"
+      });
+    }
+
+    const submission = rows[0];
+
+    await db.query(
+      `DELETE FROM lesson_plans
+       WHERE id = ?
+         AND teacher_id = ?`,
+      [id, req.user.id]
+    );
+
+    if (submission.file_path) {
+      const relativePath =
+        String(submission.file_path).replace(/^\/+/, "");
+
+      const absolutePath =
+        path.resolve(__dirname, "..", relativePath);
+
+      const uploadsRoot =
+        path.resolve(__dirname, "..", "uploads", "lesson-plans");
+
+      if (
+        absolutePath.startsWith(uploadsRoot + path.sep) &&
+        fs.existsSync(absolutePath)
+      ) {
+        try {
+          fs.unlinkSync(absolutePath);
+        } catch (fileError) {
+          console.error(
+            "Unable to remove teacher Lesson Note document:",
+            fileError.message
+          );
+        }
+      }
+    }
+
+    res.json({
+      message: "Lesson Note deleted successfully"
+    });
+
+  } catch (error) {
+    console.error("Delete my Lesson Note error:", error);
+
+    res.status(500).json({
+      message: "Failed to delete Lesson Note",
+      error: error.message
+    });
+  }
+};

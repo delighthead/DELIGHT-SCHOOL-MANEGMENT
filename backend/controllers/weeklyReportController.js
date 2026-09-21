@@ -357,3 +357,76 @@ exports.deleteWeeklyReport = async (req, res) => {
     });
   }
 };
+
+exports.deleteMyWeeklyReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!req.user || req.user.role !== "teacher") {
+      return res.status(403).json({
+        message: "Teacher access required"
+      });
+    }
+
+    const [rows] = await db.query(
+      `SELECT id, file_path
+       FROM weekly_reports
+       WHERE id = ?
+         AND teacher_id = ?
+       LIMIT 1`,
+      [id, req.user.id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "Handwriting Report not found or you do not have permission to delete it"
+      });
+    }
+
+    const submission = rows[0];
+
+    await db.query(
+      `DELETE FROM weekly_reports
+       WHERE id = ?
+         AND teacher_id = ?`,
+      [id, req.user.id]
+    );
+
+    if (submission.file_path) {
+      const relativePath =
+        String(submission.file_path).replace(/^\/+/, "");
+
+      const absolutePath =
+        path.resolve(__dirname, "..", relativePath);
+
+      const uploadsRoot =
+        path.resolve(__dirname, "..", "uploads", "weekly-reports");
+
+      if (
+        absolutePath.startsWith(uploadsRoot + path.sep) &&
+        fs.existsSync(absolutePath)
+      ) {
+        try {
+          fs.unlinkSync(absolutePath);
+        } catch (fileError) {
+          console.error(
+            "Unable to remove teacher Handwriting Report document:",
+            fileError.message
+          );
+        }
+      }
+    }
+
+    res.json({
+      message: "Handwriting Report deleted successfully"
+    });
+
+  } catch (error) {
+    console.error("Delete my Handwriting Report error:", error);
+
+    res.status(500).json({
+      message: "Failed to delete Handwriting Report",
+      error: error.message
+    });
+  }
+};

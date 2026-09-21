@@ -75,6 +75,12 @@ router.patch(
 );
 
 router.delete(
+  "/my/:id",
+  verifyToken,
+  weeklyReportController.deleteMyWeeklyReport
+);
+
+router.delete(
   "/:id",
   verifyToken,
   requireAdmin,

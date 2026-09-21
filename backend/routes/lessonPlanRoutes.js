@@ -75,6 +75,12 @@ router.patch(
 );
 
 router.delete(
+  "/my/:id",
+  verifyToken,
+  lessonPlanController.deleteMyLessonPlan
+);
+
+router.delete(
   "/:id",
   verifyToken,
   requireAdmin,

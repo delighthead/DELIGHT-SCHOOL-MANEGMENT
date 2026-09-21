@@ -6,6 +6,12 @@ document.addEventListener("DOMContentLoaded", function () {
   const tbody = document.getElementById("weeklyReportsTableBody");
   const message = document.getElementById("weeklyReportMessage");
   const submitBtn = document.getElementById("weeklyReportSubmitBtn");
+  const pageSizeSelect = document.getElementById("teacherHandwritingPageSize");
+  const pagination = document.getElementById("teacherHandwritingPagination");
+  const paginationInfo = document.getElementById("teacherHandwritingPaginationInfo");
+
+  let handwritingRows = [];
+  let currentPage = 1;
 
   function authHeaders() {
     return window.getAuthOnlyHeaders
@@ -73,6 +79,126 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  function getPageSize() {
+    return pageSizeSelect && pageSizeSelect.value !== "all"
+      ? Number(pageSizeSelect.value) || 5
+      : Infinity;
+  }
+
+  function renderPagination(totalPages) {
+    if (!pagination) return;
+
+    if (totalPages <= 1) {
+      pagination.innerHTML = "";
+      return;
+    }
+
+    let html = `
+      <button type="button"
+        class="submission-page-btn"
+        ${currentPage <= 1 ? "disabled" : ""}
+        onclick="changeTeacherHandwritingPage(${currentPage - 1})">
+        Previous
+      </button>
+    `;
+
+    for (let page = 1; page <= totalPages; page++) {
+      html += `
+        <button type="button"
+          class="submission-page-btn ${page === currentPage ? "active" : ""}"
+          onclick="changeTeacherHandwritingPage(${page})">
+          ${page}
+        </button>
+      `;
+    }
+
+    html += `
+      <button type="button"
+        class="submission-page-btn"
+        ${currentPage >= totalPages ? "disabled" : ""}
+        onclick="changeTeacherHandwritingPage(${currentPage + 1})">
+        Next
+      </button>
+    `;
+
+    pagination.innerHTML = html;
+  }
+
+  function renderHandwritingReports() {
+    if (!handwritingRows.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="7">No Handwriting Reports uploaded yet.</td></tr>';
+
+      if (paginationInfo) {
+        paginationInfo.textContent = "Showing 0 entries";
+      }
+
+      if (pagination) {
+        pagination.innerHTML = "";
+      }
+
+      return;
+    }
+
+    const pageSize = getPageSize();
+
+    const totalPages =
+      pageSize === Infinity
+        ? 1
+        : Math.max(1, Math.ceil(handwritingRows.length / pageSize));
+
+    currentPage =
+      Math.min(Math.max(1, currentPage), totalPages);
+
+    const startIndex =
+      pageSize === Infinity
+        ? 0
+        : (currentPage - 1) * pageSize;
+
+    const rows =
+      pageSize === Infinity
+        ? handwritingRows
+        : handwritingRows.slice(startIndex, startIndex + pageSize);
+
+    tbody.innerHTML = rows.map(row => `
+      <tr>
+        <td>${formatDate(row.created_at)}</td>
+        <td>${escapeHtml(row.class_name || "-")}</td>
+        <td>${escapeHtml(row.week || "-")}</td>
+        <td>
+          ${
+            row.file_path
+              ? `<a href="${escapeHtml(row.file_path)}" target="_blank" rel="noopener">View Document</a>`
+              : "-"
+          }
+        </td>
+        <td>${escapeHtml(row.status || "Pending")}</td>
+        <td>${escapeHtml(row.admin_comment || "-")}</td>
+        <td>
+          <button
+            type="button"
+            class="submission-delete-btn"
+            onclick="deleteMyHandwritingReport(${Number(row.id)})">
+            Delete
+          </button>
+        </td>
+      </tr>
+    `).join("");
+
+    const start = handwritingRows.length ? startIndex + 1 : 0;
+    const end =
+      pageSize === Infinity
+        ? handwritingRows.length
+        : Math.min(startIndex + pageSize, handwritingRows.length);
+
+    if (paginationInfo) {
+      paginationInfo.textContent =
+        `Showing ${start}–${end} of ${handwritingRows.length}`;
+    }
+
+    renderPagination(totalPages);
+  }
+
   async function loadHandwritingReports() {
     try {
       const response = await fetch("/api/weekly-reports/my", {
@@ -87,37 +213,60 @@ document.addEventListener("DOMContentLoaded", function () {
         );
       }
 
-      const rows = Array.isArray(data.weekly_reports)
+      handwritingRows = Array.isArray(data.weekly_reports)
         ? data.weekly_reports
         : [];
 
-      if (!rows.length) {
-        tbody.innerHTML =
-          '<tr><td colspan="6">No Handwriting Reports uploaded yet.</td></tr>';
-        return;
-      }
+      renderHandwritingReports();
 
-      tbody.innerHTML = rows.map(row => `
-        <tr>
-          <td>${formatDate(row.created_at)}</td>
-          <td>${escapeHtml(row.class_name || "-")}</td>
-          <td>${escapeHtml(row.week || "-")}</td>
-          <td>
-            ${
-              row.file_path
-                ? `<a href="${escapeHtml(row.file_path)}" target="_blank" rel="noopener">View Document</a>`
-                : "-"
-            }
-          </td>
-          <td>${escapeHtml(row.status || "Pending")}</td>
-          <td>${escapeHtml(row.admin_comment || "-")}</td>
-        </tr>
-      `).join("");
     } catch (error) {
       console.error(error);
       tbody.innerHTML =
-        `<tr><td colspan="6">${escapeHtml(error.message)}</td></tr>`;
+        `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
     }
+  }
+
+  window.changeTeacherHandwritingPage = function (page) {
+    currentPage = page;
+    renderHandwritingReports();
+  };
+
+  window.deleteMyHandwritingReport = async function (id) {
+    if (!confirm(
+      "Are you sure you want to delete this Handwriting Report? " +
+      "The document will also be removed. This action cannot be undone."
+    )) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/weekly-reports/my/${id}`, {
+        method: "DELETE",
+        headers: authHeaders()
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to delete Handwriting Report."
+        );
+      }
+
+      alert(data.message || "Handwriting Report deleted successfully.");
+      await loadHandwritingReports();
+
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  };
+
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener("change", function () {
+      currentPage = 1;
+      renderHandwritingReports();
+    });
   }
 
   form.addEventListener("submit", async function (event) {

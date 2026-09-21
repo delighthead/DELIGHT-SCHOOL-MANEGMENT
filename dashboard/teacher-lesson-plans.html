@@ -102,6 +102,19 @@
     <section class="dashboard-section">
       <h2>My Uploaded Lesson Notes</h2>
 
+      <div class="submission-table-toolbar">
+        <label>
+          Show
+          <select id="teacherLessonPageSize">
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="all">All</option>
+          </select>
+          entries
+        </label>
+      </div>
+
       <div style="overflow-x:auto;">
         <table class="data-table">
           <thead>
@@ -113,15 +126,21 @@
               <th>Document</th>
               <th>Status</th>
               <th>Comment</th>
+              <th>Action</th>
             </tr>
           </thead>
 
           <tbody id="lessonPlansTableBody">
             <tr>
-              <td colspan="7">Loading Lesson Notes...</td>
+              <td colspan="8">Loading Lesson Notes...</td>
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="submission-table-footer">
+        <span id="teacherLessonPaginationInfo">Showing 0 entries</span>
+        <div id="teacherLessonPagination" class="submission-pagination"></div>
       </div>
     </section>
 
@@ -130,7 +149,7 @@
 
 <script src="../js/teacher-guard.js?v=1"></script>
 <script src="../js/api-helper.js?v=2"></script>
-<script src="../js/teacher-lesson-plans.js?v=2"></script>
+<script src="../js/teacher-lesson-plans.js?v=3"></script>
 <script src="../js/logout.js?v=2"></script>
 <script src="../js/site-footer-settings.js?v=1"></script>
 <script src="../js/site-settings.js?v=4"></script>
