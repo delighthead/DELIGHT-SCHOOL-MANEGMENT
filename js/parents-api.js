@@ -86,7 +86,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function isBranchAdmin() {
-    return String(getUser().role || "").toLowerCase() === "branch_admin";
+    const role = String(getUser().role || "").toLowerCase();
+    return role === "branch_admin" || role === "teacher_admin";
   }
 
   function getBranchId() {

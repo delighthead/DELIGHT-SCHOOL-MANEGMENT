@@ -86,7 +86,7 @@ async function getLoggedInParentProfile(user) {
 // Add parent
 exports.createParent = async (req, res) => {
   try {
-    const {
+    let {
       branch_id,
       full_name,
       ghana_card_number,
@@ -94,6 +94,18 @@ exports.createParent = async (req, res) => {
       email,
       address
     } = req.body;
+
+    // Branch-scoped administrators can only create parents
+    // inside the branch assigned to their login account.
+    if (isBranchScopedAdmin(req.user)) {
+      if (!req.user.branch_id) {
+        return res.status(403).json({
+          message: "No branch is assigned to this administrator"
+        });
+      }
+
+      branch_id = req.user.branch_id;
+    }
 
     if (!branch_id || !full_name || !ghana_card_number || !phone) {
       return res.status(400).json({
@@ -174,7 +186,19 @@ exports.createParent = async (req, res) => {
 // Get parents
 exports.getParents = async (req, res) => {
   try {
-    const { branch_id } = req.query;
+    let { branch_id } = req.query;
+
+    // Never trust a branch supplied by the browser for a
+    // branch-scoped administrator.
+    if (isBranchScopedAdmin(req.user)) {
+      if (!req.user.branch_id) {
+        return res.status(403).json({
+          message: "No branch is assigned to this administrator"
+        });
+      }
+
+      branch_id = req.user.branch_id;
+    }
 
     let sql = `SELECT
         parents.id,
@@ -866,7 +890,7 @@ exports.updateParent = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const {
+    let {
       branch_id,
       full_name,
       ghana_card_number,
@@ -900,13 +924,22 @@ exports.updateParent = async (req, res) => {
 
     const parent = parents[0];
 
-    if (
-      (req.user.role === "branch_admin" || req.user.role === "teacher_admin") &&
-      Number(parent.branch_id) !== Number(req.user.branch_id)
-    ) {
-      return res.status(403).json({
-        message: "You can only edit parents in your own branch"
-      });
+    if (isBranchScopedAdmin(req.user)) {
+      if (!req.user.branch_id) {
+        return res.status(403).json({
+          message: "No branch is assigned to this administrator"
+        });
+      }
+
+      if (Number(parent.branch_id) !== Number(req.user.branch_id)) {
+        return res.status(403).json({
+          message: "You can only edit parents in your own branch"
+        });
+      }
+
+      // A branch administrator cannot transfer a parent
+      // to another branch through a modified API request.
+      branch_id = req.user.branch_id;
     }
 
     await db.query(
