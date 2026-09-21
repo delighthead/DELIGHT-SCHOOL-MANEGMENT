@@ -1,4 +1,6 @@
 const db = require("../config/database");
+const fs = require("fs");
+const path = require("path");
 const { sendReviewNotification } = require("../utils/reviewNotificationEmail");
 
 function getUploadedFilePath(file) {
@@ -271,6 +273,87 @@ exports.reviewLessonPlan = async (req, res) => {
 
     res.status(500).json({
       message: "Failed to review Lesson Note",
+      error: error.message
+    });
+  }
+};
+
+exports.deleteLessonPlan = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await db.query(
+      `SELECT
+         lp.id,
+         lp.file_path,
+         t.branch_id
+       FROM lesson_plans lp
+       LEFT JOIN teachers t ON t.user_id = lp.teacher_id
+       WHERE lp.id = ?
+       LIMIT 1`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Lesson Note not found"
+      });
+    }
+
+    const submission = rows[0];
+
+    if (
+      ["branch_admin", "teacher_admin"].includes(req.user.role)
+    ) {
+      if (
+        !req.user.branch_id ||
+        Number(submission.branch_id) !== Number(req.user.branch_id)
+      ) {
+        return res.status(403).json({
+          message: "You can only delete submissions from your own branch"
+        });
+      }
+    }
+
+    await db.query(
+      "DELETE FROM lesson_plans WHERE id = ?",
+      [id]
+    );
+
+    if (submission.file_path) {
+      const relativePath =
+        String(submission.file_path).replace(/^\/+/, "");
+
+      const absolutePath =
+        path.resolve(__dirname, "..", relativePath);
+
+      const uploadsRoot =
+        path.resolve(__dirname, "..", "uploads", "lesson-plans");
+
+      if (
+        absolutePath.startsWith(uploadsRoot + path.sep) &&
+        fs.existsSync(absolutePath)
+      ) {
+        try {
+          fs.unlinkSync(absolutePath);
+        } catch (fileError) {
+          console.error(
+            "Unable to remove Lesson Note document:",
+            fileError.message
+          );
+        }
+      }
+    }
+
+    res.json({
+      message: "Lesson Note deleted successfully"
+    });
+
+  } catch (error) {
+    console.error("Delete Lesson Note error:", error);
+
+    res.status(500).json({
+      message: "Failed to delete Lesson Note",
       error: error.message
     });
   }

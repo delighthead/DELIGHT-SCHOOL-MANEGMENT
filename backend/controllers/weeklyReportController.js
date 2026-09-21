@@ -1,4 +1,6 @@
 const db = require("../config/database");
+const fs = require("fs");
+const path = require("path");
 const { sendReviewNotification } = require("../utils/reviewNotificationEmail");
 
 function getUploadedFilePath(file) {
@@ -270,6 +272,87 @@ exports.reviewWeeklyReport = async (req, res) => {
 
     res.status(500).json({
       message: "Failed to review Handwriting Report",
+      error: error.message
+    });
+  }
+};
+
+exports.deleteWeeklyReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await db.query(
+      `SELECT
+         wr.id,
+         wr.file_path,
+         t.branch_id
+       FROM weekly_reports wr
+       LEFT JOIN teachers t ON t.user_id = wr.teacher_id
+       WHERE wr.id = ?
+       LIMIT 1`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Handwriting Report not found"
+      });
+    }
+
+    const submission = rows[0];
+
+    if (
+      ["branch_admin", "teacher_admin"].includes(req.user.role)
+    ) {
+      if (
+        !req.user.branch_id ||
+        Number(submission.branch_id) !== Number(req.user.branch_id)
+      ) {
+        return res.status(403).json({
+          message: "You can only delete submissions from your own branch"
+        });
+      }
+    }
+
+    await db.query(
+      "DELETE FROM weekly_reports WHERE id = ?",
+      [id]
+    );
+
+    if (submission.file_path) {
+      const relativePath =
+        String(submission.file_path).replace(/^\/+/, "");
+
+      const absolutePath =
+        path.resolve(__dirname, "..", relativePath);
+
+      const uploadsRoot =
+        path.resolve(__dirname, "..", "uploads", "weekly-reports");
+
+      if (
+        absolutePath.startsWith(uploadsRoot + path.sep) &&
+        fs.existsSync(absolutePath)
+      ) {
+        try {
+          fs.unlinkSync(absolutePath);
+        } catch (fileError) {
+          console.error(
+            "Unable to remove Handwriting Report document:",
+            fileError.message
+          );
+        }
+      }
+    }
+
+    res.json({
+      message: "Handwriting Report deleted successfully"
+    });
+
+  } catch (error) {
+    console.error("Delete Handwriting Report error:", error);
+
+    res.status(500).json({
+      message: "Failed to delete Handwriting Report",
       error: error.message
     });
   }

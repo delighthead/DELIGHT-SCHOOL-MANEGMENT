@@ -4228,3 +4228,85 @@ body > header.navbar nav .login-btn {
   }
 }
 
+
+/* Teacher Submissions pagination/actions */
+.submission-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 12px 0;
+}
+
+.submission-table-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.submission-table-toolbar select {
+  padding: 7px 28px 7px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.submission-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.submission-pagination {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.submission-page-btn {
+  padding: 7px 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.submission-page-btn.active {
+  background: #073b6f;
+  color: #fff;
+  border-color: #073b6f;
+}
+
+.submission-page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.submission-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.submission-actions button {
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.submission-delete-btn {
+  background: #b42318;
+  color: #fff;
+  border: 1px solid #b42318;
+}
+
+@media (max-width: 768px) {
+  .submission-table-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

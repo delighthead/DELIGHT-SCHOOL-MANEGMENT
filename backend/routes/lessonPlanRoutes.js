@@ -74,4 +74,12 @@ router.patch(
   lessonPlanController.reviewLessonPlan
 );
 
+router.delete(
+  "/:id",
+  verifyToken,
+  requireAdmin,
+  applyUserBranchSecurity,
+  lessonPlanController.deleteLessonPlan
+);
+
 module.exports = router;

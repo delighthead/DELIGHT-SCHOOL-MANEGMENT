@@ -47,6 +47,19 @@
 
       <h2>Lesson Notes</h2>
 
+      <div class="submission-table-toolbar">
+        <label>
+          Show
+          <select id="lessonPageSize">
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="all">All</option>
+          </select>
+          entries
+        </label>
+      </div>
+
       <div style="overflow-x:auto;">
         <table class="data-table">
           <thead>
@@ -71,12 +84,30 @@
         </table>
       </div>
 
+      <div class="submission-table-footer">
+        <span id="lessonPaginationInfo">Showing 0 entries</span>
+        <div id="lessonPagination" class="submission-pagination"></div>
+      </div>
+
     </section>
 
 
     <section class="dashboard-section">
 
       <h2>Handwriting Reports</h2>
+
+      <div class="submission-table-toolbar">
+        <label>
+          Show
+          <select id="handwritingPageSize">
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="all">All</option>
+          </select>
+          entries
+        </label>
+      </div>
 
       <div style="overflow-x:auto;">
         <table class="data-table">
@@ -101,6 +132,11 @@
         </table>
       </div>
 
+      <div class="submission-table-footer">
+        <span id="handwritingPaginationInfo">Showing 0 entries</span>
+        <div id="handwritingPagination" class="submission-pagination"></div>
+      </div>
+
     </section>
 
   </main>
@@ -110,7 +146,7 @@
 
 <script src="../js/admin-guard.js?v=1"></script>
 <script src="../js/api-helper.js?v=3"></script>
-<script src="../js/admin-teacher-submissions.js?v=1"></script>
+<script src="../js/admin-teacher-submissions.js?v=2"></script>
 <script src="../js/logout.js?v=2"></script>
 <script src="../js/admin-panel-title.js?v=2"></script>
 <script src="../js/site-footer-settings.js?v=2"></script>

@@ -74,4 +74,12 @@ router.patch(
   weeklyReportController.reviewWeeklyReport
 );
 
+router.delete(
+  "/:id",
+  verifyToken,
+  requireAdmin,
+  applyUserBranchSecurity,
+  weeklyReportController.deleteWeeklyReport
+);
+
 module.exports = router;
