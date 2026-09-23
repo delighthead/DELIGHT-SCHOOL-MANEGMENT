@@ -297,7 +297,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     submitBtn.disabled = true;
-    submitBtn.textContent = "Uploading...";
+    submitBtn.textContent = "Submitting...";
 
     try {
       const formData = new FormData();
@@ -332,7 +332,7 @@ document.addEventListener("DOMContentLoaded", function () {
         error.message || "Handwriting Report upload failed.";
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = "Upload Handwriting Report";
+      submitBtn.textContent = "Submit Handwriting Report";
     }
   });
 

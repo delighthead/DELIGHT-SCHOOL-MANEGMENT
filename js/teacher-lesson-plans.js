@@ -323,7 +323,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     submitBtn.disabled = true;
-    submitBtn.textContent = "Uploading...";
+    submitBtn.textContent = "Submitting...";
 
     try {
       const formData = new FormData();
@@ -359,7 +359,7 @@ document.addEventListener("DOMContentLoaded", function () {
       message.textContent = error.message || "Lesson Note upload failed.";
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = "Upload Lesson Note";
+      submitBtn.textContent = "Submit Lesson Note";
     }
   });
 

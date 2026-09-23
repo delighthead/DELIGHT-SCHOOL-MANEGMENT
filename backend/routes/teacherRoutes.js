@@ -60,6 +60,31 @@ router.patch(
   teacherController.updateTeacherProfile
 );
 
+
+router.get(
+  "/assignments",
+  verifyToken,
+  requireAdmin,
+  applyBranchSecurity,
+  teacherController.getTeacherAssignments
+);
+
+router.put(
+  "/assignments/:id",
+  verifyToken,
+  requireAdmin,
+  applyBranchSecurity,
+  teacherController.updateTeacherAssignment
+);
+
+router.delete(
+  "/assignments/:id",
+  verifyToken,
+  requireAdmin,
+  applyBranchSecurity,
+  teacherController.deleteTeacherAssignment
+);
+
 // Admin / branch admin teacher management
 router.get(
   "/",

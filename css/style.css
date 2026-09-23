@@ -4310,3 +4310,234 @@ body > header.navbar nav .login-btn {
     flex-direction: column;
   }
 }
+
+/* ==========================================================
+   MODERN TEACHER UPLOAD FORMS
+   Lesson Note + Handwriting Report
+   ========================================================== */
+
+.dashboard-main {
+  background: #f4f7fb;
+}
+
+.dashboard-main > h1 {
+  color: #003b70;
+  font-size: 30px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.dashboard-main > p {
+  color: #475569;
+  font-size: 15px;
+  margin-bottom: 22px;
+}
+
+.dashboard-section {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 28px;
+  margin-bottom: 28px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(0, 59, 112, 0.08);
+}
+
+.dashboard-section h2 {
+  color: #003b70;
+  font-size: 24px;
+  font-weight: 900;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-section h2::before {
+  content: "";
+  width: 7px;
+  height: 28px;
+  background: #ffcc00;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.dashboard-section form {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.dashboard-section .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 20px;
+}
+
+.dashboard-section form label {
+  display: block;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 7px;
+  font-size: 14px;
+}
+
+.dashboard-section form select,
+.dashboard-section form input[type="text"],
+.dashboard-section form input[type="file"],
+.dashboard-section form textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 15px;
+  background: #ffffff;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dashboard-section form input[type="file"] {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.dashboard-section form select:focus,
+.dashboard-section form input[type="text"]:focus,
+.dashboard-section form input[type="file"]:focus,
+.dashboard-section form textarea:focus {
+  border-color: #003b70;
+  box-shadow: 0 0 0 4px rgba(0, 59, 112, 0.12);
+}
+
+.dashboard-section form textarea {
+  min-height: 105px;
+  resize: vertical;
+}
+
+.dashboard-section form > p {
+  margin-top: 14px;
+  color: #64748b;
+  font-size: 14px;
+  background: #f8fafc;
+  border-left: 4px solid #ffcc00;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.dashboard-section form button,
+#lessonPlanSubmitBtn,
+#weeklyReportSubmitBtn {
+  background: #003b70;
+  color: #ffffff;
+  border: none;
+  padding: 13px 22px;
+  border-radius: 12px;
+  font-weight: 900;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 18px;
+  box-shadow: 0 8px 20px rgba(0, 59, 112, 0.22);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.dashboard-section form button:hover,
+#lessonPlanSubmitBtn:hover,
+#weeklyReportSubmitBtn:hover {
+  background: #002f59;
+  transform: translateY(-1px);
+}
+
+#lessonPlanMessage,
+#weeklyReportMessage {
+  margin-top: 14px;
+  font-weight: 800;
+  color: #003b70;
+}
+
+/* Modern table area */
+.submission-table-toolbar,
+.submission-table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+
+.submission-table-toolbar select {
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 7px 10px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.data-table th {
+  background: #003b70;
+  color: #ffffff;
+  padding: 13px 12px;
+  font-size: 14px;
+  text-align: left;
+}
+
+.data-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.data-table tr:hover td {
+  background: #f8fafc;
+}
+
+/* Mobile friendly */
+@media (max-width: 900px) {
+  .dashboard-main > h1 {
+    font-size: 26px;
+  }
+
+  .dashboard-section {
+    padding: 22px;
+  }
+
+  .dashboard-section .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-section {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .dashboard-section form {
+    padding: 16px;
+  }
+
+  .dashboard-section h2 {
+    font-size: 21px;
+  }
+
+  .dashboard-section form button,
+  #lessonPlanSubmitBtn,
+  #weeklyReportSubmitBtn {
+    width: 100%;
+  }
+
+  .data-table {
+    min-width: 720px;
+  }
+}
+

@@ -909,3 +909,161 @@ exports.getMyAssignments = async (req, res) => {
     });
   }
 };
+
+
+// Admin: Get all teacher assignments
+exports.getTeacherAssignments = async (req, res) => {
+  try {
+    let { branch_id } = req.query;
+
+    if (req.user && (req.user.role === "branch_admin" || req.user.role === "teacher_admin")) {
+      branch_id = req.user.branch_id;
+    }
+
+    let sql = `
+      SELECT
+        ta.id,
+        ta.branch_id,
+        b.branch_name,
+        ta.teacher_id,
+        t.full_name AS teacher_name,
+        t.teacher_id AS teacher_code,
+        ta.class_id,
+        c.class_name,
+        ta.subject,
+        ta.role,
+        ta.academic_year,
+        ta.status
+      FROM teacher_assignments ta
+      LEFT JOIN teachers t ON t.id = ta.teacher_id
+      LEFT JOIN classes c ON c.id = ta.class_id
+      LEFT JOIN branches b ON b.id = ta.branch_id
+      WHERE ta.status = 'active'
+    `;
+
+    const params = [];
+
+    if (branch_id) {
+      sql += " AND ta.branch_id = ?";
+      params.push(branch_id);
+    }
+
+    sql += " ORDER BY ta.id DESC";
+
+    const [assignments] = await db.query(sql, params);
+
+    res.json({
+      message: "Teacher assignments loaded successfully",
+      assignments
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to load teacher assignments",
+      error: error.message
+    });
+  }
+};
+
+
+// Admin: Update teacher assignment
+exports.updateTeacherAssignment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { subject, role, academic_year } = req.body;
+
+    if (!subject) {
+      return res.status(400).json({
+        message: "Subject is required"
+      });
+    }
+
+    if (req.user && (req.user.role === "branch_admin" || req.user.role === "teacher_admin")) {
+      const [rows] = await db.query(
+        "SELECT branch_id FROM teacher_assignments WHERE id = ? LIMIT 1",
+        [id]
+      );
+
+      if (rows.length === 0) {
+        return res.status(404).json({ message: "Assignment not found" });
+      }
+
+      if (Number(rows[0].branch_id) !== Number(req.user.branch_id)) {
+        return res.status(403).json({
+          message: "You can only edit assignments in your own branch"
+        });
+      }
+    }
+
+    const [result] = await db.query(
+      `UPDATE teacher_assignments
+       SET subject = ?, role = ?, academic_year = ?
+       WHERE id = ? AND status = 'active'`,
+      [
+        subject,
+        role || "Subject Teacher",
+        academic_year || "2025/2026",
+        id
+      ]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Assignment not found"
+      });
+    }
+
+    res.json({
+      message: "Teacher assignment updated successfully"
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to update teacher assignment",
+      error: error.message
+    });
+  }
+};
+
+
+// Admin: Remove teacher assignment
+exports.deleteTeacherAssignment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (req.user && (req.user.role === "branch_admin" || req.user.role === "teacher_admin")) {
+      const [rows] = await db.query(
+        "SELECT branch_id FROM teacher_assignments WHERE id = ? LIMIT 1",
+        [id]
+      );
+
+      if (rows.length === 0) {
+        return res.status(404).json({ message: "Assignment not found" });
+      }
+
+      if (Number(rows[0].branch_id) !== Number(req.user.branch_id)) {
+        return res.status(403).json({
+          message: "You can only remove assignments in your own branch"
+        });
+      }
+    }
+
+    const [result] = await db.query(
+      "UPDATE teacher_assignments SET status = 'inactive' WHERE id = ?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Assignment not found"
+      });
+    }
+
+    res.json({
+      message: "Teacher assignment removed successfully"
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to remove teacher assignment",
+      error: error.message
+    });
+  }
+};
