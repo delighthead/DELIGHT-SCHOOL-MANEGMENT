@@ -286,6 +286,22 @@
 
       <section class="dashboard-section">
         <h2>Teacher List</h2>
+
+        <div class="submission-table-toolbar" id="teacherListToolbar">
+          <label>
+            Show
+            <select id="teacherListPageSize">
+              <option value="5" selected>5</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+              <option value="all">All</option>
+            </select>
+            entries
+          </label>
+
+          <span id="teacherListEntriesInfo">Showing 0 entries</span>
+        </div>
+
         <table class="data-table">
           <thead>
             <tr>
@@ -307,6 +323,11 @@
             </tr>
           </tbody>
         </table>
+
+        <div class="submission-table-footer">
+          <span id="teacherListFooterInfo">Showing 0 entries</span>
+          <div class="submission-pagination" id="teacherListPagination"></div>
+        </div>
       </section>
     </main>
   </div>
@@ -316,7 +337,7 @@
   <script src="../js/api-helper.js?v=2"></script>
   <script src="../js/teacher-form-dropdown-fix.js?v=2"></script>
   <script src="../js/teacher-edit-button-style.js?v=1"></script>
-  <script src="../js/teachers-api.js?v=9"></script>
+  <script src="../js/teachers-api.js?v=10"></script>
   <script src="../js/make-teacher-admin-final.js?v=2"></script>
   <script src="../js/assign-role-dropdown-force.js?v=1"></script>
   <script src="../js/assign-teacher-submit-final.js?v=3"></script>

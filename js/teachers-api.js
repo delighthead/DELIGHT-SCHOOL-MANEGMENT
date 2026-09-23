@@ -14,6 +14,11 @@ document.addEventListener("DOMContentLoaded", function () {
   let editingTeacherId = null;
   let isSavingTeacher = false;
 
+  // Teacher List pagination
+  let teacherListData = [];
+  let teacherListCurrentPage = 1;
+  let teacherListPageSize = 5;
+
   function getUser() {
     try {
       return JSON.parse(localStorage.getItem("user") || "{}");
@@ -172,10 +177,179 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  function renderTeacherList() {
+    if (!teacherTableBody) return;
+
+    const pageSizeSelect = document.getElementById("teacherListPageSize");
+    const topInfo = document.getElementById("teacherListEntriesInfo");
+    const footerInfo = document.getElementById("teacherListFooterInfo");
+    const pagination = document.getElementById("teacherListPagination");
+
+    if (pageSizeSelect) {
+      const selected = pageSizeSelect.value;
+
+      teacherListPageSize =
+        selected === "all"
+          ? "all"
+          : Math.max(1, Number(selected) || 5);
+    }
+
+    if (!teacherListData.length) {
+      teacherTableBody.innerHTML =
+        `<tr><td colspan="10">No teachers found.</td></tr>`;
+
+      if (topInfo) topInfo.textContent = "Showing 0 entries";
+      if (footerInfo) footerInfo.textContent = "Showing 0 entries";
+      if (pagination) pagination.innerHTML = "";
+      return;
+    }
+
+    const total = teacherListData.length;
+
+    let totalPages = 1;
+    let startIndex = 0;
+    let endIndex = total;
+
+    if (teacherListPageSize !== "all") {
+      totalPages = Math.max(
+        1,
+        Math.ceil(total / teacherListPageSize)
+      );
+
+      if (teacherListCurrentPage > totalPages) {
+        teacherListCurrentPage = totalPages;
+      }
+
+      startIndex =
+        (teacherListCurrentPage - 1) * teacherListPageSize;
+
+      endIndex = Math.min(
+        startIndex + teacherListPageSize,
+        total
+      );
+    } else {
+      teacherListCurrentPage = 1;
+    }
+
+    const visibleTeachers =
+      teacherListData.slice(startIndex, endIndex);
+
+    teacherTableBody.innerHTML = "";
+
+    visibleTeachers.forEach(teacher => {
+      const row = document.createElement("tr");
+      const actionButtons = [];
+
+      actionButtons.push(`
+        <button type="button"
+          class="small-btn success edit-teacher-btn"
+          style="background:#16a34a;color:#ffffff;opacity:1;border:none;cursor:pointer;"
+          data-id="${teacher.id || ""}"
+          data-record="${encodeURIComponent(JSON.stringify(teacher))}">
+          Edit
+        </button>
+      `);
+
+      if (canManageTeachers()) {
+        actionButtons.push(`
+          <button type="button"
+            class="small-btn danger-btn disable-teacher-btn"
+            data-id="${teacher.id || ""}">
+            Disable
+          </button>
+        `);
+      }
+
+      if (isSuperAdmin()) {
+        actionButtons.push(`
+          <button type="button"
+            class="small-btn warning make-teacher-admin-btn"
+            data-id="${teacher.id || ""}">
+            Make Teacher Admin
+          </button>
+        `);
+      } else {
+        actionButtons.push(`
+          <small style="display:inline-block; margin-left:4px; color:#6b7280; font-weight:600;">
+            Teacher Admin: Super Admin only
+          </small>
+        `);
+      }
+
+      row.innerHTML = `
+        <td>${teacher.branch_name || teacher.branch || ""}</td>
+        <td>${teacher.teacher_id || ""}</td>
+        <td>${teacher.full_name || teacher.name || ""}</td>
+        <td>${teacher.ghana_card_number || teacher.ghana_card || ""}</td>
+        <td>${teacher.phone || ""}</td>
+        <td>${teacher.email || ""}</td>
+        <td>${teacher.assigned_classes || ""}</td>
+        <td>${teacher.assigned_subjects || ""}</td>
+        <td>${teacher.status || ""}</td>
+        <td>${actionButtons.join(" ")}</td>
+      `;
+
+      teacherTableBody.appendChild(row);
+    });
+
+    let infoText;
+
+    if (teacherListPageSize === "all") {
+      infoText = `Showing ${total} of ${total} entries`;
+    } else {
+      infoText =
+        `Showing ${startIndex + 1}-${endIndex} of ${total} entries`;
+    }
+
+    if (topInfo) topInfo.textContent = infoText;
+    if (footerInfo) footerInfo.textContent = infoText;
+
+    if (!pagination) return;
+
+    if (teacherListPageSize === "all" || totalPages <= 1) {
+      pagination.innerHTML = "";
+      return;
+    }
+
+    let buttons = `
+      <button type="button"
+        class="submission-page-btn"
+        data-teacher-page="${teacherListCurrentPage - 1}"
+        ${teacherListCurrentPage === 1 ? "disabled" : ""}>
+        Previous
+      </button>
+    `;
+
+    for (let page = 1; page <= totalPages; page++) {
+      buttons += `
+        <button type="button"
+          class="submission-page-btn ${
+            page === teacherListCurrentPage ? "active" : ""
+          }"
+          data-teacher-page="${page}">
+          ${page}
+        </button>
+      `;
+    }
+
+    buttons += `
+      <button type="button"
+        class="submission-page-btn"
+        data-teacher-page="${teacherListCurrentPage + 1}"
+        ${teacherListCurrentPage === totalPages ? "disabled" : ""}>
+        Next
+      </button>
+    `;
+
+    pagination.innerHTML = buttons;
+  }
+
+
   async function loadTeachers(forceRefresh = false) {
     if (!teacherTableBody) return;
 
-    teacherTableBody.innerHTML = `<tr><td colspan="10">Loading teachers...</td></tr>`;
+    teacherTableBody.innerHTML =
+      `<tr><td colspan="10">Loading teachers...</td></tr>`;
 
     try {
       let url = `${API}/api/teachers`;
@@ -198,83 +372,72 @@ document.addEventListener("DOMContentLoaded", function () {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Failed to load teachers");
+        throw new Error(
+          data.message || "Failed to load teachers"
+        );
       }
 
-      const teachers = pickArray(data, "teachers");
+      teacherListData = pickArray(data, "teachers");
+      teacherListCurrentPage = 1;
 
-      if (teachers.length === 0) {
-        teacherTableBody.innerHTML = `<tr><td colspan="10">No teachers found.</td></tr>`;
-        return teachers;
-      }
+      renderTeacherList();
 
-      teacherTableBody.innerHTML = "";
+      return teacherListData;
 
-      teachers.forEach(teacher => {
-        const row = document.createElement("tr");
-        const actionButtons = [];
-
-        actionButtons.push(`
-          <button type="button" class="small-btn success edit-teacher-btn"
-            style="background:#16a34a;color:#ffffff;opacity:1;border:none;cursor:pointer;"
-            data-id="${teacher.id || ""}"
-            data-record="${encodeURIComponent(JSON.stringify(teacher))}">
-            Edit
-          </button>
-        `);
-
-        if (canManageTeachers()) {
-          actionButtons.push(`
-            <button type="button" class="small-btn danger-btn disable-teacher-btn"
-              data-id="${teacher.id || ""}">
-              Disable
-            </button>
-          `);
-        }
-
-        if (isSuperAdmin()) {
-          actionButtons.push(`
-            <button type="button" class="small-btn warning make-teacher-admin-btn"
-              data-id="${teacher.id || ""}">
-              Make Teacher Admin
-            </button>
-          `);
-        } else {
-          actionButtons.push(`
-            <small style="display:inline-block; margin-left:4px; color:#6b7280; font-weight:600;">
-              Teacher Admin: Super Admin only
-            </small>
-          `);
-        }
-
-        row.innerHTML = `
-          <td>${teacher.branch_name || teacher.branch || ""}</td>
-          <td>${teacher.teacher_id || ""}</td>
-          <td>${teacher.full_name || teacher.name || ""}</td>
-          <td>${teacher.ghana_card_number || teacher.ghana_card || ""}</td>
-          <td>${teacher.phone || ""}</td>
-          <td>${teacher.email || ""}</td>
-          <td>${teacher.assigned_classes || ""}</td>
-          <td>${teacher.assigned_subjects || ""}</td>
-          <td>${teacher.status || ""}</td>
-          <td>${actionButtons.join(" ")}</td>
-        `;
-
-        teacherTableBody.appendChild(row);
-      });
-
-      return teachers;
     } catch (error) {
       console.error("Teachers load error:", error);
-      teacherTableBody.innerHTML = `<tr><td colspan="10">${error.message}</td></tr>`;
+
+      teacherListData = [];
+
+      teacherTableBody.innerHTML =
+        `<tr><td colspan="10">${error.message}</td></tr>`;
+
+      const topInfo =
+        document.getElementById("teacherListEntriesInfo");
+
+      const footerInfo =
+        document.getElementById("teacherListFooterInfo");
+
+      const pagination =
+        document.getElementById("teacherListPagination");
+
+      if (topInfo) topInfo.textContent = "Showing 0 entries";
+      if (footerInfo) footerInfo.textContent = "Showing 0 entries";
+      if (pagination) pagination.innerHTML = "";
 
       if (assignTeacher) {
-        assignTeacher.innerHTML = `<option value="">Failed to load teachers</option>`;
+        assignTeacher.innerHTML =
+          `<option value="">Failed to load teachers</option>`;
       }
 
       return [];
     }
   }
+
+
+  document.addEventListener("change", function (event) {
+    if (event.target.id !== "teacherListPageSize") return;
+
+    teacherListCurrentPage = 1;
+    renderTeacherList();
+  });
+
+
+  document.addEventListener("click", function (event) {
+    const button =
+      event.target.closest("[data-teacher-page]");
+
+    if (!button || button.disabled) return;
+
+    const requestedPage =
+      Number(button.dataset.teacherPage);
+
+    if (!Number.isFinite(requestedPage)) return;
+
+    teacherListCurrentPage = requestedPage;
+    renderTeacherList();
+  });
+
 
   async function loadAssignTeachers(selectedBranchId = "") {
     if (!assignTeacher) return;
@@ -808,19 +971,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  document.addEventListener("click", function (event) {
-    const editBtn = event.target.closest(".edit-assignment-btn");
-    const deleteBtn = event.target.closest(".delete-assignment-btn");
-
-    if (editBtn) {
-      const record = JSON.parse(decodeURIComponent(editBtn.dataset.record || "{}"));
-      updateTeacherAssignment(record);
-    }
-
-    if (deleteBtn) {
-      deleteTeacherAssignment(deleteBtn.dataset.id);
-    }
-  });
+  // Legacy assignment click handler disabled.
+  // The final grouped assignment table and checkbox editor
+  // now handle Edit and Remove actions.
 
   loadTeacherAssignments();
 
@@ -836,138 +989,276 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 /* ==========================================================
-   EDIT ASSIGNMENT USING FORM CHECKBOXES - NO PROMPT POPUP
+   GROUPED ASSIGNMENT EDITOR
    ========================================================== */
 document.addEventListener("DOMContentLoaded", function () {
-  let editingAssignmentId = null;
+  const assignForm = document.getElementById("teacherAssignForm");
+  if (!assignForm) return;
+
+  let editingAssignmentIds = [];
 
   function setSelectValue(id, value) {
     const el = document.getElementById(id);
     if (!el) return;
-    el.value = value || "";
-    el.dispatchEvent(new Event("change", { bubbles: true }));
-  }
 
-  function checkSubject(subject) {
-    document
-      .querySelectorAll('input[name="assign_subjects"]')
-      .forEach(input => {
-        input.checked =
-          String(input.value || "").trim().toUpperCase() ===
-          String(subject || "").trim().toUpperCase();
-      });
+    el.value = value ?? "";
+    el.dispatchEvent(new Event("change", { bubbles: true }));
   }
 
   function checkClass(classId) {
     const container = document.getElementById("assign_class_checkboxes");
     if (!container) return;
 
-    container.querySelectorAll("input[type='checkbox']").forEach(input => {
-      input.checked = String(input.value) === String(classId);
-    });
+    container
+      .querySelectorAll("input[type='checkbox']")
+      .forEach(input => {
+        input.checked =
+          String(input.value) === String(classId);
+      });
+  }
+
+  function checkSubjects(subjects) {
+    const wanted = new Set(
+      (Array.isArray(subjects) ? subjects : [])
+        .map(subject => String(subject || "").trim().toUpperCase())
+        .filter(Boolean)
+    );
+
+    document
+      .querySelectorAll('input[name="assign_subjects"]')
+      .forEach(input => {
+        input.checked = wanted.has(
+          String(input.value || "").trim().toUpperCase()
+        );
+      });
   }
 
   document.addEventListener("click", function (event) {
     const editBtn = event.target.closest(".edit-assignment-btn");
     if (!editBtn) return;
 
-    const record = JSON.parse(
-      decodeURIComponent(editBtn.dataset.record || "{}")
-    );
+    event.preventDefault();
+    event.stopPropagation();
 
-    editingAssignmentId = record.id;
+    let record;
+
+    try {
+      record = JSON.parse(
+        decodeURIComponent(editBtn.dataset.record || "{}")
+      );
+    } catch (error) {
+      console.error("Unable to read assignment:", error);
+      alert("Unable to open this assignment for editing.");
+      return;
+    }
+
+    editingAssignmentIds = Array.isArray(record.group_assignment_ids)
+      ? record.group_assignment_ids.map(String)
+      : record.id
+        ? [String(record.id)]
+        : [];
+
+    if (editingAssignmentIds.length === 0) {
+      alert("No assignment records were found for this row.");
+      return;
+    }
 
     setSelectValue("assign_branch_id", record.branch_id);
 
+    /*
+     * Branch selection can trigger teacher/class/subject controls
+     * to reload, so give those controls time to finish before
+     * selecting the current assignment.
+     */
     setTimeout(() => {
       setSelectValue("assign_teacher_id", record.teacher_id);
-      checkClass(record.class_id);
-      checkSubject(record.subject);
 
-      const role = document.getElementById("assign_role");
-      const year = document.getElementById("assign_academic_year");
-      const submitBtn = document.querySelector("#teacherAssignForm button[type='submit']");
+      setTimeout(() => {
+        checkClass(record.class_id);
 
-      if (role) role.value = record.role || "Subject Teacher";
-      if (year) year.value = record.academic_year || "";
+        const subjects = Array.isArray(record.group_subjects)
+          ? record.group_subjects
+          : record.subject
+            ? [record.subject]
+            : [];
 
-      if (submitBtn) {
-        submitBtn.textContent = "Update Assignment";
-        submitBtn.dataset.editingAssignmentId = editingAssignmentId;
-      }
+        checkSubjects(subjects);
 
-      document
-        .getElementById("teacherAssignForm")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 900);
+        const role = document.getElementById("assign_role");
+        const year = document.getElementById("assign_academic_year");
+        const submitBtn = assignForm.querySelector(
+          "button[type='submit']"
+        );
+
+        if (role) {
+          role.value = record.role || "Subject Teacher";
+        }
+
+        if (year) {
+          year.value = record.academic_year || "";
+        }
+
+        if (submitBtn) {
+          submitBtn.textContent = "Update Assignment";
+          submitBtn.dataset.editingGroup = "yes";
+        }
+
+        assignForm.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }, 500);
+    }, 500);
   });
 
-  const assignForm = document.getElementById("teacherAssignForm");
+  assignForm.addEventListener("submit", async function (event) {
+    const submitBtn = assignForm.querySelector(
+      "button[type='submit']"
+    );
 
-  if (assignForm) {
-    assignForm.addEventListener("submit", async function (event) {
-      const submitBtn = document.querySelector("#teacherAssignForm button[type='submit']");
-      const editId = submitBtn?.dataset.editingAssignmentId;
+    if (
+      !submitBtn ||
+      submitBtn.dataset.editingGroup !== "yes" ||
+      editingAssignmentIds.length === 0
+    ) {
+      return;
+    }
 
-      if (!editId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
 
-      event.preventDefault();
-      event.stopImmediatePropagation();
+    const selectedClasses = Array.from(
+      document.querySelectorAll(
+        '#assign_class_checkboxes input[type="checkbox"]:checked'
+      )
+    );
 
-      const selectedSubject = Array.from(
-        document.querySelectorAll('input[name="assign_subjects"]:checked')
-      ).map(input => input.value)[0];
+    const selectedSubjects = Array.from(
+      document.querySelectorAll(
+        'input[name="assign_subjects"]:checked'
+      )
+    )
+      .map(input => String(input.value || "").trim())
+      .filter(Boolean);
 
-      const role = document.getElementById("assign_role")?.value || "Subject Teacher";
-      const academicYear = document.getElementById("assign_academic_year")?.value || "2025/2026";
+    if (selectedClasses.length !== 1) {
+      alert("Please select one class when editing an assignment.");
+      return;
+    }
 
-      if (!selectedSubject) {
-        alert("Please select a subject.");
-        return;
-      }
+    if (selectedSubjects.length === 0) {
+      alert("Please select at least one subject.");
+      return;
+    }
 
-      try {
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Updating...";
+    const classId = Number(selectedClasses[0].value);
 
-        const res = await fetch(`/api/teachers/assignments/${editId}`, {
+    if (!Number.isInteger(classId) || classId <= 0) {
+      alert("Please select a valid class.");
+      return;
+    }
+
+    const role =
+      document.getElementById("assign_role")?.value ||
+      "Subject Teacher";
+
+    const academicYear =
+      document.getElementById("assign_academic_year")?.value ||
+      "2025/2026";
+
+    if (
+      !confirm(
+        "Update this teacher assignment with the selected class and subjects?"
+      )
+    ) {
+      return;
+    }
+
+    const originalText = submitBtn.textContent;
+
+    try {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Updating...";
+
+      const res = await fetch(
+        "/api/teachers/assignments/group/update",
+        {
           method: "PUT",
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token") || ""}`
+            ...authHeaders(),
+            "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            subject: selectedSubject,
+            assignment_ids: editingAssignmentIds,
+            class_id: classId,
+            subjects: selectedSubjects,
             role,
             academic_year: academicYear
           })
+        }
+      );
+
+      let data = {};
+
+      try {
+        data = await res.json();
+      } catch (_) {}
+
+      if (!res.ok) {
+        throw new Error(
+          data.message || "Failed to update teacher assignment."
+        );
+      }
+
+      alert(
+        data.message || "Teacher assignment updated successfully."
+      );
+
+      editingAssignmentIds = [];
+
+      delete submitBtn.dataset.editingGroup;
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Assign Teacher";
+
+      document
+        .querySelectorAll(
+          'input[name="assign_classes"], ' +
+          'input[name="assign_subjects"]'
+        )
+        .forEach(input => {
+          input.checked = false;
         });
 
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to update assignment");
-        }
-
-        alert(data.message || "Assignment updated successfully.");
-
-        submitBtn.textContent = "Assign Teacher";
-        delete submitBtn.dataset.editingAssignmentId;
-
-        assignForm.reset();
-
-        if (typeof window.loadTeacherAssignments === "function") {
-          await window.loadTeacherAssignments();
-        }
-
-        location.reload();
-      } catch (error) {
-        alert(error.message);
-      } finally {
-        submitBtn.disabled = false;
+      /*
+       * Refresh both tables:
+       * - Teacher List assigned classes/subjects
+       * - Manage Teacher Assignments
+       */
+      if (typeof window.loadTeachers === "function") {
+        await window.loadTeachers(true);
       }
-    }, true);
-  }
+
+      if (typeof window.loadTeacherAssignments === "function") {
+        await window.loadTeacherAssignments();
+      }
+
+    } catch (error) {
+      console.error(
+        "Grouped teacher assignment update error:",
+        error
+      );
+
+      alert(
+        error.message || "Failed to update teacher assignment."
+      );
+
+      submitBtn.disabled = false;
+      submitBtn.textContent =
+        originalText || "Update Assignment";
+    }
+  }, true);
 });
 
 
@@ -1045,180 +1336,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 /* ==========================================================
-   GROUP MANAGE TEACHER ASSIGNMENTS VIEW
-   Show one row per teacher/class/year/role with all subjects
+   LEGACY GROUPED ASSIGNMENT VIEW REMOVED
+   Final grouped assignment renderer below is authoritative.
    ========================================================== */
-document.addEventListener("DOMContentLoaded", function () {
-  const tbody = document.getElementById("teacherAssignmentsTableBody");
-  if (!tbody) return;
-
-  function groupAssignmentRows() {
-    const rows = Array.from(tbody.querySelectorAll("tr"));
-    if (rows.length === 0) return;
-
-    const normalRows = rows.filter(row => {
-      const text = row.textContent.toLowerCase();
-      return !text.includes("loading") && !text.includes("no teacher assignments");
-    });
-
-    if (normalRows.length === 0) return;
-
-    const groups = new Map();
-
-    normalRows.forEach(row => {
-      const cells = row.querySelectorAll("td");
-      if (cells.length < 7) return;
-
-      const branch = cells[0].textContent.trim();
-      const teacher = cells[1].textContent.trim();
-      const className = cells[2].textContent.trim();
-      const subject = cells[3].textContent.trim();
-      const role = cells[4].textContent.trim();
-      const year = cells[5].textContent.trim();
-
-      const editBtn = row.querySelector(".edit-assignment-btn");
-      const removeBtn = row.querySelector(".delete-assignment-btn");
-
-      let record = {};
-      try {
-        record = JSON.parse(decodeURIComponent(editBtn?.dataset.record || "{}"));
-      } catch (e) {}
-
-      const key = [
-        branch,
-        teacher,
-        className,
-        role,
-        year
-      ].join("||");
-
-      if (!groups.has(key)) {
-        groups.set(key, {
-          branch,
-          teacher,
-          className,
-          role,
-          year,
-          subjects: [],
-          ids: [],
-          records: []
-        });
-      }
-
-      const group = groups.get(key);
-
-      if (subject && !group.subjects.includes(subject)) {
-        group.subjects.push(subject);
-      }
-
-      if (record.id && !group.ids.includes(String(record.id))) {
-        group.ids.push(String(record.id));
-      }
-
-      if (record.id) {
-        group.records.push(record);
-      }
-    });
-
-    if (groups.size === 0) return;
-
-    tbody.innerHTML = "";
-
-    Array.from(groups.values()).forEach(group => {
-      // Use copies so firstRecord does not contain an array
-      // that also contains firstRecord itself.
-      const firstRecord = group.records[0]
-        ? { ...group.records[0] }
-        : {};
-
-      firstRecord.group_subjects = [...group.subjects];
-      firstRecord.group_assignment_ids = [...group.ids];
-      firstRecord.group_records = group.records.map(record => ({
-        ...record
-      }));
-
-      const row = document.createElement("tr");
-
-      row.innerHTML = `
-        <td>${group.branch}</td>
-        <td>${group.teacher}</td>
-        <td>${group.className}</td>
-        <td>${group.subjects.join(", ")}</td>
-        <td>${group.role}</td>
-        <td>${group.year}</td>
-        <td>
-          <button type="button"
-            class="small-btn success edit-assignment-btn"
-            data-record="${encodeURIComponent(JSON.stringify(firstRecord))}">
-            Edit
-          </button>
-
-          <button type="button"
-            class="small-btn danger-btn delete-assignment-group-btn"
-            data-ids="${group.ids.join(",")}">
-            Remove
-          </button>
-        </td>
-      `;
-
-      tbody.appendChild(row);
-    });
-  }
-
-  const observer = new MutationObserver(function () {
-    clearTimeout(window.__groupTeacherAssignmentsTimer);
-    window.__groupTeacherAssignmentsTimer = setTimeout(groupAssignmentRows, 150);
-  });
-
-  observer.observe(tbody, {
-    childList: true
-  });
-
-  setTimeout(groupAssignmentRows, 1200);
-
-  document.addEventListener("click", async function (event) {
-    const btn = event.target.closest(".delete-assignment-group-btn");
-    if (!btn) return;
-
-    const ids = String(btn.dataset.ids || "")
-      .split(",")
-      .map(id => id.trim())
-      .filter(Boolean);
-
-    if (ids.length === 0) return;
-
-    if (!confirm("Remove all subjects in this teacher assignment group?")) {
-      return;
-    }
-
-    try {
-      for (const id of ids) {
-        const res = await fetch(`/api/teachers/assignments/${id}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token") || ""}`
-          }
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message || "Failed to remove assignment");
-        }
-      }
-
-      alert("Teacher assignment group removed successfully.");
-
-      if (typeof window.loadTeacherAssignments === "function") {
-        await window.loadTeacherAssignments();
-      } else {
-        location.reload();
-      }
-    } catch (error) {
-      alert(error.message);
-    }
-  });
-});
 
 
 /* ==========================================================
