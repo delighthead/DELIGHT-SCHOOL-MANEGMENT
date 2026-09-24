@@ -301,3 +301,185 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
+
+/* ==========================================================
+   HANDWRITING REPORT SUBMISSION CONTROL
+   ========================================================== */
+document.addEventListener("DOMContentLoaded", function () {
+  const container =
+    document.getElementById("handwritingSubmissionControls");
+
+  if (!container) return;
+
+  function authHeaders() {
+    const token = localStorage.getItem("token");
+
+    return {
+      "Content-Type": "application/json",
+      "Authorization": token ? `Bearer ${token}` : ""
+    };
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  async function loadControls() {
+    container.innerHTML =
+      "<p>Loading branch submission status...</p>";
+
+    try {
+      const response = await fetch(
+        "/api/handwriting-submission-control",
+        {
+          headers: authHeaders()
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          "Unable to load Handwriting Report submission controls."
+        );
+      }
+
+      const controls = Array.isArray(data.controls)
+        ? data.controls
+        : [];
+
+      if (!controls.length) {
+        container.innerHTML =
+          "<p>No branches are available.</p>";
+        return;
+      }
+
+      container.innerHTML = controls.map(item => {
+        const isOpen = Number(item.is_open) === 1;
+
+        return `
+          <div
+            style="
+              border:1px solid #d1d5db;
+              border-radius:10px;
+              padding:16px;
+              margin:12px 0;
+            "
+          >
+            <div
+              style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:15px;
+                flex-wrap:wrap;
+              "
+            >
+              <div>
+                <strong>
+                  ${escapeHtml(item.branch_name || "Branch")}
+                </strong>
+
+                <div style="margin-top:6px;">
+                  ${
+                    isOpen
+                      ? "🟢 OPEN — Teachers can submit Handwriting Reports."
+                      : "🔒 LOCKED — Teachers cannot submit Handwriting Reports."
+                  }
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="${isOpen ? "danger-btn" : "primary-btn"}"
+                data-handwriting-branch="${Number(item.branch_id)}"
+                data-handwriting-open="${isOpen ? "1" : "0"}"
+              >
+                ${
+                  isOpen
+                    ? "Lock Submission"
+                    : "Open Submission"
+                }
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+    } catch (error) {
+      console.error(error);
+
+      container.innerHTML =
+        `<p>${escapeHtml(error.message)}</p>`;
+    }
+  }
+
+  container.addEventListener("click", async function (event) {
+    const button = event.target.closest(
+      "[data-handwriting-branch]"
+    );
+
+    if (!button) return;
+
+    const branchId =
+      Number(button.dataset.handwritingBranch);
+
+    const currentlyOpen =
+      button.dataset.handwritingOpen === "1";
+
+    const nextOpen = !currentlyOpen;
+
+    const action =
+      nextOpen ? "OPEN" : "LOCK";
+
+    if (!confirm(
+      `${action} Handwriting Report submission for this branch?`
+    )) {
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent =
+      nextOpen ? "Opening..." : "Locking...";
+
+    try {
+      const response = await fetch(
+        "/api/handwriting-submission-control",
+        {
+          method: "PUT",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            branch_id: branchId,
+            is_open: nextOpen
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          "Unable to update submission status."
+        );
+      }
+
+      alert(data.message);
+      await loadControls();
+
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+      await loadControls();
+    }
+  });
+
+  loadControls();
+});

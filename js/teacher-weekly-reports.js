@@ -6,12 +6,15 @@ document.addEventListener("DOMContentLoaded", function () {
   const tbody = document.getElementById("weeklyReportsTableBody");
   const message = document.getElementById("weeklyReportMessage");
   const submitBtn = document.getElementById("weeklyReportSubmitBtn");
+  const submissionStatus =
+    document.getElementById("handwritingSubmissionStatus");
   const pageSizeSelect = document.getElementById("teacherHandwritingPageSize");
   const pagination = document.getElementById("teacherHandwritingPagination");
   const paginationInfo = document.getElementById("teacherHandwritingPaginationInfo");
 
   let handwritingRows = [];
   let currentPage = 1;
+  let handwritingSubmissionOpen = false;
 
   function authHeaders() {
     return window.getAuthOnlyHeaders
@@ -35,6 +38,74 @@ document.addEventListener("DOMContentLoaded", function () {
     return Number.isNaN(date.getTime())
       ? escapeHtml(value)
       : date.toLocaleDateString();
+  }
+
+
+  function applySubmissionState(isOpen, branchName) {
+    handwritingSubmissionOpen = Boolean(isOpen);
+
+    weekSelect.disabled = !handwritingSubmissionOpen;
+    fileInput.disabled = !handwritingSubmissionOpen;
+    submitBtn.disabled = !handwritingSubmissionOpen;
+
+    if (!submissionStatus) return;
+
+    if (handwritingSubmissionOpen) {
+      submissionStatus.innerHTML =
+        `🟢 <strong>OPEN</strong> — Handwriting Report submission is currently open` +
+        `${branchName ? ` for ${escapeHtml(branchName)}` : ""}.`;
+
+      submissionStatus.style.background = "#ecfdf5";
+      submissionStatus.style.border = "1px solid #86efac";
+    } else {
+      submissionStatus.innerHTML =
+        `🔒 <strong>LOCKED</strong> — Handwriting Report submission is currently closed by Administration` +
+        `${branchName ? ` for ${escapeHtml(branchName)}` : ""}.`;
+
+      submissionStatus.style.background = "#fef2f2";
+      submissionStatus.style.border = "1px solid #fecaca";
+    }
+  }
+
+  async function loadSubmissionStatus() {
+    // Safe default while the status is loading.
+    applySubmissionState(false, "");
+
+    try {
+      const response = await fetch(
+        "/api/handwriting-submission-control/my",
+        {
+          headers: authHeaders()
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+          "Unable to load Handwriting Report submission status."
+        );
+      }
+
+      const control = data.control || {};
+
+      applySubmissionState(
+        Number(control.is_open) === 1,
+        control.branch_name || ""
+      );
+
+    } catch (error) {
+      console.error(error);
+
+      applySubmissionState(false, "");
+
+      if (submissionStatus) {
+        submissionStatus.innerHTML =
+          `🔒 <strong>LOCKED</strong> — Unable to confirm the submission window. ` +
+          `Please contact Administration.`;
+      }
+    }
   }
 
   async function loadAssignments() {
@@ -274,6 +345,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     message.textContent = "";
 
+    if (!handwritingSubmissionOpen) {
+      message.textContent =
+        "Handwriting Report submission is currently locked by Administration.";
+      return;
+    }
+
     const selectedClass =
       classSelect.options[classSelect.selectedIndex];
 
@@ -331,12 +408,13 @@ document.addEventListener("DOMContentLoaded", function () {
       message.textContent =
         error.message || "Handwriting Report upload failed.";
     } finally {
-      submitBtn.disabled = false;
+      submitBtn.disabled = !handwritingSubmissionOpen;
       submitBtn.textContent = "Submit Handwriting Report";
     }
   });
 
   Promise.all([
+    loadSubmissionStatus(),
     loadAssignments(),
     loadHandwritingReports()
   ]).catch(error => {

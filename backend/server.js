@@ -27,6 +27,8 @@ const promotionRoutes = require("./routes/promotionRoutes");
 const activityRoutes = require("./routes/activityRoutes");
 const lessonPlanRoutes = require("./routes/lessonPlanRoutes");
 const weeklyReportRoutes = require("./routes/weeklyReportRoutes");
+const handwritingSubmissionControlRoutes =
+  require("./routes/handwritingSubmissionControlRoutes");
 
 const app = express();
 
@@ -134,6 +136,7 @@ app.use("/api/promotions", promotionRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/lesson-plans", lessonPlanRoutes);
 app.use("/api/weekly-reports", weeklyReportRoutes);
+app.use("/api/handwriting-submission-control", handwritingSubmissionControlRoutes);
 
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || "0.0.0.0";

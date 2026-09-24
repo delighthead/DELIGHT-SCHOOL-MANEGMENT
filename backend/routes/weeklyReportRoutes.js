@@ -1,4 +1,5 @@
 const express = require("express");
+const db = require("../config/database");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
@@ -41,11 +42,59 @@ const uploadWeeklyReport = multer({
   }
 });
 
+
+async function requireOpenHandwritingSubmission(req, res, next) {
+  try {
+    // The submission window applies to teachers.
+    if (!req.user || req.user.role !== "teacher") {
+      return next();
+    }
+
+    if (!req.user.branch_id) {
+      return res.status(403).json({
+        message: "No branch is assigned to your account"
+      });
+    }
+
+    const [rows] = await db.query(
+      `SELECT is_open
+       FROM handwriting_submission_controls
+       WHERE branch_id = ?
+       LIMIT 1`,
+      [req.user.branch_id]
+    );
+
+    const submissionOpen =
+      rows.length > 0 &&
+      Number(rows[0].is_open) === 1;
+
+    if (!submissionOpen) {
+      return res.status(403).json({
+        message:
+          "Handwriting Report submission is currently locked by Administration."
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error(
+      "Handwriting submission lock check error:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        "Unable to confirm Handwriting Report submission status."
+    });
+  }
+}
+
 router.post(
   "/",
   verifyToken,
   requireAdminOrTeacher,
   applyUserBranchSecurity,
+  requireOpenHandwritingSubmission,
   uploadWeeklyReport.single("report_file"),
   weeklyReportController.createWeeklyReport
 );

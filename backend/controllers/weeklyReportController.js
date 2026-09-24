@@ -28,6 +28,36 @@ exports.createWeeklyReport = async (req, res) => {
       });
     }
 
+
+    // Teachers may submit Handwriting Reports only while their
+    // branch submission window is open.
+    if (req.user && req.user.role === "teacher") {
+      if (!req.user.branch_id) {
+        return res.status(403).json({
+          message: "No branch is assigned to your account"
+        });
+      }
+
+      const [controlRows] = await db.query(
+        `SELECT is_open
+         FROM handwriting_submission_controls
+         WHERE branch_id = ?
+         LIMIT 1`,
+        [req.user.branch_id]
+      );
+
+      const submissionOpen =
+        controlRows.length > 0 &&
+        Number(controlRows[0].is_open) === 1;
+
+      if (!submissionOpen) {
+        return res.status(403).json({
+          message:
+            "Handwriting Report submission is currently locked by Administration."
+        });
+      }
+    }
+
     const filePath = getUploadedFilePath(req.file);
     const originalName = req.file.originalname;
 
