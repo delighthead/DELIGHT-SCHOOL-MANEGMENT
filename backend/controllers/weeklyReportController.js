@@ -209,7 +209,13 @@ exports.getMyWeeklyReports = async (req, res) => {
 exports.reviewWeeklyReport = async (req, res) => {
   try {
     const { id } = req.params;
-    const { admin_comment } = req.body;
+    const { status, admin_comment } = req.body;
+
+    if (!["Approved", "Rejected"].includes(status)) {
+      return res.status(400).json({
+        message: "Status must be Approved or Rejected"
+      });
+    }
 
     const [rows] = await db.query(
       `SELECT
@@ -250,12 +256,12 @@ exports.reviewWeeklyReport = async (req, res) => {
 
     const [result] = await db.query(
       `UPDATE weekly_reports
-       SET status = 'Reviewed',
+       SET status = ?,
            admin_comment = ?,
            reviewed_by = ?,
            reviewed_at = NOW()
        WHERE id = ?`,
-      [admin_comment || null, req.user.id || null, id]
+      [status, admin_comment || null, req.user.id || null, id]
     );
 
     if (result.affectedRows === 0) {
@@ -274,7 +280,7 @@ exports.reviewWeeklyReport = async (req, res) => {
           submissionType: "Handwriting Report",
           className: submission.class_name,
           week: submission.week,
-          status: "Reviewed",
+          status,
           adminComment: admin_comment
         });
 
@@ -294,7 +300,7 @@ exports.reviewWeeklyReport = async (req, res) => {
     }
 
     res.json({
-      message: "Handwriting Report marked as reviewed successfully",
+      message: `Handwriting Report ${status.toLowerCase()} successfully`,
       email_notification: emailNotification
     });
   } catch (error) {
@@ -306,6 +312,110 @@ exports.reviewWeeklyReport = async (req, res) => {
     });
   }
 };
+
+exports.commentWeeklyReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const adminComment = String(req.body.admin_comment || "").trim();
+
+    if (!adminComment) {
+      return res.status(400).json({
+        message: "Comment is required"
+      });
+    }
+
+    const [rows] = await db.query(
+      `SELECT
+         wr.id,
+         wr.class_name,
+         wr.week,
+         wr.status,
+         t.full_name AS teacher_name,
+         t.email AS teacher_email,
+         t.branch_id
+       FROM weekly_reports wr
+       LEFT JOIN teachers t ON t.user_id = wr.teacher_id
+       WHERE wr.id = ?
+       LIMIT 1`,
+      [id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "Handwriting Report not found"
+      });
+    }
+
+    const submission = rows[0];
+
+    if (
+      ["branch_admin", "teacher_admin"].includes(req.user.role) &&
+      (
+        !req.user.branch_id ||
+        Number(submission.branch_id) !== Number(req.user.branch_id)
+      )
+    ) {
+      return res.status(403).json({
+        message: "You can only comment on submissions from your own branch"
+      });
+    }
+
+    await db.query(
+      `UPDATE weekly_reports
+       SET admin_comment = ?,
+           reviewed_by = ?,
+           reviewed_at = NOW()
+       WHERE id = ?`,
+      [adminComment, req.user.id || null, id]
+    );
+
+    let emailNotification = "not_sent";
+
+    if (submission.teacher_email) {
+      try {
+        await sendReviewNotification({
+          teacherEmail: submission.teacher_email,
+          teacherName: submission.teacher_name,
+          submissionType: "Handwriting Report",
+          className: submission.class_name,
+          week: submission.week,
+          status: submission.status || "Pending",
+          adminComment,
+          commentOnly: true
+        });
+
+        emailNotification = "sent";
+      } catch (emailError) {
+        emailNotification = "failed";
+        console.error(
+          "Handwriting Report comment email failed:",
+          emailError.message
+        );
+      }
+    } else {
+      emailNotification = "no_teacher_email";
+    }
+
+    res.json({
+      message:
+        emailNotification === "sent"
+          ? "Comment saved and emailed to the teacher successfully"
+          : emailNotification === "no_teacher_email"
+            ? "Comment saved, but the teacher has no email address"
+            : "Comment saved, but the email could not be sent",
+      email_notification: emailNotification
+    });
+
+  } catch (error) {
+    console.error("Handwriting Report comment error:", error);
+
+    res.status(500).json({
+      message: "Failed to send Handwriting Report comment",
+      error: error.message
+    });
+  }
+};
+
 
 exports.deleteWeeklyReport = async (req, res) => {
   try {

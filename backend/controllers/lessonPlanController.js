@@ -278,6 +278,112 @@ exports.reviewLessonPlan = async (req, res) => {
   }
 };
 
+exports.commentLessonPlan = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const adminComment = String(req.body.admin_comment || "").trim();
+
+    if (!adminComment) {
+      return res.status(400).json({
+        message: "Comment is required"
+      });
+    }
+
+    const [rows] = await db.query(
+      `SELECT
+         lp.id,
+         lp.class_name,
+         lp.subject,
+         lp.week,
+         lp.status,
+         t.full_name AS teacher_name,
+         t.email AS teacher_email,
+         t.branch_id
+       FROM lesson_plans lp
+       LEFT JOIN teachers t ON t.user_id = lp.teacher_id
+       WHERE lp.id = ?
+       LIMIT 1`,
+      [id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "Lesson Note not found"
+      });
+    }
+
+    const submission = rows[0];
+
+    if (
+      ["branch_admin", "teacher_admin"].includes(req.user.role) &&
+      (
+        !req.user.branch_id ||
+        Number(submission.branch_id) !== Number(req.user.branch_id)
+      )
+    ) {
+      return res.status(403).json({
+        message: "You can only comment on submissions from your own branch"
+      });
+    }
+
+    await db.query(
+      `UPDATE lesson_plans
+       SET admin_comment = ?,
+           reviewed_by = ?,
+           reviewed_at = NOW()
+       WHERE id = ?`,
+      [adminComment, req.user.id || null, id]
+    );
+
+    let emailNotification = "not_sent";
+
+    if (submission.teacher_email) {
+      try {
+        await sendReviewNotification({
+          teacherEmail: submission.teacher_email,
+          teacherName: submission.teacher_name,
+          submissionType: "Lesson Note",
+          className: submission.class_name,
+          subject: submission.subject,
+          week: submission.week,
+          status: submission.status || "Pending",
+          adminComment,
+          commentOnly: true
+        });
+
+        emailNotification = "sent";
+      } catch (emailError) {
+        emailNotification = "failed";
+        console.error(
+          "Lesson Note comment email failed:",
+          emailError.message
+        );
+      }
+    } else {
+      emailNotification = "no_teacher_email";
+    }
+
+    res.json({
+      message:
+        emailNotification === "sent"
+          ? "Comment saved and emailed to the teacher successfully"
+          : emailNotification === "no_teacher_email"
+            ? "Comment saved, but the teacher has no email address"
+            : "Comment saved, but the email could not be sent",
+      email_notification: emailNotification
+    });
+
+  } catch (error) {
+    console.error("Lesson Note comment error:", error);
+
+    res.status(500).json({
+      message: "Failed to send Lesson Note comment",
+      error: error.message
+    });
+  }
+};
+
+
 exports.deleteLessonPlan = async (req, res) => {
   try {
     const { id } = req.params;

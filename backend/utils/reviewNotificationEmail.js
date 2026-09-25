@@ -37,7 +37,8 @@ async function sendReviewNotification({
   subject,
   week,
   status,
-  adminComment
+  adminComment,
+  commentOnly = false
 }) {
   if (!teacherEmail) {
     return {
@@ -56,7 +57,9 @@ async function sendReviewNotification({
   const safeStatus = escapeHtml(status || "Reviewed");
   const safeComment = escapeHtml(adminComment || "No comment provided.");
 
-  const subjectLine = `${submissionType} Reviewed - Delight International School`;
+  const subjectLine = commentOnly
+    ? `${submissionType} Comment - Delight International School`
+    : `${submissionType} ${status || "Reviewed"} - Delight International School`;
 
   const subjectRow = subject
     ? `<tr><td><strong>Subject:</strong></td><td>${safeSubject}</td></tr>`
@@ -65,7 +68,9 @@ async function sendReviewNotification({
   const textLines = [
     `Dear ${teacherName || "Teacher"},`,
     "",
-    `Your ${submissionType} has been reviewed.`,
+    commentOnly
+      ? `A comment has been sent regarding your ${submissionType}.`
+      : `Your ${submissionType} has been reviewed.`,
     "",
     `Class: ${className || "-"}`,
     subject ? `Subject: ${subject}` : null,
@@ -87,7 +92,11 @@ async function sendReviewNotification({
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#222">
         <p>Dear <strong>${safeName}</strong>,</p>
 
-        <p>Your <strong>${safeType}</strong> has been reviewed.</p>
+        <p>${
+          commentOnly
+            ? `A comment has been sent regarding your <strong>${safeType}</strong>.`
+            : `Your <strong>${safeType}</strong> has been reviewed.`
+        }</p>
 
         <table cellpadding="5" cellspacing="0">
           <tr>

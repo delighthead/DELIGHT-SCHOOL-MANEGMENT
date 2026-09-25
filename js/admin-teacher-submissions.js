@@ -232,6 +232,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
               <button
                 type="button"
+                onclick="sendLessonComment(${Number(row.id)})">
+                Send Comment
+              </button>
+
+              <button
+                type="button"
                 class="submission-delete-btn"
                 onclick="deleteLessonNote(${Number(row.id)})">
                 Delete
@@ -320,8 +326,20 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="submission-actions">
               <button
                 type="button"
-                onclick="reviewHandwritingReport(${Number(row.id)})">
-                Mark Reviewed
+                onclick="reviewHandwritingReport(${Number(row.id)}, 'Approved')">
+                Approve
+              </button>
+
+              <button
+                type="button"
+                onclick="reviewHandwritingReport(${Number(row.id)}, 'Rejected')">
+                Reject
+              </button>
+
+              <button
+                type="button"
+                onclick="sendHandwritingComment(${Number(row.id)})">
+                Send Comment
               </button>
 
               <button
@@ -481,11 +499,15 @@ document.addEventListener("DOMContentLoaded", function () {
   };
 
 
-  window.reviewHandwritingReport = async function (id) {
+  window.reviewHandwritingReport = async function (id, status) {
     const comment =
       document.getElementById(`handwriting-comment-${id}`)?.value || "";
 
-    if (!confirm("Mark this Handwriting Report as reviewed?")) {
+    if (
+      !confirm(
+        `${status === "Approved" ? "Approve" : "Reject"} this Handwriting Report?`
+      )
+    ) {
       return;
     }
 
@@ -495,6 +517,7 @@ document.addEventListener("DOMContentLoaded", function () {
           method: "PATCH",
           headers: headers(),
           body: JSON.stringify({
+            status,
             admin_comment: comment
           })
         });
@@ -510,9 +533,91 @@ document.addEventListener("DOMContentLoaded", function () {
 
       alert(
         data.message ||
-        "Handwriting Report marked as reviewed."
+        "Handwriting Report updated."
       );
 
+      await loadHandwritingReports();
+
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  };
+
+
+  window.sendLessonComment = async function (id) {
+    const comment =
+      document.getElementById(`lesson-comment-${id}`)?.value.trim() || "";
+
+    if (!comment) {
+      alert("Please enter a comment before sending.");
+      return;
+    }
+
+    if (!confirm("Send this comment to the teacher by email?")) {
+      return;
+    }
+
+    try {
+      const response =
+        await fetch(`/api/lesson-plans/${id}/comment`, {
+          method: "PATCH",
+          headers: headers(),
+          body: JSON.stringify({
+            admin_comment: comment
+          })
+        });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to send Lesson Note comment."
+        );
+      }
+
+      alert(data.message || "Comment sent successfully.");
+      await loadLessonNotes();
+
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  };
+
+
+  window.sendHandwritingComment = async function (id) {
+    const comment =
+      document.getElementById(`handwriting-comment-${id}`)?.value.trim() || "";
+
+    if (!comment) {
+      alert("Please enter a comment before sending.");
+      return;
+    }
+
+    if (!confirm("Send this comment to the teacher by email?")) {
+      return;
+    }
+
+    try {
+      const response =
+        await fetch(`/api/weekly-reports/${id}/comment`, {
+          method: "PATCH",
+          headers: headers(),
+          body: JSON.stringify({
+            admin_comment: comment
+          })
+        });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to send Handwriting Report comment."
+        );
+      }
+
+      alert(data.message || "Comment sent successfully.");
       await loadHandwritingReports();
 
     } catch (error) {

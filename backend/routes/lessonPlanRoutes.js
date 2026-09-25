@@ -74,6 +74,14 @@ router.patch(
   lessonPlanController.reviewLessonPlan
 );
 
+router.patch(
+  "/:id/comment",
+  verifyToken,
+  requireAdmin,
+  applyUserBranchSecurity,
+  lessonPlanController.commentLessonPlan
+);
+
 router.delete(
   "/my/:id",
   verifyToken,

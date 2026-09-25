@@ -123,6 +123,14 @@ router.patch(
   weeklyReportController.reviewWeeklyReport
 );
 
+router.patch(
+  "/:id/comment",
+  verifyToken,
+  requireAdmin,
+  applyUserBranchSecurity,
+  weeklyReportController.commentWeeklyReport
+);
+
 router.delete(
   "/my/:id",
   verifyToken,
