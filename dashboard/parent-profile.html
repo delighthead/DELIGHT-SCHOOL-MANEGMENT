@@ -5,6 +5,131 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Child Profile - Delight International School</title>
   <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    .parent-children-selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-top: 18px;
+    }
+
+    .parent-child-select-card {
+      border: 2px solid #e2e8f0;
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      text-align: left;
+      transition: 0.2s ease;
+    }
+
+    .parent-child-select-card:hover {
+      border-color: #ffcc00;
+      transform: translateY(-2px);
+    }
+
+    .parent-child-select-card.active {
+      border-color: #003b70;
+      background: #f3f7fb;
+      box-shadow: 0 4px 14px rgba(0, 59, 112, 0.10);
+    }
+
+    .parent-child-select-photo {
+      width: 58px;
+      height: 58px;
+      min-width: 58px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #003b70;
+      color: #ffcc00;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+    }
+
+    .parent-child-select-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .parent-child-select-info strong {
+      display: block;
+      color: #003b70;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    .parent-child-select-info span {
+      display: block;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .parent-profile-hero {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      background: #f4f6f9;
+      padding: 24px;
+      border-radius: 12px;
+      margin-bottom: 22px;
+    }
+
+    .parent-profile-photo {
+      width: 130px;
+      height: 130px;
+      min-width: 130px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #003b70;
+      color: #ffcc00;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .parent-profile-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .parent-profile-hero h2 {
+      color: #003b70;
+      margin: 0 0 10px;
+    }
+
+    .parent-profile-hero p {
+      margin: 5px 0;
+    }
+
+    .parent-profile-section-title {
+      color: #003b70;
+      margin-top: 25px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 650px) {
+      .parent-profile-hero {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .parent-children-selector {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -66,6 +191,15 @@
         <p id="parentContactMsg" style="font-weight:600;"></p>
       </section>
 
+      <section class="dashboard-section">
+        <h2>My Children</h2>
+        <p>Select a child below to view his or her complete profile.</p>
+
+        <div id="parentChildrenSelector" class="parent-children-selector">
+          <p>Loading children...</p>
+        </div>
+      </section>
+
       <div id="childrenProfileBox">
         <section class="dashboard-section">
           <h2>Loading Child Profile...</h2>
@@ -78,7 +212,7 @@
   </div>
 
   <script src="../js/panel-title.js?v=1"></script>
-  <script src="../js/parent-profile-api.js?v=1"></script>
+  <script src="../js/parent-profile-api.js?v=2"></script>
   <script src="../js/logout.js?v=2"></script>
   <script src="../js/parent-guard.js?v=1"></script>
   <script src="../js/site-footer-settings.js?v=1"></script>
