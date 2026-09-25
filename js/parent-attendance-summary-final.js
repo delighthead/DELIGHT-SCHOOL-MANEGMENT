@@ -1,181 +1,295 @@
-(function () {
-  const API = "";
-  let latestSummary = [];
+document.addEventListener("DOMContentLoaded", function () {
+  const childrenSelector =
+    document.getElementById("attendanceChildrenSelector");
 
-  function token() {
-    return localStorage.getItem("token") || "";
-  }
+  const tableBody =
+    document.getElementById("parentAttendanceTableBody");
+
+  const countText =
+    document.getElementById("parentAttendanceCountText");
+
+  const heading =
+    document.getElementById("attendanceRecordsHeading");
+
+  const rateBox =
+    document.getElementById("attendanceRate");
+
+  const presentBox =
+    document.getElementById("attendancePresent");
+
+  const absentBox =
+    document.getElementById("attendanceAbsent");
+
+  const lateBox =
+    document.getElementById("attendanceLate");
+
+  let children = [];
+  let attendance = [];
+  let selectedChildId = null;
 
   function headers() {
-    return token() ? { Authorization: `Bearer ${token()}` } : {};
+    const token = localStorage.getItem("token");
+
+    return token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
   }
 
-  function getTable() {
-    return document.querySelector(".data-table") || document.querySelector("table");
+  function safe(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
-  function getBody() {
-    return (
-      document.getElementById("parentAttendanceTableBody") ||
-      document.getElementById("attendanceTableBody") ||
-      document.querySelector("tbody")
+  function formatDate(value) {
+    if (!value) return "";
+    return String(value).slice(0, 10);
+  }
+
+  function titleCase(value) {
+    const text = String(value || "").trim();
+
+    if (!text) return "";
+
+    return text
+      .toLowerCase()
+      .replace(/\b\w/g, char => char.toUpperCase());
+  }
+
+  async function fetchJson(url) {
+    const response = await fetch(url, {
+      headers: headers()
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Could not load attendance."
+      );
+    }
+
+    return data;
+  }
+
+  function getSelectedChild() {
+    return children.find(
+      child => Number(child.id) === Number(selectedChildId)
+    ) || children[0] || null;
+  }
+
+  function selectedAttendance() {
+    return attendance.filter(
+      record =>
+        Number(record.student_id) ===
+        Number(selectedChildId)
     );
   }
 
-  function getRecords(data) {
-    if (Array.isArray(data)) return data;
-    if (Array.isArray(data.attendance)) return data.attendance;
-    if (Array.isArray(data.records)) return data.records;
-    if (Array.isArray(data.data)) return data.data;
-    return [];
-  }
+  function renderChildren() {
+    if (!childrenSelector) return;
 
-  function makeKey(record) {
-    return [
-      record.student_id || record.admission_number || record.student_name || "",
-      record.class_name || "",
-      record.term || "",
-      record.academic_year || ""
-    ].join("|");
-  }
-
-  function groupAttendance(records) {
-    const grouped = {};
-
-    records.forEach(record => {
-      const key = makeKey(record);
-
-      if (!grouped[key]) {
-        grouped[key] = {
-          student_name: record.student_name || record.full_name || "",
-          admission_number: record.admission_number || "",
-          class_name: record.class_name || "",
-          term: record.term || "",
-          academic_year: record.academic_year || "",
-          days_in_school: 0,
-          total_present: 0,
-          total_absent: 0
-        };
-      }
-
-      grouped[key].days_in_school += 1;
-
-      const status = String(record.status || "").toLowerCase();
-
-      if (status === "present") grouped[key].total_present += 1;
-      if (status === "absent") grouped[key].total_absent += 1;
-    });
-
-    return Object.values(grouped);
-  }
-
-  function fixHeading() {
-    const table = getTable();
-    if (!table) return;
-
-    let thead = table.querySelector("thead");
-
-    if (!thead) {
-      thead = document.createElement("thead");
-      table.prepend(thead);
-    }
-
-    thead.innerHTML = `
-      <tr>
-        <th>Student</th>
-        <th>Admission No.</th>
-        <th>Class</th>
-        <th>Term</th>
-        <th>Academic Year</th>
-        <th>Days in School</th>
-        <th>Total Present</th>
-        <th>Total Absent</th>
-      </tr>
-    `;
-  }
-
-  function renderSummary() {
-    const body = getBody();
-    if (!body) return;
-
-    fixHeading();
-
-    const countText =
-      document.getElementById("attendanceCountText") ||
-      document.getElementById("parentAttendanceCountText");
-
-    if (countText) {
-      countText.textContent = `Showing ${latestSummary.length} attendance summary record(s)`;
-    }
-
-    if (!latestSummary.length) {
-      body.innerHTML = `<tr><td colspan="8">No attendance records found.</td></tr>`;
+    if (!children.length) {
+      childrenSelector.innerHTML =
+        "<p>No active children found.</p>";
       return;
     }
 
-    body.innerHTML = "";
+    childrenSelector.innerHTML = children
+      .map(child => {
+        const active =
+          Number(child.id) === Number(selectedChildId)
+            ? " active"
+            : "";
 
-    latestSummary.forEach(item => {
-      const row = document.createElement("tr");
+        return `
+          <button
+            type="button"
+            class="attendance-child-card${active}"
+            data-child-id="${safe(child.id)}"
+          >
+            <strong>
+              ${safe(child.full_name || "Student")}
+            </strong>
 
-      row.innerHTML = `
-        <td>${item.student_name}</td>
-        <td>${item.admission_number}</td>
-        <td>${item.class_name}</td>
-        <td>${item.term}</td>
-        <td>${item.academic_year}</td>
-        <td>${item.days_in_school}</td>
-        <td>${item.total_present}</td>
-        <td>${item.total_absent}</td>
-      `;
+            <span>
+              ${safe(child.class_name || "Class not assigned")}
+            </span>
 
-      body.appendChild(row);
-    });
+            <span>
+              ${safe(child.branch_name || "Branch not assigned")}
+            </span>
+          </button>
+        `;
+      })
+      .join("");
+
+    childrenSelector
+      .querySelectorAll(".attendance-child-card")
+      .forEach(button => {
+        button.addEventListener("click", function () {
+          selectedChildId = this.dataset.childId;
+
+          renderChildren();
+          renderAttendance();
+        });
+      });
   }
 
-  async function loadSummary() {
-    const body = getBody();
-    if (body) body.innerHTML = `<tr><td colspan="8">Loading attendance...</td></tr>`;
+  function renderSummary(records) {
+    let present = 0;
+    let absent = 0;
+    let late = 0;
 
+    records.forEach(record => {
+      const status =
+        String(record.status || "")
+          .trim()
+          .toLowerCase();
+
+      if (status === "present") present++;
+      else if (status === "absent") absent++;
+      else if (status === "late") late++;
+    });
+
+    const total = records.length;
+
+    const rate =
+      total > 0
+        ? Math.round((present / total) * 100)
+        : null;
+
+    rateBox.textContent =
+      rate === null ? "--" : `${rate}%`;
+
+    presentBox.textContent =
+      total ? String(present) : "--";
+
+    absentBox.textContent =
+      total ? String(absent) : "--";
+
+    lateBox.textContent =
+      total ? String(late) : "--";
+  }
+
+  function renderAttendance() {
+    const child = getSelectedChild();
+
+    if (!child) {
+      renderSummary([]);
+
+      heading.textContent = "Attendance Records";
+      countText.textContent = "";
+
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5">
+            No active child is linked to this account.
+          </td>
+        </tr>
+      `;
+
+      return;
+    }
+
+    const records = selectedAttendance();
+
+    heading.textContent =
+      `${child.full_name || "Student"} - Attendance`;
+
+    countText.textContent =
+      records.length
+        ? `Showing ${records.length} attendance record(s)`
+        : "No attendance records available yet.";
+
+    renderSummary(records);
+
+    if (!records.length) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5">
+            No attendance records found for
+            ${safe(child.full_name || "this child")}.
+          </td>
+        </tr>
+      `;
+
+      return;
+    }
+
+    tableBody.innerHTML = records
+      .map(record => `
+        <tr>
+          <td>
+            ${safe(formatDate(record.attendance_date))}
+          </td>
+
+          <td>
+            ${safe(record.term || "")}
+          </td>
+
+          <td>
+            ${safe(record.academic_year || "")}
+          </td>
+
+          <td>
+            <span class="attendance-status">
+              ${safe(titleCase(record.status))}
+            </span>
+          </td>
+
+          <td>
+            ${safe(record.remarks || "")}
+          </td>
+        </tr>
+      `)
+      .join("");
+  }
+
+  async function loadAttendancePage() {
     try {
-      const res = await fetch(`${API}/api/parents/my/attendance`, {
-        headers: headers()
-      });
+      const [childrenData, attendanceData] =
+        await Promise.all([
+          fetchJson("/api/parents/my/children"),
+          fetchJson("/api/parents/my/attendance")
+        ]);
 
-      const data = await res.json();
+      children = childrenData.children || [];
+      attendance = attendanceData.attendance || [];
 
-      if (!res.ok) {
-        throw new Error(data.message || "Could not load attendance.");
+      selectedChildId =
+        children.length ? children[0].id : null;
+
+      renderChildren();
+      renderAttendance();
+
+    } catch (error) {
+      console.error(
+        "Parent attendance error:",
+        error
+      );
+
+      if (childrenSelector) {
+        childrenSelector.innerHTML =
+          `<p>${safe(error.message)}</p>`;
       }
 
-      latestSummary = groupAttendance(getRecords(data));
-      renderSummary();
-      document.body.classList.remove("parent-attendance-loading");
+      if (tableBody) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="5">
+              ${safe(error.message)}
+            </td>
+          </tr>
+        `;
+      }
 
-      setTimeout(renderSummary, 500);
-      setTimeout(renderSummary, 1500);
-      setTimeout(renderSummary, 3000);
-    } catch (error) {
-      console.error("Parent attendance summary error:", error);
-      if (body) body.innerHTML = `<tr><td colspan="8">${error.message}</td></tr>`;
-      document.body.classList.remove("parent-attendance-loading");
+      renderSummary([]);
     }
   }
 
-  function fixPrintButton() {
-    document.querySelectorAll("button, a").forEach(btn => {
-      const text = String(btn.textContent || "").toLowerCase();
-      if (text.includes("print scores")) {
-        btn.textContent = "Print Attendance";
-      }
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", function () {
-    fixPrintButton();
-    loadSummary();
-  });
-
-  setTimeout(fixPrintButton, 300);
-  setTimeout(loadSummary, 700);
-})();
+  loadAttendancePage();
+});

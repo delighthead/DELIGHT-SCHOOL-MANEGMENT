@@ -3,27 +3,147 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Parent Attendance - Delight International School</title>
+
   <link rel="stylesheet" href="../css/style.css">
 
+  <style>
+    .parent-attendance-header {
+      margin-bottom: 22px;
+    }
 
+    .parent-attendance-header h1 {
+      margin-bottom: 6px;
+    }
 
+    .parent-attendance-header p {
+      color: #64748b;
+      margin: 0;
+    }
 
-<style>
-  body.parent-attendance-loading #attendanceTableBody,
-  body.parent-attendance-loading #parentAttendanceTableBody,
-  body.parent-attendance-loading table tbody {
-    display: none !important;
-  }
-</style>
+    .attendance-children-selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
 
+    .attendance-child-card {
+      border: 2px solid #e2e8f0;
+      background: #fff;
+      border-radius: 12px;
+      padding: 15px;
+      cursor: pointer;
+      text-align: left;
+      transition: 0.2s ease;
+    }
+
+    .attendance-child-card:hover {
+      border-color: #ffcc00;
+      transform: translateY(-2px);
+    }
+
+    .attendance-child-card.active {
+      border-color: #003b70;
+      background: #f3f7fb;
+      box-shadow: 0 4px 14px rgba(0, 59, 112, 0.10);
+    }
+
+    .attendance-child-card strong {
+      display: block;
+      color: #003b70;
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+
+    .attendance-child-card span {
+      display: block;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .attendance-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .attendance-summary-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px;
+      border-top: 4px solid #ffcc00;
+      box-shadow: 0 4px 15px rgba(15, 23, 42, 0.06);
+    }
+
+    .attendance-summary-card .label {
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+
+    .attendance-summary-card .value {
+      color: #003b70;
+      font-size: 25px;
+      font-weight: 800;
+    }
+
+    .attendance-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .attendance-toolbar p {
+      margin: 0;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .attendance-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .attendance-status {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #eef2f7;
+      color: #334155;
+    }
+
+    @media (max-width: 1000px) {
+      .attendance-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 650px) {
+      .attendance-summary-grid,
+      .attendance-children-selector {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
-<body class="parent-attendance-loading">
+
+<body>
 
   <div class="dashboard-layout">
 
     <aside class="sidebar">
       <h2>Parent Panel</h2>
+
       <a href="../index.html">Website Home</a>
       <a href="parent.html">Dashboard Overview</a>
       <a href="parent-profile.html">Child Profile</a>
@@ -36,37 +156,98 @@
     </aside>
 
     <main class="dashboard-main">
-      <h1>Attendance</h1>
-      <p>View attendance records for all active children linked to your account.</p>
+
+      <div class="parent-attendance-header">
+        <h1>Attendance</h1>
+        <p>
+          Select a child to view his or her attendance information.
+        </p>
+      </div>
 
       <section class="dashboard-section">
-        <h2>Attendance Records</h2>
-        <button type="button" class="primary-btn" id="printParentAttendanceBtn" style="margin:10px 0; background:#16a34a; color:white;">
-          Print Attendance
-        </button>
+        <h2>My Children</h2>
 
-        <p id="parentAttendanceCountText" style="font-weight:bold;"></p>
+        <div
+          id="attendanceChildrenSelector"
+          class="attendance-children-selector"
+        >
+          <p>Loading children...</p>
+        </div>
+      </section>
 
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Student</th>
-              <th>Admission No.</th>
-              <th>Class</th>
-              <th>Term</th>
-              <th>Academic Year</th>
-              <th>Days in School</th>
-              <th>Total Present</th>
-              <th>Total Absent</th>
-            </tr>
-          </thead>
+      <div class="attendance-summary-grid">
 
-          <tbody id="attendanceTableBody">
-            <tr>
-              <td colspan="8">Loading attendance summary...</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="attendance-summary-card">
+          <div class="label">Attendance Rate</div>
+          <div class="value" id="attendanceRate">--</div>
+        </div>
+
+        <div class="attendance-summary-card">
+          <div class="label">Present</div>
+          <div class="value" id="attendancePresent">--</div>
+        </div>
+
+        <div class="attendance-summary-card">
+          <div class="label">Absent</div>
+          <div class="value" id="attendanceAbsent">--</div>
+        </div>
+
+        <div class="attendance-summary-card">
+          <div class="label">Late</div>
+          <div class="value" id="attendanceLate">--</div>
+        </div>
+
+      </div>
+
+      <section class="dashboard-section">
+
+        <div class="attendance-toolbar">
+
+          <div>
+            <h2 id="attendanceRecordsHeading">
+              Attendance Records
+            </h2>
+
+            <p id="parentAttendanceCountText"></p>
+          </div>
+
+          <button
+            type="button"
+            class="primary-btn"
+            id="printParentAttendanceBtn"
+            style="background:#16a34a;color:white;"
+          >
+            Print Attendance
+          </button>
+
+        </div>
+
+        <div class="attendance-table-wrap">
+
+          <table class="data-table" id="parentAttendanceTable">
+
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Term</th>
+                <th>Academic Year</th>
+                <th>Status</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+
+            <tbody id="parentAttendanceTableBody">
+              <tr>
+                <td colspan="5">
+                  Loading attendance records...
+                </td>
+              </tr>
+            </tbody>
+
+          </table>
+
+        </div>
+
       </section>
 
     </main>
@@ -74,79 +255,14 @@
   </div>
 
   <script src="../js/panel-title.js?v=1"></script>
-
-<!-- DIRECT PARENT ATTENDANCE FIX START -->
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  setTimeout(async function () {
-    const tbody = document.getElementById("parentAttendanceTableBody");
-    const countText = document.getElementById("parentAttendanceCountText");
-    if (!tbody) return;
-
-    try {
-      const response = await fetch("/api/parents/my/attendance", {
-        headers: {
-          "Authorization": "Bearer " + localStorage.getItem("token")
-        }
-      });
-
-      const data = await response.json();
-      const attendance = data.attendance || [];
-
-      tbody.innerHTML = "";
-
-      if (!response.ok) {
-        tbody.innerHTML = `<tr><td colspan="8">${data.message || "Could not load attendance."}</td></tr>`;
-        return;
-      }
-
-      if (countText) {
-        countText.textContent = `Showing ${attendance.length} attendance record(s)`;
-      }
-
-      if (attendance.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8">No attendance records found for active children.</td></tr>`;
-        return;
-      }
-
-      attendance.forEach(function (record) {
-        const date = record.attendance_date ? String(record.attendance_date).slice(0, 10) : "";
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${record.student_name || ""}</td>
-          <td>${record.admission_number || ""}</td>
-          <td>${record.class_name || ""}</td>
-          <td>${date}</td>
-          <td>${record.term || ""}</td>
-          <td>${record.academic_year || ""}</td>
-          <td>${record.status || ""}</td>
-          <td>${record.remarks || ""}</td>
-        `;
-
-        tbody.appendChild(row);
-      });
-    } catch (error) {
-      console.error(error);
-      tbody.innerHTML = `<tr><td colspan="8">Cannot connect to backend.</td></tr>`;
-    }
-  }, 300);
-});
-</script>
-<!-- DIRECT PARENT ATTENDANCE FIX END -->
-
   <script src="../js/logout.js?v=2"></script>
   <script src="../js/parent-guard.js?v=1"></script>
   <script src="../js/site-footer-settings.js?v=1"></script>
   <script src="../js/site-settings.js?v=4"></script>
-  <script src="../js/academic-session.js?v=1"></script>
-  <script src="../js/admin-common-polish.js?v=1"></script>
-  <script src="../js/teacher-dropdown-final.js?v=2"></script>
-  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
-  <script src="../js/api-helper.js?v=2"></script>
   <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
-  <script src="../js/parent-attendance-summary-final.js?v=1783249922"></script>
+
+  <script src="../js/parent-attendance-summary-final.js?v=2"></script>
   <script src="../js/parent-attendance-print-final.js?v=1783251325"></script>
-  <script src="../js/parent-print-tab-final.js?v=1"></script>
+
 </body>
 </html>
