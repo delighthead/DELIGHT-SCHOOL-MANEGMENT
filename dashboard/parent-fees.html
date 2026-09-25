@@ -3,15 +3,152 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Parent Fees - Delight International School</title>
+
   <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    .parent-fees-header {
+      margin-bottom: 22px;
+    }
+
+    .parent-fees-header h1 {
+      margin-bottom: 6px;
+    }
+
+    .parent-fees-header p {
+      color: #64748b;
+      margin: 0;
+    }
+
+    .fees-children-selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .fees-child-card {
+      border: 2px solid #e2e8f0;
+      background: #fff;
+      border-radius: 12px;
+      padding: 15px;
+      cursor: pointer;
+      text-align: left;
+      transition: 0.2s ease;
+    }
+
+    .fees-child-card:hover {
+      border-color: #ffcc00;
+      transform: translateY(-2px);
+    }
+
+    .fees-child-card.active {
+      border-color: #003b70;
+      background: #f3f7fb;
+      box-shadow: 0 4px 14px rgba(0, 59, 112, 0.10);
+    }
+
+    .fees-child-card strong {
+      display: block;
+      color: #003b70;
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+
+    .fees-child-card span {
+      display: block;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .fees-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .fees-summary-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px;
+      border-top: 4px solid #ffcc00;
+      box-shadow: 0 4px 15px rgba(15, 23, 42, 0.06);
+    }
+
+    .fees-summary-card .label {
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+
+    .fees-summary-card .value {
+      color: #003b70;
+      font-size: 23px;
+      font-weight: 800;
+    }
+
+    .fees-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .fees-toolbar h2 {
+      margin-bottom: 5px;
+    }
+
+    .fees-toolbar p {
+      margin: 0;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .fees-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .fee-status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #eef2f7;
+      color: #334155;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 1000px) {
+      .fees-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 650px) {
+      .fees-summary-grid,
+      .fees-children-selector {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
   <div class="dashboard-layout">
 
     <aside class="sidebar">
       <h2>Parent Panel</h2>
+
       <a href="../index.html">Website Home</a>
       <a href="parent.html">Dashboard Overview</a>
       <a href="parent-profile.html">Child Profile</a>
@@ -24,39 +161,98 @@
     </aside>
 
     <main class="dashboard-main">
-      <h1>Fees Status</h1>
-      <p>View fee records for all active children linked to your account.</p>
+
+      <div class="parent-fees-header">
+        <h1>Fees Status</h1>
+        <p>
+          Select a child to view his or her fee information.
+        </p>
+      </div>
 
       <section class="dashboard-section">
-        <h2>Fee Records</h2>
-        <p id="parentFeesCountText" style="font-weight:bold;"></p>
-        <div style="margin-bottom:12px;">
-          <button type="button" id="printFeesStatementBtn" class="small-btn success">Print Fees Statement</button>
+        <h2>My Children</h2>
+
+        <div
+          id="feesChildrenSelector"
+          class="fees-children-selector"
+        >
+          <p>Loading children...</p>
+        </div>
+      </section>
+
+      <div class="fees-summary-grid">
+
+        <div class="fees-summary-card">
+          <div class="label">Total Fees</div>
+          <div class="value" id="feesTotalPayable">--</div>
         </div>
 
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Student</th>
-              <th>Admission No.</th>
-              <th>Class</th>
-              <th>Term</th>
-              <th>Academic Year</th>
-              <th>Amount Payable</th>
-              <th>Amount Paid</th>
-              <th>Balance</th>
-              <th>Status</th>
-              <th>Payment Date</th>
-              <th class="parent-fees-action-head">Action</th>
-            </tr>
-          </thead>
+        <div class="fees-summary-card">
+          <div class="label">Amount Paid</div>
+          <div class="value" id="feesTotalPaid">--</div>
+        </div>
 
-          <tbody id="parentFeesTableBody">
-            <tr>
-              <td colspan="11">Loading fees...</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="fees-summary-card">
+          <div class="label">Outstanding Balance</div>
+          <div class="value" id="feesTotalBalance">--</div>
+        </div>
+
+        <div class="fees-summary-card">
+          <div class="label">Payment Status</div>
+          <div class="value" id="feesPaymentStatus">--</div>
+        </div>
+
+      </div>
+
+      <section class="dashboard-section">
+
+        <div class="fees-toolbar">
+
+          <div>
+            <h2 id="feesRecordsHeading">
+              Fee Records
+            </h2>
+
+            <p id="parentFeesCountText"></p>
+          </div>
+
+          <button
+            type="button"
+            id="printFeesStatementBtn"
+            class="small-btn success"
+          >
+            Print Fees Statement
+          </button>
+
+        </div>
+
+        <div class="fees-table-wrap">
+
+          <table class="data-table" id="parentFeesTable">
+
+            <thead>
+              <tr>
+                <th>Term</th>
+                <th>Academic Year</th>
+                <th>Amount Payable</th>
+                <th>Amount Paid</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th>Payment Date</th>
+                <th class="parent-fees-action-head">Action</th>
+              </tr>
+            </thead>
+
+            <tbody id="parentFeesTableBody">
+              <tr>
+                <td colspan="8">Loading fees...</td>
+              </tr>
+            </tbody>
+
+          </table>
+
+        </div>
+
       </section>
 
     </main>
@@ -64,19 +260,14 @@
   </div>
 
   <script src="../js/panel-title.js?v=1"></script>
-  <script src="../js/parent-fees-api.js?v=2"></script>
   <script src="../js/logout.js?v=2"></script>
   <script src="../js/parent-guard.js?v=1"></script>
   <script src="../js/site-footer-settings.js?v=1"></script>
   <script src="../js/site-settings.js?v=4"></script>
-  <script src="../js/academic-session.js?v=1"></script>
-  <script src="../js/admin-common-polish.js?v=1"></script>
-  <script src="../js/teacher-dropdown-final.js?v=2"></script>
-  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
-  <script src="../js/api-helper.js?v=2"></script>
-  <script src="../js/parent-fees-print-final.js?v=2"></script>
-  <script src="../js/parent-fees-print-button.js?v=1"></script>
-  <script src="../js/parent-print-tab-final.js?v=1"></script>
   <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+
+  <script src="../js/parent-fees-api.js?v=3"></script>
+  <script src="../js/parent-fees-print-final.js?v=2"></script>
+
 </body>
 </html>
