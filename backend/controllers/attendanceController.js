@@ -78,7 +78,7 @@ exports.getAttendance = async (req, res) => {
       FROM attendance
       LEFT JOIN branches ON attendance.branch_id = branches.id
       LEFT JOIN students ON attendance.student_id = students.id
-      LEFT JOIN classes ON attendance.class_id = classes.id
+      LEFT JOIN classes ON students.class_id = classes.id
       LEFT JOIN teachers ON attendance.teacher_id = teachers.id`;
 
     const params = [];
@@ -96,8 +96,8 @@ exports.getAttendance = async (req, res) => {
           SELECT 1
           FROM teacher_assignments ta
           WHERE ta.teacher_id = ?
-            AND ta.class_id = attendance.class_id
-            AND ta.branch_id = attendance.branch_id
+            AND ta.class_id = students.class_id
+            AND ta.branch_id = students.branch_id
             AND ta.status = 'active'
         )`
       );
@@ -385,17 +385,50 @@ exports.bulkSaveAttendance = async (req, res) => {
         continue;
       }
 
-      let branchId = record.branch_id || null;
+      const [studentRows] = await db.query(
+        `SELECT id, branch_id, class_id
+         FROM students
+         WHERE id = ?
+         LIMIT 1`,
+        [record.student_id]
+      );
+
+      if (studentRows.length === 0) {
+        continue;
+      }
+
+      const student = studentRows[0];
+
+      let branchId = student.branch_id;
+      let classId = student.class_id;
       let teacherId = record.teacher_id || null;
 
       if (teacher) {
-        const allowed = await isTeacherAssignedToStudent(teacher.id, record.student_id);
+        const allowed = await isTeacherAssignedToStudent(
+          teacher.id,
+          record.student_id
+        );
+
         if (!allowed) {
           continue;
         }
 
-        branchId = teacher.branch_id;
+        if (
+          Number(student.branch_id) !==
+          Number(teacher.branch_id)
+        ) {
+          continue;
+        }
+
+        branchId = student.branch_id;
+        classId = student.class_id;
         teacherId = teacher.id;
+      } else if (
+        isBranchScopedAdmin(req.user) &&
+        Number(student.branch_id) !==
+        Number(req.user.branch_id)
+      ) {
+        continue;
       }
 
       await db.query(
@@ -421,7 +454,7 @@ exports.bulkSaveAttendance = async (req, res) => {
         [
           branchId,
           record.student_id,
-          record.class_id || null,
+          classId,
           teacherId,
           record.attendance_date,
           record.term || null,
