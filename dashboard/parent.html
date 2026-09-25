@@ -5,7 +5,240 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Parent Dashboard - Delight International School</title>
   <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    .parent-dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 20px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .parent-dashboard-header h1 {
+      margin-bottom: 6px;
+    }
+
+    .parent-dashboard-header p {
+      margin: 0;
+      color: #64748b;
+    }
+
+    .parent-child-selector {
+      min-width: 240px;
+    }
+
+    .parent-child-selector label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #0b3f70;
+    }
+
+    .parent-child-selector select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #d8e0e8;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .parent-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .parent-summary-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.07);
+      border-top: 4px solid #ffcc00;
+    }
+
+    .parent-summary-card .label {
+      color: #64748b;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .parent-summary-card .value {
+      color: #0b3f70;
+      font-size: 26px;
+      line-height: 1.15;
+      font-weight: 800;
+    }
+
+    .parent-summary-card .subtext {
+      margin-top: 7px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .parent-dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .parent-panel {
+      background: #fff;
+      border-radius: 14px;
+      padding: 22px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.07);
+    }
+
+    .parent-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .parent-panel-header h2 {
+      margin: 0;
+      color: #0b3f70;
+      font-size: 20px;
+    }
+
+    .parent-link-btn {
+      display: inline-block;
+      text-decoration: none;
+      background: #0b3f70;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .parent-child-summary {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .parent-child-photo {
+      width: 96px;
+      height: 96px;
+      min-width: 96px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #0b3f70;
+      color: #ffcc00;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      overflow: hidden;
+    }
+
+    .parent-child-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .parent-child-info h3 {
+      color: #0b3f70;
+      margin: 0 0 10px;
+      font-size: 22px;
+    }
+
+    .parent-child-info p {
+      margin: 5px 0;
+      color: #334155;
+    }
+
+    .parent-stat-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .parent-stat-item {
+      background: #f7f9fc;
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .parent-stat-item strong {
+      display: block;
+      color: #64748b;
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    .parent-stat-item span {
+      color: #0b3f70;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .parent-empty {
+      color: #64748b;
+      padding: 12px 0;
+    }
+
+    .parent-report-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #e7edf3;
+    }
+
+    .parent-report-item:last-child {
+      border-bottom: 0;
+    }
+
+    .parent-report-item strong {
+      color: #0b3f70;
+    }
+
+    .parent-report-item p {
+      margin: 4px 0 0;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    @media (max-width: 1100px) {
+      .parent-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 800px) {
+      .parent-dashboard-grid,
+      .parent-summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .parent-child-summary {
+        align-items: flex-start;
+      }
+
+      .parent-stat-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .parent-child-summary {
+        flex-direction: column;
+      }
+
+      .parent-panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
   <div class="dashboard-layout">
@@ -24,35 +257,113 @@
     </aside>
 
     <main class="dashboard-main">
-      <h1>Parent Dashboard</h1>
-      <p>Welcome, Parent. View your active child or children linked to your account.</p>
 
-      <section class="dashboard-section">
-        <h2>Active Children</h2>
+      <div class="parent-dashboard-header">
+        <div>
+          <h1>Parent Dashboard</h1>
+          <p id="parentWelcomeText">
+            Welcome. Here is an overview of your child's school information.
+          </p>
+        </div>
 
-        <div class="dashboard-cards" id="parentChildBox">
-          <div class="dashboard-card">
-            <h2>Loading Children...</h2>
-            <p>Please wait.</p>
+        <div class="parent-child-selector" id="parentChildSelectorWrap" style="display:none;">
+          <label for="parentChildSelector">Viewing Child</label>
+          <select id="parentChildSelector"></select>
+        </div>
+      </div>
+
+      <div class="parent-summary-grid">
+
+        <div class="parent-summary-card">
+          <div class="label">Active Children</div>
+          <div class="value" id="summaryChildren">--</div>
+          <div class="subtext">Linked to your account</div>
+        </div>
+
+        <div class="parent-summary-card">
+          <div class="label">Attendance</div>
+          <div class="value" id="summaryAttendance">--</div>
+          <div class="subtext">Present percentage</div>
+        </div>
+
+        <div class="parent-summary-card">
+          <div class="label">Fee Balance</div>
+          <div class="value" id="summaryFees">--</div>
+          <div class="subtext">Outstanding balance</div>
+        </div>
+
+        <div class="parent-summary-card">
+          <div class="label">Academic Average</div>
+          <div class="value" id="summaryResults">--</div>
+          <div class="subtext">Approved scores</div>
+        </div>
+
+      </div>
+
+      <div class="parent-dashboard-grid">
+
+        <section class="parent-panel">
+          <div class="parent-panel-header">
+            <h2>Child Summary</h2>
+            <a class="parent-link-btn" href="parent-profile.html">View Full Profile</a>
           </div>
+          <div id="parentChildBox">
+            <div class="parent-empty">Loading child information...</div>
+          </div>
+        </section>
+
+        <section class="parent-panel">
+          <div class="parent-panel-header">
+            <h2>Attendance Summary</h2>
+            <a class="parent-link-btn" href="parent-attendance.html">View Attendance</a>
+          </div>
+          <div id="parentAttendanceSummary" class="parent-empty">
+            Loading attendance...
+          </div>
+        </section>
+
+        <section class="parent-panel">
+          <div class="parent-panel-header">
+            <h2>Fees Summary</h2>
+            <a class="parent-link-btn" href="parent-fees.html">View Fees</a>
+          </div>
+          <div id="parentFeesSummary" class="parent-empty">
+            Loading fees...
+          </div>
+        </section>
+
+        <section class="parent-panel">
+          <div class="parent-panel-header">
+            <h2>Academic Performance</h2>
+            <a class="parent-link-btn" href="parent-results.html">View Results</a>
+          </div>
+          <div id="parentResultsSummary" class="parent-empty">
+            Loading results...
+          </div>
+        </section>
+
+      </div>
+
+      <section class="parent-panel">
+        <div class="parent-panel-header">
+          <h2>Recent Reports</h2>
+          <a class="parent-link-btn" href="parent-reports.html">View Reports</a>
+        </div>
+        <div id="parentReportsSummary" class="parent-empty">
+          Loading reports...
         </div>
       </section>
-    </main>
 
+    </main>
   </div>
 
   <script src="../js/panel-title.js?v=1"></script>
-  <script src="../js/parent-dashboard-api.js?v=4"></script>
+  <script src="../js/parent-dashboard-api.js?v=5"></script>
   <script src="../js/logout.js?v=2"></script>
   <script src="../js/parent-guard.js?v=1"></script>
   <script src="../js/site-footer-settings.js?v=1"></script>
   <script src="../js/site-settings.js?v=4"></script>
-  <script src="../js/admin-common-polish.js?v=1"></script>
-  <script src="../js/teacher-dropdown-final.js?v=2"></script>
-  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
-  <script src="../js/api-helper.js?v=2"></script>
-  <script src="../js/parent-scores-print-final.js?v=1"></script>
-  <script src="../js/parent-print-tab-final.js?v=1"></script>
   <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
+
 </body>
 </html>
