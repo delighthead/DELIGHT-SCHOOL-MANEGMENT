@@ -1,4 +1,5 @@
 const db = require("../config/database");
+const { sendFeePaymentSms } = require("../utils/mnotifySms");
 
 function isBranchScopedAdmin(user) {
   if (!user) return false;
@@ -444,11 +445,57 @@ exports.addFeePayment = async (req, res) => {
       ]
     );
 
+    let smsStatus = "not_sent";
+
+    try {
+      const [studentRows] = await db.query(
+        `SELECT
+          full_name,
+          admission_number,
+          mother_phone,
+          father_phone
+         FROM students
+         WHERE id = ?
+         LIMIT 1`,
+        [fee.student_id]
+      );
+
+      if (studentRows.length === 0) {
+        smsStatus = "skipped";
+        console.error(
+          "Fee payment SMS skipped: student record not found for ID",
+          fee.student_id
+        );
+      } else {
+        const student = studentRows[0];
+
+        const smsResult = await sendFeePaymentSms({
+          studentName: student.full_name,
+          paymentAmount: amount,
+          totalPaid,
+          balance: computed.balance,
+          motherPhone: student.mother_phone,
+          fatherPhone: student.father_phone
+        });
+
+        smsStatus = smsResult && smsResult.skipped
+          ? "skipped"
+          : "sent";
+      }
+    } catch (smsError) {
+      console.error(
+        "Fee payment SMS failed:",
+        smsError.message
+      );
+      smsStatus = "failed";
+    }
+
     res.status(201).json({
       message: "Fee payment added successfully",
       total_paid: totalPaid,
       balance: computed.balance,
-      payment_status: finalStatus
+      payment_status: finalStatus,
+      sms_status: smsStatus
     });
   } catch (error) {
     res.status(500).json({

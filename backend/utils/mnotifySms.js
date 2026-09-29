@@ -102,8 +102,42 @@ async function sendStudentRegistrationSms({
   });
 }
 
+async function sendFeePaymentSms({
+  studentName,
+  paymentAmount,
+  totalPaid,
+  balance,
+  motherPhone,
+  fatherPhone
+}) {
+  const recipients = [motherPhone, fatherPhone].filter(Boolean);
+
+  if (recipients.length === 0) {
+    return {
+      skipped: true,
+      reason: "No parent phone number supplied"
+    };
+  }
+
+  const money = (value) =>
+    Number(value || 0).toFixed(2);
+
+  const message =
+    `Payment received for ${studentName}. ` +
+    `Amount paid: GHS ${money(paymentAmount)}. ` +
+    `Total paid: GHS ${money(totalPaid)}. ` +
+    `Balance: GHS ${money(balance)}. ` +
+    `Thank you. - Delight International School`;
+
+  return sendSms({
+    recipients,
+    message
+  });
+}
+
 module.exports = {
   normalizeGhanaPhone,
   sendSms,
-  sendStudentRegistrationSms
+  sendStudentRegistrationSms,
+  sendFeePaymentSms
 };
