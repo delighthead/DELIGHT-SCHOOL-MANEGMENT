@@ -125,6 +125,7 @@ exports.getLessonPlans = async (req, res) => {
          lp.*,
          COALESCE(t.full_name, u.full_name, 'Unknown Teacher') AS teacher_name,
          t.teacher_id AS teacher_code,
+         t.phone AS teacher_phone,
          t.branch_id
        FROM lesson_plans lp
        LEFT JOIN teachers t ON t.user_id = lp.teacher_id

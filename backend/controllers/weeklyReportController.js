@@ -159,6 +159,7 @@ exports.getWeeklyReports = async (req, res) => {
          wr.*,
          COALESCE(t.full_name, u.full_name, 'Unknown Teacher') AS teacher_name,
          t.teacher_id AS teacher_code,
+         t.phone AS teacher_phone,
          t.branch_id
        FROM weekly_reports wr
        LEFT JOIN teachers t ON t.user_id = wr.teacher_id

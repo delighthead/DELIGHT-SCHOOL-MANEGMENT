@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const classSelect = document.getElementById("handwriting_class");
   const weekSelect = document.getElementById("handwriting_week");
   const fileInput = document.getElementById("handwriting_file");
+  const removeFileBtn = document.getElementById("removeHandwritingFileBtn");
   const tbody = document.getElementById("weeklyReportsTableBody");
   const message = document.getElementById("weeklyReportMessage");
   const submitBtn = document.getElementById("weeklyReportSubmitBtn");
@@ -44,8 +45,10 @@ document.addEventListener("DOMContentLoaded", function () {
   function applySubmissionState(isOpen, branchName) {
     handwritingSubmissionOpen = Boolean(isOpen);
 
-    weekSelect.disabled = !handwritingSubmissionOpen;
-    fileInput.disabled = !handwritingSubmissionOpen;
+    // Teachers may prepare the form while submission is locked.
+    // Only the final Submit button is controlled by Administration.
+    weekSelect.disabled = false;
+    fileInput.disabled = false;
     submitBtn.disabled = !handwritingSubmissionOpen;
 
     if (!submissionStatus) return;
@@ -340,6 +343,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
+  if (fileInput && removeFileBtn) {
+    fileInput.addEventListener("change", function () {
+      removeFileBtn.style.display = fileInput.files.length ? "inline-block" : "none";
+    });
+
+    removeFileBtn.addEventListener("click", function () {
+      fileInput.value = "";
+      removeFileBtn.style.display = "none";
+      message.textContent = "";
+    });
+  }
+
   form.addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -402,6 +417,7 @@ document.addEventListener("DOMContentLoaded", function () {
         data.message || "Handwriting Report uploaded successfully.";
 
       form.reset();
+      if (removeFileBtn) removeFileBtn.style.display = "none";
       await loadHandwritingReports();
     } catch (error) {
       console.error(error);

@@ -2,7 +2,8 @@ const db = require("../config/database");
 
 function isBranchScopedAdmin(user) {
   if (!user) return false;
-  return user.role === "branch_admin" || user.role === "teacher_admin";
+  const role = String(user.role || "").toLowerCase();
+  return role === "branch_admin" || role === "teacher_admin";
 }
 
 function normalizeAttendanceStatus(status) {
@@ -85,7 +86,16 @@ exports.getAttendance = async (req, res) => {
 
     const conditions = [];
 
-    if (branch_id) {
+    if (isBranchScopedAdmin(req.user)) {
+      if (!req.user.branch_id) {
+        return res.status(403).json({
+          message: "No branch is assigned to this account"
+        });
+      }
+
+      conditions.push("attendance.branch_id = ?");
+      params.push(req.user.branch_id);
+    } else if (branch_id) {
       conditions.push("attendance.branch_id = ?");
       params.push(branch_id);
     }
@@ -137,6 +147,16 @@ exports.createAttendance = async (req, res) => {
       status,
       remarks
     } = req.body;
+
+    if (isBranchScopedAdmin(req.user)) {
+      if (!req.user.branch_id) {
+        return res.status(403).json({
+          message: "No branch is assigned to this account"
+        });
+      }
+
+      branch_id = req.user.branch_id;
+    }
 
     if (!branch_id || !student_id || !attendance_date || !status) {
       return res.status(400).json({
@@ -263,10 +283,20 @@ exports.updateAttendance = async (req, res) => {
 
     const existing = existingRows[0];
 
-    if (isBranchScopedAdmin(req.user) && Number(existing.branch_id) !== Number(req.user.branch_id)) {
-      return res.status(403).json({
-        message: "You can only update attendance in your own branch"
-      });
+    if (isBranchScopedAdmin(req.user)) {
+      if (!req.user.branch_id) {
+        return res.status(403).json({
+          message: "No branch is assigned to this account"
+        });
+      }
+
+      if (Number(existing.branch_id) !== Number(req.user.branch_id)) {
+        return res.status(403).json({
+          message: "You can only update attendance in your own branch"
+        });
+      }
+
+      branch_id = req.user.branch_id;
     }
 
     if (req.user && req.user.role === "teacher") {
@@ -363,6 +393,13 @@ exports.bulkSaveAttendance = async (req, res) => {
     if (!records || !Array.isArray(records) || records.length === 0) {
       return res.status(400).json({
         message: "No attendance records provided"
+      });
+    }
+
+    // Branch-scoped admins must always have an authenticated branch.
+    if (isBranchScopedAdmin(req.user) && !req.user.branch_id) {
+      return res.status(403).json({
+        message: "No branch is assigned to this account"
       });
     }
 

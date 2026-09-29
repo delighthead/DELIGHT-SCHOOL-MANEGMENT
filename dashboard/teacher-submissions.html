@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Submissions - Delight International School</title>
-  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/style.css?v=teacher-submissions-mobile-1">
 </head>
 
 <body>
@@ -58,9 +58,18 @@
           </select>
           entries
         </label>
+
+        <label>
+          Search:
+          <input
+            type="search"
+            id="lessonSearch"
+            placeholder="Teacher name, ID, phone or class"
+            autocomplete="off">
+        </label>
       </div>
 
-      <div style="overflow-x:auto;">
+      <div class="teacher-submissions-table-wrap">
         <table class="data-table">
           <thead>
             <tr>
@@ -107,9 +116,18 @@
           </select>
           entries
         </label>
+
+        <label>
+          Search:
+          <input
+            type="search"
+            id="handwritingSearch"
+            placeholder="Teacher name, ID, phone or class"
+            autocomplete="off">
+        </label>
       </div>
 
-      <div style="overflow-x:auto;">
+      <div class="teacher-submissions-table-wrap">
         <table class="data-table">
           <thead>
             <tr>
@@ -146,7 +164,7 @@
 
 <script src="../js/admin-guard.js?v=1"></script>
 <script src="../js/api-helper.js?v=3"></script>
-<script src="../js/admin-teacher-submissions.js?v=2"></script>
+<script src="../js/admin-teacher-submissions.js?v=4"></script>
 <script src="../js/logout.js?v=2"></script>
 <script src="../js/admin-panel-title.js?v=2"></script>
 <script src="../js/site-footer-settings.js?v=2"></script>
@@ -157,3 +175,26 @@
 
 </body>
 </html>
+
+<style>
+/* Teacher Submissions Search */
+.submission-table-toolbar input[type="search"] {
+  width: 300px;
+  max-width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+@media (max-width: 768px) {
+  .submission-table-toolbar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .submission-table-toolbar input[type="search"] {
+    width: 100%;
+  }
+}
+</style>

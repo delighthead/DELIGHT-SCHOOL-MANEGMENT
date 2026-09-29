@@ -62,9 +62,15 @@ exports.getFees = async (req, res) => {
 
     const params = [];
 
-    if (branch_id) {
+    // Branch-scoped admins must only retrieve their authenticated branch.
+    // Never trust a branch_id supplied by the browser for these roles.
+    const effectiveBranchId = isBranchScopedAdmin(req.user)
+      ? req.user.branch_id
+      : branch_id;
+
+    if (effectiveBranchId) {
       sql += " WHERE fees.branch_id = ?";
-      params.push(branch_id);
+      params.push(effectiveBranchId);
     }
 
     sql += " ORDER BY fees.created_at DESC";
@@ -97,7 +103,11 @@ exports.createFee = async (req, res) => {
       payment_status
     } = req.body;
 
-    if (!branch_id || !student_id || !term || !academic_year) {
+    const effectiveBranchId = isBranchScopedAdmin(req.user)
+      ? req.user.branch_id
+      : branch_id;
+
+    if (!effectiveBranchId || !student_id || !term || !academic_year) {
       return res.status(400).json({
         message: "Branch, student, term, and academic year are required"
       });
@@ -114,9 +124,9 @@ exports.createFee = async (req, res) => {
       });
     }
 
-    if (Number(studentRows[0].branch_id) !== Number(branch_id)) {
+    if (Number(studentRows[0].branch_id) !== Number(effectiveBranchId)) {
       return res.status(400).json({
-        message: "Selected student does not belong to the provided branch"
+        message: "Selected student does not belong to your permitted branch"
       });
     }
 
@@ -131,7 +141,7 @@ exports.createFee = async (req, res) => {
       (branch_id, student_id, term, academic_year, amount_payable, amount_paid, balance, payment_date, payment_status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        branch_id,
+        effectiveBranchId,
         student_id,
         term,
         academic_year,
@@ -148,7 +158,7 @@ exports.createFee = async (req, res) => {
       (branch_id, user_id, action, module, description)
       VALUES (?, ?, ?, ?, ?)`,
       [
-        branch_id,
+        effectiveBranchId,
         req.user ? req.user.id : null,
         "Fee Recorded",
         "Fees",
@@ -460,7 +470,12 @@ exports.applyClassTermFee = async (req, res) => {
       term_fee
     } = req.body;
 
-    if (!branch_id || !class_id || !term || !academic_year || term_fee === undefined) {
+    // Branch-scoped admins must always use their authenticated branch.
+    const effectiveBranchId = isBranchScopedAdmin(req.user)
+      ? req.user.branch_id
+      : branch_id;
+
+    if (!effectiveBranchId || !class_id || !term || !academic_year || term_fee === undefined) {
       return res.status(400).json({
         message: "Branch, class, term, academic year, and term fee are required."
       });
@@ -481,7 +496,7 @@ exports.applyClassTermFee = async (req, res) => {
          AND class_id = ?
          AND status = 'active'
        ORDER BY full_name ASC, first_name ASC, surname ASC`,
-      [branch_id, class_id]
+      [effectiveBranchId, class_id]
     );
 
     if (students.length === 0) {
@@ -502,7 +517,7 @@ exports.applyClassTermFee = async (req, res) => {
          WHERE student_id = ?
            AND branch_id = ?
            AND NOT (term = ? AND academic_year = ?)`,
-        [studentId, branch_id, term, academic_year]
+        [studentId, effectiveBranchId, term, academic_year]
       );
 
       const previousBalance = Number(previousBalanceRow.previous_balance || 0);
@@ -516,7 +531,7 @@ exports.applyClassTermFee = async (req, res) => {
            AND term = ?
            AND academic_year = ?
          LIMIT 1`,
-        [studentId, branch_id, term, academic_year]
+        [studentId, effectiveBranchId, term, academic_year]
       );
 
       const amountPaid = existingRows.length ? Number(existingRows[0].amount_paid || 0) : 0;
@@ -546,7 +561,7 @@ exports.applyClassTermFee = async (req, res) => {
            (branch_id, student_id, term, academic_year, amount_payable, amount_paid, balance, payment_date, payment_status)
            VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?)`,
           [
-            branch_id,
+            effectiveBranchId,
             studentId,
             term,
             academic_year,
@@ -566,7 +581,7 @@ exports.applyClassTermFee = async (req, res) => {
        (branch_id, user_id, action, module, description)
        VALUES (?, ?, ?, ?, ?)`,
       [
-        branch_id,
+        effectiveBranchId,
         req.user ? req.user.id : null,
         "Class Term Fee Applied",
         "Fees",

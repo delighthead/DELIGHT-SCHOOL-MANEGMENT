@@ -11,6 +11,12 @@ document.addEventListener("DOMContentLoaded", function () {
   const handwritingPageSize =
     document.getElementById("handwritingPageSize");
 
+  const lessonSearch =
+    document.getElementById("lessonSearch");
+
+  const handwritingSearch =
+    document.getElementById("handwritingSearch");
+
   const lessonPagination =
     document.getElementById("lessonPagination");
 
@@ -64,6 +70,28 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     return Number(select.value) || 5;
+  }
+
+
+  function filterSubmissions(rows, searchInput) {
+    const query = String(searchInput?.value || "")
+      .trim()
+      .toLowerCase();
+
+    if (!query) return rows;
+
+    return rows.filter(row => {
+      const searchable = [
+        row.teacher_name,
+        row.teacher_code,
+        row.teacher_phone,
+        row.class_name
+      ]
+        .map(value => String(value || "").toLowerCase())
+        .join(" ");
+
+      return searchable.includes(query);
+    });
   }
 
 
@@ -170,9 +198,12 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    const filteredRows =
+      filterSubmissions(lessonRows, lessonSearch);
+
     const pageData =
       getPageData(
-        lessonRows,
+        filteredRows,
         lessonPage,
         lessonPageSize
       );
@@ -249,7 +280,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (lessonInfo) {
       lessonInfo.textContent =
-        `Showing ${pageData.start}–${pageData.end} of ${lessonRows.length}`;
+        `Showing ${pageData.start}–${pageData.end} of ${filteredRows.length}`;
     }
 
     renderPagination(
@@ -277,9 +308,12 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
+    const filteredRows =
+      filterSubmissions(handwritingRows, handwritingSearch);
+
     const pageData =
       getPageData(
-        handwritingRows,
+        filteredRows,
         handwritingPage,
         handwritingPageSize
       );
@@ -355,7 +389,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (handwritingInfo) {
       handwritingInfo.textContent =
-        `Showing ${pageData.start}–${pageData.end} of ${handwritingRows.length}`;
+        `Showing ${pageData.start}–${pageData.end} of ${filteredRows.length}`;
     }
 
     renderPagination(
@@ -440,6 +474,21 @@ document.addEventListener("DOMContentLoaded", function () {
     handwritingPage = page;
     renderHandwritingReports();
   };
+
+
+  if (lessonSearch) {
+    lessonSearch.addEventListener("input", function () {
+      lessonPage = 1;
+      renderLessonNotes();
+    });
+  }
+
+  if (handwritingSearch) {
+    handwritingSearch.addEventListener("input", function () {
+      handwritingPage = 1;
+      renderHandwritingReports();
+    });
+  }
 
 
   if (lessonPageSize) {

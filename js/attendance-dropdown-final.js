@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function isBranchAdmin() {
     const role = String(getUser().role || "").toLowerCase();
-    return role === "branch_admin";
+    return role === "branch_admin" || role === "teacher_admin";
   }
 
   function isSuperAdmin() {

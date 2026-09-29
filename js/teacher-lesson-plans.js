@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const subjectSelect = document.getElementById("lesson_subject");
   const weekSelect = document.getElementById("lesson_week");
   const fileInput = document.getElementById("lesson_file");
+  const removeFileBtn = document.getElementById("removeLessonFileBtn");
   const tbody = document.getElementById("lessonPlansTableBody");
   const message = document.getElementById("lessonPlanMessage");
   const submitBtn = document.getElementById("lessonPlanSubmitBtn");
@@ -297,6 +298,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
   classSelect.addEventListener("change", loadSubjectsForClass);
 
+  if (fileInput && removeFileBtn) {
+    fileInput.addEventListener("change", function () {
+      removeFileBtn.style.display = fileInput.files.length ? "inline-block" : "none";
+    });
+
+    removeFileBtn.addEventListener("click", function () {
+      fileInput.value = "";
+      removeFileBtn.style.display = "none";
+      message.textContent = "";
+    });
+  }
+
   form.addEventListener("submit", async function (event) {
     event.preventDefault();
 
@@ -350,6 +363,7 @@ document.addEventListener("DOMContentLoaded", function () {
         data.message || "Lesson Note uploaded successfully.";
 
       form.reset();
+      if (removeFileBtn) removeFileBtn.style.display = "none";
       subjectSelect.innerHTML =
         '<option value="">Select Class First</option>';
 
