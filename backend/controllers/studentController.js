@@ -1,4 +1,5 @@
 const db = require("../config/database");
+const { sendStudentRegistrationSms } = require("../utils/mnotifySms");
 
 async function upsertParentAndLinkStudent({
   branchId,
@@ -328,9 +329,31 @@ exports.createStudent = async (req, res) => {
       ]
     );
 
+    let smsStatus = "not_sent";
+
+    try {
+      const smsResult = await sendStudentRegistrationSms({
+        studentName: finalFullName,
+        admissionNumber: admission_number,
+        motherPhone: mother_phone,
+        fatherPhone: father_phone
+      });
+
+      smsStatus = smsResult && smsResult.skipped
+        ? "skipped"
+        : "sent";
+    } catch (smsError) {
+      console.error(
+        "Student registration SMS failed:",
+        smsError.message
+      );
+      smsStatus = "failed";
+    }
+
     res.status(201).json({
       message: "Student added successfully",
-      student_database_id: result.insertId
+      student_database_id: result.insertId,
+      sms_status: smsStatus
     });
   } catch (error) {
     res.status(500).json({
