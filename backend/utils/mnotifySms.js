@@ -94,7 +94,7 @@ async function sendStudentRegistrationSms({
   const message =
     `${studentName} has been successfully registered. ` +
     `Admission No: ${admissionNumber}. ` +
-    `Visit the school portal or contact the school for assistance.`;
+    `Visit the school portal: https://delightintschool.com/pages/login.html`;
 
   return sendSms({
     recipients,
@@ -127,7 +127,7 @@ async function sendFeePaymentSms({
     `Amount paid: GHS ${money(paymentAmount)}. ` +
     `Total paid: GHS ${money(totalPaid)}. ` +
     `Balance: GHS ${money(balance)}. ` +
-    `Thank you. - Delight International School`;
+    `Thank you. - https://delightintschool.com/pages/login.html`;
 
   return sendSms({
     recipients,

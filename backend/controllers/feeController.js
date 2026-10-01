@@ -290,7 +290,10 @@ exports.getFeePayments = async (req, res) => {
     const { fee_id } = req.params;
 
     const [feeRows] = await db.query(
-      "SELECT id, branch_id FROM fees WHERE id = ? LIMIT 1",
+      `SELECT id, branch_id, amount_payable, amount_paid, balance, payment_status
+       FROM fees
+       WHERE id = ?
+       LIMIT 1`,
       [fee_id]
     );
 
@@ -325,18 +328,15 @@ exports.getFeePayments = async (req, res) => {
       [fee_id]
     );
 
-    const [[summary]] = await db.query(
-      `SELECT
-        COALESCE(SUM(payment_amount), 0) AS total_paid
-       FROM fee_payments
-       WHERE fee_id = ?`,
-      [fee_id]
-    );
+    const fee = feeRows[0];
 
     res.json({
       message: "Fee payments retrieved successfully",
       payments,
-      total_paid: Number(summary.total_paid || 0)
+      total_paid: Number(fee.amount_paid || 0),
+      amount_payable: Number(fee.amount_payable || 0),
+      balance: Number(fee.balance || 0),
+      payment_status: fee.payment_status || "unpaid"
     });
   } catch (error) {
     res.status(500).json({

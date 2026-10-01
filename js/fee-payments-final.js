@@ -89,23 +89,47 @@ document.addEventListener("DOMContentLoaded", function () {
 
       let rows = "";
 
-      if (payments.length === 0) {
+      const totalPaid = Number(data.total_paid || 0);
+      const detailedPaymentsTotal = payments.reduce(
+        (sum, payment) => sum + Number(payment.payment_amount || 0),
+        0
+      );
+
+      const previousPaid = Math.max(
+        0,
+        totalPaid - detailedPaymentsTotal
+      );
+
+      let rowNumber = 1;
+
+      if (previousPaid > 0) {
+        rows += `
+          <tr>
+            <td>${rowNumber++}</td>
+            <td>${fee.payment_date ? String(fee.payment_date).slice(0, 10) : "-"}</td>
+            <td>${money(previousPaid)}</td>
+            <td>Previous payment recorded before detailed payment history</td>
+          </tr>
+        `;
+      }
+
+      payments.forEach((payment) => {
+        rows += `
+          <tr>
+            <td>${rowNumber++}</td>
+            <td>${payment.payment_date ? String(payment.payment_date).slice(0, 10) : ""}</td>
+            <td>${money(payment.payment_amount)}</td>
+            <td>${payment.payment_note || ""}</td>
+          </tr>
+        `;
+      });
+
+      if (!rows) {
         rows = `
           <tr>
             <td colspan="4">No payment history found.</td>
           </tr>
         `;
-      } else {
-        payments.forEach((payment, index) => {
-          rows += `
-            <tr>
-              <td>${index + 1}</td>
-              <td>${payment.payment_date ? String(payment.payment_date).slice(0, 10) : ""}</td>
-              <td>${money(payment.payment_amount)}</td>
-              <td>${payment.payment_note || ""}</td>
-            </tr>
-          `;
-        });
       }
 
       const win = window.open("", "_blank");
@@ -230,22 +254,44 @@ document.addEventListener("DOMContentLoaded", function () {
 
       let paymentRows = "";
 
-      if (payments.length === 0) {
+      const detailedPaymentsTotal = payments.reduce(
+        (sum, payment) => sum + Number(payment.payment_amount || 0),
+        0
+      );
+
+      const previousPaid = Math.max(
+        0,
+        totalPaid - detailedPaymentsTotal
+      );
+
+      let rowNumber = 1;
+
+      if (previousPaid > 0) {
+        paymentRows += `
+          <tr>
+            <td>${rowNumber++}</td>
+            <td>${fee.payment_date ? String(fee.payment_date).slice(0, 10) : "Previous Payment"}</td>
+            <td>${money(previousPaid)}</td>
+          </tr>
+        `;
+      }
+
+      payments.forEach((payment) => {
+        paymentRows += `
+          <tr>
+            <td>${rowNumber++}</td>
+            <td>${payment.payment_date ? String(payment.payment_date).slice(0, 10) : ""}</td>
+            <td>${money(payment.payment_amount)}</td>
+          </tr>
+        `;
+      });
+
+      if (!paymentRows) {
         paymentRows = `
           <tr>
             <td colspan="3">No payment history found.</td>
           </tr>
         `;
-      } else {
-        payments.forEach((payment, index) => {
-          paymentRows += `
-            <tr>
-              <td>${index + 1}</td>
-              <td>${payment.payment_date ? String(payment.payment_date).slice(0, 10) : ""}</td>
-              <td>${money(payment.payment_amount)}</td>
-            </tr>
-          `;
-        });
       }
 
       const win = window.open("", "_blank");

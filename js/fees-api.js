@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const feeTableBody = document.getElementById("feeTableBody");
   const feeForm = document.getElementById("feeForm");
   const branchSelect = document.getElementById("fee_branch_id");
+  const classSelect = document.getElementById("fee_class_id");
   const studentSelect = document.getElementById("fee_student_id");
   const feeIdInput = document.getElementById("fee_id");
   const termInput = document.getElementById("term") || document.getElementById("fee_term");
@@ -120,42 +121,117 @@ document.addEventListener("DOMContentLoaded", function () {
         branchSelect.disabled = true;
       }
 
-      await loadStudents();
+      await loadClasses();
     } catch (error) {
       console.error(error);
       branchSelect.innerHTML = '<option value="">Could not load branches</option>';
     }
   }
 
-  async function loadStudents() {
-    if (!studentSelect) return;
+  async function loadClasses(selectedClassId = "") {
+    if (!classSelect) return;
+
+    const branchId = isBranchAdmin()
+      ? getAdminBranchId()
+      : (branchSelect ? branchSelect.value : "");
+
+    classSelect.innerHTML = '<option value="">Select branch first</option>';
+
+    if (studentSelect) {
+      studentSelect.innerHTML = '<option value="">Select class first</option>';
+    }
+
+    if (!branchId) return;
+
+    classSelect.innerHTML = '<option value="">Loading classes...</option>';
 
     try {
-      const branchId = isBranchAdmin() ? getAdminBranchId() : (branchSelect ? branchSelect.value : "");
-      let url = `${API}/api/students`;
+      const response = await fetch(
+        `${API}/api/classes?branch_id=${encodeURIComponent(branchId)}`,
+        { headers: authHeaders(false) }
+      );
 
-      if (branchId) {
-        url += `?branch_id=${encodeURIComponent(branchId)}`;
+      const data = await response.json();
+      const classes = data.classes || [];
+
+      classSelect.innerHTML = '<option value="">Select class</option>';
+
+      classes.forEach((cls) => {
+        const option = document.createElement("option");
+        option.value = cls.id || cls.class_id;
+        option.textContent = cls.class_name || cls.name || "Class";
+        classSelect.appendChild(option);
+      });
+
+      if (selectedClassId) {
+        classSelect.value = String(selectedClassId);
       }
+    } catch (error) {
+      console.error(error);
+      classSelect.innerHTML = '<option value="">Could not load classes</option>';
+    }
+  }
+
+  async function loadStudents(selectedStudentId = "") {
+    if (!studentSelect) return;
+
+    const branchId = isBranchAdmin()
+      ? getAdminBranchId()
+      : (branchSelect ? branchSelect.value : "");
+
+    const classId = classSelect ? classSelect.value : "";
+
+    if (!branchId) {
+      studentSelect.innerHTML = '<option value="">Select branch first</option>';
+      return;
+    }
+
+    if (!classId) {
+      studentSelect.innerHTML = '<option value="">Select class first</option>';
+      return;
+    }
+
+    studentSelect.innerHTML = '<option value="">Loading students...</option>';
+
+    try {
+      const url =
+        `${API}/api/students?branch_id=${encodeURIComponent(branchId)}` +
+        `&class_id=${encodeURIComponent(classId)}`;
 
       const response = await fetch(url, {
         headers: authHeaders(false)
       });
 
       const data = await response.json();
-      const students = data.students || [];
+
+      // The students API is branch-filtered. Filter the returned students
+      // by the selected class here for the Add Fee Record form.
+      const students = (data.students || []).filter((student) =>
+        String(student.class_id || "") === String(classId)
+      );
 
       studentSelect.innerHTML = '<option value="">Select student</option>';
 
       students.forEach((student) => {
         const option = document.createElement("option");
         option.value = student.id;
-        option.textContent = `${student.full_name || ""} - ${student.admission_number || ""} - ${student.class_name || ""}`;
+        option.textContent =
+          `${student.full_name || ""} - ${student.admission_number || ""}`;
         studentSelect.appendChild(option);
       });
+
+      if (selectedStudentId) {
+        studentSelect.value = String(selectedStudentId);
+      }
+
+      if (students.length === 0) {
+        studentSelect.innerHTML =
+          '<option value="">No students found in selected class</option>';
+      }
     } catch (error) {
       console.error(error);
-      studentSelect.innerHTML = '<option value="">Could not load students</option>';
+      studentSelect.innerHTML =
+        '<option value="">Could not load students</option>';
     }
   }
 
@@ -220,10 +296,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  function fillFormForEdit(fee) {
+  async function fillFormForEdit(fee) {
     if (feeIdInput) feeIdInput.value = fee.id || "";
     if (branchSelect && !branchSelect.disabled) branchSelect.value = fee.branch_id || "";
-    if (studentSelect) studentSelect.value = fee.student_id || "";
+
+    await loadClasses(fee.class_id || "");
+    await loadStudents(fee.student_id || "");
     if (termInput) termInput.value = fee.term || "";
     if (yearInput) yearInput.value = fee.academic_year || "";
     if (amountPayableInput) amountPayableInput.value = Number(fee.amount_payable || 0);
@@ -326,12 +404,13 @@ document.addEventListener("DOMContentLoaded", function () {
   async function submitFee(event) {
     event.preventDefault();
 
-    if (!branchSelect || !studentSelect || !termInput || !yearInput || !amountPayableInput || !amountPaidInput) {
+    if (!branchSelect || !classSelect || !studentSelect || !termInput || !yearInput || !amountPayableInput || !amountPaidInput) {
       alert("Fee form is not complete.");
       return;
     }
 
     const branch_id = isBranchAdmin() ? getAdminBranchId() : branchSelect.value;
+    const class_id = classSelect.value;
     const student_id = studentSelect.value;
     const term = termInput.value;
     const academic_year = yearInput.value.trim();
@@ -339,8 +418,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const amount_paid = Number(amountPaidInput.value || 0);
     const payment_date = paymentDateInput ? paymentDateInput.value : "";
 
-    if (!branch_id || !student_id || !term || !academic_year) {
-      alert("Branch, student, term, and academic year are required.");
+    if (!branch_id || !class_id || !student_id || !term || !academic_year) {
+      alert("Branch, class, student, term, and academic year are required.");
       return;
     }
 
@@ -383,7 +462,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       updatePreview();
-      await loadStudents();
+      await loadClasses();
       await loadFees();
 
       const submitBtn = feeForm ? feeForm.querySelector("button[type='submit']") : null;
@@ -395,7 +474,15 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   if (branchSelect) {
-    branchSelect.addEventListener("change", loadStudents);
+    branchSelect.addEventListener("change", async function () {
+      await loadClasses();
+    });
+  }
+
+  if (classSelect) {
+    classSelect.addEventListener("change", function () {
+      loadStudents();
+    });
   }
 
   if (amountPayableInput) {
