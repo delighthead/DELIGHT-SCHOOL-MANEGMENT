@@ -20,6 +20,7 @@ const upload = multer({ storage });
 
 router.use(verifyToken, requireAdmin, applyBranchSecurity);
 
+router.get("/next-admission-number", studentController.getNextAdmissionNumber);
 router.get("/", studentController.getStudents);
 router.post("/", upload.single("profile_picture"), studentController.createStudent);
 router.put("/:id", upload.single("profile_picture"), studentController.updateStudent);

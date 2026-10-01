@@ -182,6 +182,129 @@ exports.getStudents = async (req, res) => {
   }
 };
 
+
+// Get next automatic admission number for a branch
+exports.getNextAdmissionNumber = async (req, res) => {
+  try {
+    let branchId = req.query.branch_id;
+
+    // Branch-scoped administrators can only generate numbers
+    // for the branch assigned to their account.
+    if (
+      req.user &&
+      ["branch_admin", "teacher_admin"].includes(req.user.role)
+    ) {
+      if (!req.user.branch_id) {
+        return res.status(403).json({
+          message: "No branch is assigned to this administrator"
+        });
+      }
+
+      branchId = req.user.branch_id;
+    }
+
+    if (!branchId) {
+      return res.status(400).json({
+        message: "Branch is required"
+      });
+    }
+
+    const [branches] = await db.query(
+      `SELECT id, branch_name, location
+       FROM branches
+       WHERE id = ?
+       LIMIT 1`,
+      [branchId]
+    );
+
+    if (branches.length === 0) {
+      return res.status(404).json({
+        message: "Branch not found"
+      });
+    }
+
+    const branch = branches[0];
+    const branchText =
+      `${branch.branch_name || ""} ${branch.location || ""}`.toUpperCase();
+
+    let prefix = null;
+
+    if (branchText.includes("KOTOBABI")) {
+      prefix = "AMDK";
+    } else if (branchText.includes("OFANKOR")) {
+      prefix = "AMDO";
+    } else {
+      return res.status(400).json({
+        message: "Automatic admission numbering is not configured for this branch"
+      });
+    }
+
+    // Only numbers using the NEW branch-specific format are considered.
+    // Existing old AMD001-style numbers are deliberately left untouched.
+    const [rows] = await db.query(
+      `SELECT admission_number
+       FROM students
+       WHERE branch_id = ?
+         AND UPPER(admission_number) LIKE ?
+       ORDER BY id`,
+      [branchId, `${prefix}%`]
+    );
+
+    let highestNumber = 0;
+    const usedNumbers = new Set();
+
+    for (const row of rows) {
+      const admissionNumber = String(row.admission_number || "")
+        .trim()
+        .toUpperCase();
+
+      const match = admissionNumber.match(
+        new RegExp(`^${prefix}(\\d+)$`)
+      );
+
+      if (!match) continue;
+
+      const number = Number(match[1]);
+
+      if (Number.isInteger(number) && number > 0) {
+        usedNumbers.add(number);
+
+        if (number > highestNumber) {
+          highestNumber = number;
+        }
+      }
+    }
+
+    // Always continue after the highest number ever used.
+    // Deleted or manually changed lower numbers are not automatically recycled.
+    let nextNumber = highestNumber + 1;
+
+    // Extra safety in case the calculated number already exists.
+    while (usedNumbers.has(nextNumber)) {
+      nextNumber += 1;
+    }
+
+    const admissionNumber =
+      prefix + String(nextNumber).padStart(3, "0");
+
+    res.json({
+      message: "Next admission number generated successfully",
+      branch_id: Number(branchId),
+      branch_name: branch.branch_name,
+      prefix,
+      sequence: nextNumber,
+      admission_number: admissionNumber
+    });
+  } catch (error) {
+    console.error("Generate admission number error:", error);
+
+    res.status(500).json({
+      message: "Failed to generate admission number",
+      error: error.message
+    });
+  }
+};
+
 // Add student
 exports.createStudent = async (req, res) => {
   try {
@@ -213,12 +336,14 @@ exports.createStudent = async (req, res) => {
     const primaryParentCard = (String(mother_ghana_card || "").trim() || String(father_ghana_card || "").trim()) || null;
     const primaryParentPhone = (String(mother_phone || "").trim() || String(father_phone || "").trim()) || null;
 
-    if (!branch_id || !admission_number || !finalFullName) {
+    if (!branch_id || !finalFullName) {
       return res.status(400).json({
-        message: "Branch, admission number, and full name are required"
+        message: "Branch and full name are required"
       });
     }
 
+    let cleanAdmissionNumber = null;
+    let connection = null;
     let classId = null;
 
     if (class_name) {
@@ -241,7 +366,86 @@ exports.createStudent = async (req, res) => {
       }
     }
 
-    const [result] = await db.query(
+    try {
+      connection = await db.getConnection();
+      await connection.beginTransaction();
+
+      // Lock this branch while the next number is calculated and inserted.
+      // Registrations in the other branch can still proceed independently.
+      const [branchRows] = await connection.query(
+        `SELECT id, branch_name, location
+         FROM branches
+         WHERE id = ?
+         LIMIT 1
+         FOR UPDATE`,
+        [branch_id]
+      );
+
+      if (branchRows.length === 0) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+
+        return res.status(404).json({
+          message: "Branch not found"
+        });
+      }
+
+      const branch = branchRows[0];
+      const branchText =
+        `${branch.branch_name || ""} ${branch.location || ""}`.toUpperCase();
+
+      let prefix = null;
+
+      if (branchText.includes("KOTOBABI")) {
+        prefix = "AMDK";
+      } else if (branchText.includes("OFANKOR")) {
+        prefix = "AMDO";
+      } else {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+
+        return res.status(400).json({
+          message: "Automatic admission numbering is not configured for this branch"
+        });
+      }
+
+      const [numberRows] = await connection.query(
+        `SELECT admission_number
+         FROM students
+         WHERE branch_id = ?
+           AND UPPER(admission_number) LIKE ?`,
+        [branch_id, `${prefix}%`]
+      );
+
+      let highestNumber = 0;
+
+      for (const row of numberRows) {
+        const currentAdmissionNumber = String(row.admission_number || "")
+          .trim()
+          .toUpperCase();
+
+        const match = currentAdmissionNumber.match(
+          new RegExp(`^${prefix}(\\d+)$`)
+        );
+
+        if (!match) continue;
+
+        const currentNumber = Number(match[1]);
+
+        if (
+          Number.isInteger(currentNumber) &&
+          currentNumber > highestNumber
+        ) {
+          highestNumber = currentNumber;
+        }
+      }
+
+      cleanAdmissionNumber =
+        prefix + String(highestNumber + 1).padStart(3, "0");
+
+    const [result] = await connection.query(
       `INSERT INTO students
       (
         branch_id,
@@ -271,8 +475,8 @@ exports.createStudent = async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         branch_id,
-        student_id || admission_number,
-        admission_number,
+        cleanAdmissionNumber,
+        cleanAdmissionNumber,
         finalFullName,
         (finalFullName || "").trim().split(/\s+/)[0] || finalFullName,
         (finalFullName || "").trim().split(/\s+/).slice(1).join(" ") || "-",
@@ -295,6 +499,10 @@ exports.createStudent = async (req, res) => {
         profilePicture
       ]
     );
+
+      await connection.commit();
+      connection.release();
+      connection = null;
 
     const motherParentId = await upsertParentAndLinkStudent({
       branchId: branch_id,
@@ -325,7 +533,7 @@ exports.createStudent = async (req, res) => {
         req.user ? req.user.id : null,
         "Student Added",
         "Students",
-        `Registered student ${finalFullName} with admission number ${admission_number}.`
+        `Registered student ${finalFullName} with admission number ${cleanAdmissionNumber}.`
       ]
     );
 
@@ -334,7 +542,7 @@ exports.createStudent = async (req, res) => {
     try {
       const smsResult = await sendStudentRegistrationSms({
         studentName: finalFullName,
-        admissionNumber: admission_number,
+        admissionNumber: cleanAdmissionNumber,
         motherPhone: mother_phone,
         fatherPhone: father_phone
       });
@@ -355,7 +563,29 @@ exports.createStudent = async (req, res) => {
       student_database_id: result.insertId,
       sms_status: smsStatus
     });
+    } catch (transactionError) {
+      if (connection) {
+        try {
+          await connection.rollback();
+        } catch (rollbackError) {
+          console.error("Student registration rollback failed:", rollbackError);
+        }
+
+        connection.release();
+        connection = null;
+      }
+
+      throw transactionError;
+    }
   } catch (error) {
+    console.error("Create student error:", error);
+
+    if (error && error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        message: "That admission number is already in use. Please try the registration again."
+      });
+    }
+
     res.status(500).json({
       message: "Failed to add student",
       error: error.message
@@ -418,6 +648,8 @@ exports.updateStudent = async (req, res) => {
 
     const student = students[0];
 
+    // Check branch permission before looking up any other student's
+    // admission number.
     if (
       req.user &&
       (req.user.role === "branch_admin" || req.user.role === "teacher_admin") &&
@@ -425,6 +657,31 @@ exports.updateStudent = async (req, res) => {
     ) {
       return res.status(403).json({
         message: "You can only edit students in your own branch"
+      });
+    }
+
+    const cleanAdmissionNumber = String(admission_number || "")
+      .trim()
+      .toUpperCase();
+
+    if (!cleanAdmissionNumber) {
+      return res.status(400).json({
+        message: "Admission number is required"
+      });
+    }
+
+    const [duplicateAdmission] = await db.query(
+      `SELECT id, full_name
+       FROM students
+       WHERE UPPER(admission_number) = ?
+         AND id <> ?
+       LIMIT 1`,
+      [cleanAdmissionNumber, id]
+    );
+
+    if (duplicateAdmission.length > 0) {
+      return res.status(409).json({
+        message: `Admission number ${cleanAdmissionNumber} is already assigned to another student`
       });
     }
 
@@ -480,8 +737,8 @@ exports.updateStudent = async (req, res) => {
 
     const params = [
       branch_id,
-      student_id || admission_number,
-      admission_number,
+      student_id || cleanAdmissionNumber,
+      cleanAdmissionNumber,
       finalFullName,
       firstName,
       surname,
@@ -542,7 +799,7 @@ exports.updateStudent = async (req, res) => {
         req.user ? req.user.id : null,
         "Student Updated",
         "Students",
-        `Updated student ${finalFullName} with admission number ${admission_number}.`
+        `Updated student ${finalFullName} with admission number ${cleanAdmissionNumber}.`
       ]
     );
 

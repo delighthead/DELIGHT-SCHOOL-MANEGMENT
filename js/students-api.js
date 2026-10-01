@@ -1,8 +1,80 @@
+
+async function loadNextAdmissionNumber(branchId) {
+  const admissionInput = document.getElementById("admission_number");
+
+  if (!admissionInput) return;
+
+  // Existing students keep their admission number while editing.
+  if (localStorage.getItem("editing_student_id")) {
+    admissionInput.readOnly = false;
+    return;
+  }
+
+  // New students always use an automatically generated number.
+  admissionInput.readOnly = true;
+
+  if (!branchId) {
+    admissionInput.value = "";
+    admissionInput.placeholder = "Select branch to generate";
+    return;
+  }
+
+  admissionInput.value = "";
+  admissionInput.placeholder = "Generating admission number...";
+
+  try {
+    const response = await fetch(
+      `/api/students/next-admission-number?branch_id=${encodeURIComponent(branchId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Unable to generate admission number"
+      );
+    }
+
+    // Do not overwrite an existing student if Edit was opened
+    // while the request was still running.
+    if (localStorage.getItem("editing_student_id")) {
+      admissionInput.readOnly = false;
+      return;
+    }
+
+    admissionInput.value = data.admission_number || "";
+    admissionInput.placeholder = "Generated automatically";
+  } catch (error) {
+    console.error("Admission number generation error:", error);
+
+    admissionInput.value = "";
+    admissionInput.placeholder = "Could not generate admission number";
+
+    alert(
+      error.message +
+      ". Please try selecting the branch again."
+    );
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   const studentForm = document.getElementById("studentForm");
   const studentTableBody = document.getElementById("studentTableBody");
   const branchSelect = document.getElementById("student_branch_id");
   const classSelect = document.getElementById("class_name");
+  const admissionInput = document.getElementById("admission_number");
+
+  // Add mode: admission number is generated automatically.
+  if (admissionInput && !localStorage.getItem("editing_student_id")) {
+    admissionInput.readOnly = true;
+    admissionInput.value = "";
+    admissionInput.placeholder = "Select branch to generate";
+  }
 
   const DEFAULT_CLASSES = [
     "Nursery 1",
@@ -21,6 +93,14 @@ document.addEventListener("DOMContentLoaded", function () {
   ];
 
   let studentsCache = [];
+
+  if (branchSelect) {
+    branchSelect.addEventListener("change", function () {
+      if (!localStorage.getItem("editing_student_id")) {
+        loadNextAdmissionNumber(branchSelect.value);
+      }
+    });
+  }
 
   function getLoggedInUser() {
     try {
@@ -265,6 +345,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     setValue("student_id", student.student_id || student.admission_number);
     setValue("admission_number", student.admission_number);
+
+    if (admissionInput) {
+      admissionInput.readOnly = false;
+      admissionInput.placeholder = "Enter admission number";
+    }
+
     setValue("full_name", student.full_name);
     setValue("sex", student.sex);
     setValue("date_of_birth", formatDate(student.date_of_birth));
@@ -356,6 +442,12 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.removeItem("editing_student_id");
         studentForm.reset();
 
+        if (admissionInput) {
+          admissionInput.readOnly = true;
+          admissionInput.value = "";
+          admissionInput.placeholder = "Select branch to generate";
+        }
+
         const submitBtn = document.querySelector("#studentForm button[type='submit']");
         if (submitBtn) submitBtn.textContent = "Add Student";
 
@@ -372,6 +464,16 @@ document.addEventListener("DOMContentLoaded", function () {
     await loades();
     await loadClasses();
     await loadStudents();
+
+    // Branch admins already have their branch selected automatically.
+    // Generate their first admission number without requiring a change event.
+    if (
+      branchSelect &&
+      branchSelect.value &&
+      !localStorage.getItem("editing_student_id")
+    ) {
+      await loadNextAdmissionNumber(branchSelect.value);
+    }
   }
 
   start();
