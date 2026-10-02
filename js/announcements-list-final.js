@@ -73,7 +73,15 @@ document.addEventListener("DOMContentLoaded", function () {
           <td>${item.message || ""}</td>
           <td>${item.audience || ""}</td>
           <td>${item.created_at ? String(item.created_at).slice(0, 10) : ""}</td>
-          <td></td>
+          <td>
+            <button
+              type="button"
+              class="small-btn danger final-delete-announcement-btn"
+              data-id="${item.id}"
+            >
+              Delete
+            </button>
+          </td>
         `;
 
         tableBody.appendChild(row);
@@ -83,6 +91,56 @@ document.addEventListener("DOMContentLoaded", function () {
       tableBody.innerHTML = `<tr><td colspan="6">${error.message}</td></tr>`;
     }
   }
+
+  tableBody.addEventListener("click", async function (event) {
+    const deleteButton = event.target.closest(
+      ".final-delete-announcement-btn"
+    );
+
+    if (!deleteButton) return;
+
+    const announcementId = deleteButton.dataset.id;
+
+    if (!announcementId) return;
+
+    const confirmed = confirm(
+      "Delete this announcement? It will also be removed from the Teacher and Parent announcement pages."
+    );
+
+    if (!confirmed) return;
+
+    const originalText = deleteButton.textContent;
+    deleteButton.disabled = true;
+    deleteButton.textContent = "Deleting...";
+
+    try {
+      const response = await fetch(
+        `${API}/api/announcements/${encodeURIComponent(announcementId)}`,
+        {
+          method: "DELETE",
+          headers: headers()
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to delete announcement."
+        );
+      }
+
+      alert("Announcement deleted successfully.");
+
+      await loadAnnouncementsFinal();
+    } catch (error) {
+      console.error("Announcement delete error:", error);
+      alert(error.message || "Failed to delete announcement.");
+
+      deleteButton.disabled = false;
+      deleteButton.textContent = originalText;
+    }
+  });
 
   window.loadAnnouncementsFinal = loadAnnouncementsFinal;
   loadAnnouncementsFinal();

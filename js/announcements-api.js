@@ -54,12 +54,8 @@ document.addEventListener("DOMContentLoaded", function () {
   async function loadBranches() {
     if (!branchSelect) return;
 
-    if (isSuperAdmin()) {
-      if (branchWrapper) {
-        branchWrapper.style.display = "none";
-      }
-      branchSelect.removeAttribute("required");
-      return;
+    if (branchWrapper) {
+      branchWrapper.style.display = "";
     }
 
     try {
@@ -69,7 +65,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const data = await response.json();
 
-      branchSelect.innerHTML = '<option value="">Select branch</option>';
+      branchSelect.innerHTML = isSuperAdmin()
+        ? '<option value="">All Branches</option>'
+        : '<option value="">Select branch</option>';
 
       data.branches.forEach(function (branch) {
         const option = document.createElement("option");
@@ -147,7 +145,7 @@ document.addEventListener("DOMContentLoaded", function () {
       event.preventDefault();
 
       const announcementData = {
-        branch_id: isSuperAdmin() ? null : getAdminId(),
+        branch_id: isSuperAdmin() ? (branchSelect.value || null) : getAdminId(),
         title: document.getElementById("announcement_title").value.trim(),
         message: document.getElementById("announcement_message").value.trim(),
         audience: document.getElementById("announcement_audience").value
@@ -167,7 +165,19 @@ document.addEventListener("DOMContentLoaded", function () {
           return;
         }
 
-        alert("Announcement added successfully");
+        let successMessage = "Announcement added successfully.";
+
+        if (data.sms_status === "sent") {
+          successMessage += ` SMS sent to ${data.sms_recipient_count || 0} recipient(s).`;
+        } else if (data.sms_status === "failed") {
+          successMessage += " Announcement was published, but SMS sending failed.";
+        } else if (data.sms_status === "skipped") {
+          successMessage += " No SMS was sent because no recipient phone numbers were found.";
+        } else if (data.sms_status === "not_applicable") {
+          successMessage += " No SMS is sent for the Students audience.";
+        }
+
+        alert(successMessage);
         announcementForm.reset();
         loades();
         loadAnnouncements();

@@ -1,4 +1,8 @@
 const db = require("../config/database");
+const {
+  sendSms,
+  normalizeGhanaPhone
+} = require("../utils/mnotifySms");
 
 function isBranchScopedAdmin(user) {
   if (!user) return false;
@@ -56,6 +60,9 @@ exports.createAnnouncement = async (req, res) => {
     }
 
     const finalBranchId = branch_id || null;
+    const finalAudience = String(audience || "all")
+      .trim()
+      .toLowerCase();
 
     const [result] = await db.query(
       `INSERT INTO announcements
@@ -65,7 +72,7 @@ exports.createAnnouncement = async (req, res) => {
         finalBranchId,
         title,
         message,
-        audience || "all"
+        finalAudience
       ]
     );
 
@@ -82,9 +89,128 @@ exports.createAnnouncement = async (req, res) => {
       ]
     );
 
+    let smsStatus = "not_sent";
+    let smsRecipientCount = 0;
+
+    try {
+      const recipients = [];
+
+      // ----------------------------------------------------
+      // Teachers
+      // ----------------------------------------------------
+      if (
+        finalAudience === "teachers" ||
+        finalAudience === "teacher" ||
+        finalAudience === "all" ||
+        finalAudience === "everyone"
+      ) {
+        let teacherSql = `
+          SELECT phone
+          FROM teachers
+          WHERE status = 'active'
+            AND phone IS NOT NULL
+            AND TRIM(phone) <> ''
+        `;
+
+        const teacherParams = [];
+
+        if (finalBranchId) {
+          teacherSql += " AND branch_id = ?";
+          teacherParams.push(finalBranchId);
+        }
+
+        const [teacherRows] = await db.query(
+          teacherSql,
+          teacherParams
+        );
+
+        teacherRows.forEach((teacher) => {
+          if (teacher.phone) recipients.push(teacher.phone);
+        });
+      }
+
+      // ----------------------------------------------------
+      // Parents
+      // ----------------------------------------------------
+      if (
+        finalAudience === "parents" ||
+        finalAudience === "parent" ||
+        finalAudience === "all" ||
+        finalAudience === "everyone"
+      ) {
+        let parentSql = `
+          SELECT phone
+          FROM parents
+          WHERE status = 'active'
+            AND phone IS NOT NULL
+            AND TRIM(phone) <> ''
+        `;
+
+        const parentParams = [];
+
+        if (finalBranchId) {
+          parentSql += " AND branch_id = ?";
+          parentParams.push(finalBranchId);
+        }
+
+        const [parentRows] = await db.query(
+          parentSql,
+          parentParams
+        );
+
+        parentRows.forEach((parent) => {
+          if (parent.phone) recipients.push(parent.phone);
+        });
+      }
+
+      // Students audience intentionally does not send SMS.
+      if (
+        finalAudience === "students" ||
+        finalAudience === "student"
+      ) {
+        smsStatus = "not_applicable";
+      } else if (recipients.length === 0) {
+        smsStatus = "skipped";
+      } else {
+        const smsMessage =
+          `${String(title).trim()}: ${String(message).trim()} ` +
+          `- https://delightintschool.com/pages/login.html`;
+
+        const smsResult = await sendSms({
+          recipients,
+          message: smsMessage
+        });
+
+        if (smsResult && smsResult.skipped) {
+          smsStatus = "skipped";
+        } else {
+          smsStatus = "sent";
+
+          // sendSms() already removes duplicate phone numbers.
+          // This count is an informational local count only.
+          smsRecipientCount = [
+            ...new Set(
+              recipients
+                .map(normalizeGhanaPhone)
+                .filter(Boolean)
+            )
+          ].length;
+        }
+      }
+    } catch (smsError) {
+      console.error(
+        "Announcement SMS failed:",
+        smsError.message
+      );
+
+      smsStatus = "failed";
+    }
+
     res.status(201).json({
       message: "Announcement added successfully",
-      announcement_id: result.insertId
+      announcement_id: result.insertId,
+      sms_status: smsStatus,
+      sms_recipient_count: smsRecipientCount
     });
   } catch (error) {
     res.status(500).json({
