@@ -60,6 +60,17 @@
     return teacher;
   }
 
+  function formatProfileDate(value) {
+    if (!value) return "Not provided";
+
+    const raw = String(value).slice(0, 10);
+    const parts = raw.split("-");
+
+    if (parts.length !== 3) return raw;
+
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
   function rebuildSummary(teacher) {
     const section = findProfileSummarySection();
     if (!section || !teacher) return;
@@ -85,6 +96,7 @@
           justify-content:center;
         ">
           <img
+            id="teacherProfilePicture"
             src="${imageUrl(teacher.profile_picture)}"
             alt="Teacher Photo"
             style="width:100%; height:100%; object-fit:cover; border-radius:50%;"
@@ -117,8 +129,33 @@
         </div>
 
         <div class="summary-card">
-          <h3></h3>
+          <h3>Branch</h3>
           <p>${teacher.branch_name || ""}</p>
+        </div>
+
+        <div class="summary-card">
+          <h3>Gender</h3>
+          <p>${teacher.gender || "Not provided"}</p>
+        </div>
+
+        <div class="summary-card">
+          <h3>Date of Birth</h3>
+          <p>${formatProfileDate(teacher.date_of_birth)}</p>
+        </div>
+
+        <div class="summary-card">
+          <h3>Residential Address</h3>
+          <p>${teacher.address || teacher.residential_address || "Not provided"}</p>
+        </div>
+
+        <div class="summary-card">
+          <h3>Date Employed</h3>
+          <p>${formatProfileDate(teacher.date_employed)}</p>
+        </div>
+
+        <div class="summary-card">
+          <h3>Qualification</h3>
+          <p>${teacher.qualification || "Not provided"}</p>
         </div>
 
         <div class="summary-card">
@@ -156,8 +193,7 @@
     }
   }
 
-    setTimeout(start, 300);
-    setTimeout(start, 1000);
+    start();
   });
 })();
 

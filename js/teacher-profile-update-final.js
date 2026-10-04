@@ -39,15 +39,15 @@
   }
 
   function findPhoneInput() {
-    return findInput(["phone", "number"]);
+    return document.getElementById("teacher_profile_phone");
   }
 
   function findEmailInput() {
-    return findInput(["email"]);
+    return document.getElementById("teacher_profile_email");
   }
 
   function findAddressInput() {
-    return findInput(["address", "residential"]);
+    return document.getElementById("teacher_profile_address");
   }
 
   function findPictureInput() {
@@ -122,6 +122,27 @@
     try {
       const teacher = await getTeacher();
 
+      const phoneInput = findPhoneInput();
+      const emailInput = findEmailInput();
+      const addressInput = findAddressInput();
+
+      if (teacher) {
+        if (phoneInput) {
+          phoneInput.value = teacher.phone || "";
+        }
+
+        if (emailInput) {
+          emailInput.value = teacher.email || "";
+        }
+
+        if (addressInput) {
+          addressInput.value =
+            teacher.address ||
+            teacher.residential_address ||
+            "";
+        }
+      }
+
       if (teacher && teacher.profile_picture) {
         const img = getSummaryPhotoBox();
 
@@ -137,7 +158,7 @@
   window.updateTeacherProfileNow = async function () {
     const phoneInput = findPhoneInput();
     const emailInput = findEmailInput();
-    const addressInput = null;
+    const addressInput = findAddressInput();
     const pictureInput = findPictureInput();
 
     const teacherId = await getTeacherId();
