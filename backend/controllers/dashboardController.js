@@ -51,11 +51,10 @@ exports.getAdminDashboard = async (req, res) => {
       params
     );
 
-    const [[attendanceToday]] = await db.query(
-      `SELECT COUNT(*) AS total 
-       FROM attendance 
-       WHERE attendance_date = CURDATE()
-       ${branch_id ? "AND branch_id = ?" : ""}`,
+    const [[totalAttendance]] = await db.query(
+      `SELECT COUNT(*) AS total
+       FROM attendance
+       ${branch_id ? "WHERE branch_id = ?" : ""}`,
       params
     );
 
@@ -122,12 +121,11 @@ exports.getAdminDashboard = async (req, res) => {
          ORDER BY branches.branch_name`
       );
 
-      const [attendanceTodayByBranch] = await db.query(
+      const [totalAttendanceByBranch] = await db.query(
         `SELECT branches.branch_name, COUNT(attendance.id) AS total
          FROM branches
-         LEFT JOIN attendance 
+         LEFT JOIN attendance
            ON attendance.branch_id = branches.id
-           AND attendance.attendance_date = CURDATE()
          WHERE branches.status = 'active'
          GROUP BY branches.id, branches.branch_name
          ORDER BY branches.branch_name`
@@ -140,7 +138,7 @@ exports.getAdminDashboard = async (req, res) => {
         fees: feesByBranch,
         pending_scores: pendingScoresByBranch,
         announcements: announcementsByBranch,
-        attendance_today: attendanceTodayByBranch
+        total_attendance: totalAttendanceByBranch
       };
     }
 
@@ -155,7 +153,7 @@ exports.getAdminDashboard = async (req, res) => {
         total_balance: fees.total_balance,
         pending_scores: pendingScores.total,
         announcements: announcements.total,
-        attendance_today: attendanceToday.total
+        total_attendance: totalAttendance.total
       },
       breakdown
     });

@@ -7,6 +7,10 @@ const { verifyToken, requireAdminOrTeacher, applyUserBranchSecurity } = require(
 router.use(verifyToken, requireAdminOrTeacher, applyUserBranchSecurity);
 
 router.get("/", attendanceController.getAttendance);
+router.get(
+  "/teacher-students",
+  attendanceController.getTeacherAttendanceStudents
+);
 router.post("/", attendanceController.createAttendance);
 router.post("/bulk", attendanceController.bulkSaveAttendance);
 router.put("/:id", attendanceController.updateAttendance);

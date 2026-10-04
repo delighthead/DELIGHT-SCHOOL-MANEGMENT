@@ -3,9 +3,213 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Attendance - Delight International School</title>
+  <title>Attendance Register - Delight International School</title>
   <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    .attendance-register-controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .attendance-register-controls label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .attendance-register-controls select,
+    .attendance-register-controls input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .attendance-register-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 24px;
+      margin: 12px 0 18px;
+      font-weight: 600;
+    }
+
+    .attendance-register-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 12px 0 18px;
+    }
+
+    .attendance-register-scroll {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid #d8dee6;
+    }
+
+    .attendance-register {
+      width: 100%;
+      min-width: 1050px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    .attendance-register th,
+    .attendance-register td {
+      border: 1px solid #777;
+      padding: 6px 5px;
+      text-align: center;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+
+    .attendance-register thead th {
+      background: #073b70;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .attendance-register .student-number {
+      width: 42px;
+    }
+
+    .attendance-register .student-name {
+      min-width: 190px;
+      text-align: left;
+      position: sticky;
+      left: 0;
+      background: #fff;
+      z-index: 1;
+    }
+
+    .attendance-register thead .student-name {
+      background: #073b70;
+      z-index: 3;
+    }
+
+    .attendance-register .sex-column {
+      width: 48px;
+    }
+
+    .attendance-register .day-heading {
+      min-width: 58px;
+    }
+
+    .attendance-register .attendance-cell {
+      min-width: 52px;
+      padding: 3px;
+    }
+
+    .attendance-register .attendance-toggle {
+      width: 42px;
+      min-height: 38px;
+      border: 1px solid #aeb7c2;
+      border-radius: 5px;
+      background: #f7f7f7;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .attendance-register .attendance-toggle[data-status="present"] {
+      background: #dff4e5;
+      color: #126b2e;
+    }
+
+    .attendance-register .attendance-toggle[data-status="absent"] {
+      background: #fde1e1;
+      color: #9b1c1c;
+    }
+
+    .attendance-register .attendance-toggle[data-status="holiday"] {
+      background: #eceff3;
+      color: #555;
+      cursor: default;
+    }
+
+    .attendance-register .weekly-total,
+    .attendance-register .term-total {
+      font-weight: 800;
+      background: #f3f6f9;
+    }
+
+    .attendance-register .register-summary-label {
+      text-align: left;
+      font-weight: 800;
+      background: #f3f6f9;
+    }
+
+    .register-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin: 12px 0;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .register-message {
+      padding: 12px;
+      margin-bottom: 12px;
+      display: none;
+      border-radius: 5px;
+    }
+
+    .register-message.success {
+      display: block;
+      background: #e6f5ea;
+      color: #176b31;
+    }
+
+    .register-message.error {
+      display: block;
+      background: #fde8e8;
+      color: #8d1b1b;
+    }
+
+    @media (max-width: 800px) {
+      .attendance-register-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .attendance-register-actions button {
+        width: 100%;
+      }
+    }
+
+    @media print {
+      .sidebar,
+      .attendance-register-actions,
+      .register-legend {
+        display: none !important;
+      }
+
+      .dashboard-layout,
+      .dashboard-main {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .attendance-register-scroll {
+        overflow: visible;
+        border: 0;
+      }
+
+      .attendance-register {
+        min-width: 0;
+      }
+
+      @page {
+        size: landscape;
+        margin: 8mm;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
   <div class="dashboard-layout">
@@ -31,101 +235,38 @@
     </aside>
 
     <main class="dashboard-main">
-      <h1>Attendance</h1>
-      <p>Record and view student attendance by branch/location.</p>
+
+      <h1>Attendance Register</h1>
+      <p>
+        Select a branch and class, then mark attendance for the learners.
+        Click a daily cell to change between Present and Absent.
+      </p>
 
       <section class="dashboard-section">
-        <h2>Add Attendance Record</h2>
 
-        <form class="admin-form" id="attendanceForm">
-          <input type="hidden" id="attendance_id">
+        <h2>Register Details</h2>
+
+        <div id="teacherAttendanceMessage" class="register-message"></div>
+
+        <div class="attendance-register-controls">
+
           <div>
-            <label>Branch / Location</label>
-            <select id="attendance_branch_id" required>
+            <label for="admin_attendance_branch">Branch / Location</label>
+            <select id="admin_attendance_branch">
               <option value="">Loading branches...</option>
             </select>
           </div>
 
           <div>
-            <label>Student</label>
-            <select id="attendance_student_id" required>
+            <label for="admin_attendance_class">Class</label>
+            <select id="admin_attendance_class">
               <option value="">Select branch first</option>
             </select>
           </div>
 
           <div>
-            <label>Teacher</label>
-            <select id="attendance_teacher_id">
-              <option value="">Select teacher</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Attendance Date</label>
-            <input type="date" id="attendance_date" required>
-          </div>
-
-          <div>
-            <label>Term</label>
-            <select id="attendance_term">
-              <option value="">Select term</option>
-              <option>Term 1</option>
-              <option>Term 2</option>
-              <option>Term 3</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Academic Year</label>
-            <input type="text" id="attendance_academic_year" value="2025/2026">
-          </div>
-
-          <div>
-            <label>Status</label>
-            <select id="attendance_status" required>
-              <option value="">Select status</option>
-              <option value="present">Present</option>
-              <option value="absent">Absent</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Remarks</label>
-            <input type="text" id="attendance_remarks" placeholder="Optional remarks">
-          </div>
-
-          <button type="submit">Save Attendance</button>
-        </form>
-      </section>
-
-      
-      
-      <section class="dashboard-section">
-        <h2>Quick Mark Attendance</h2>
-
-        <div class="admin-form">
-          <div class="form-group">
-            <label for="quick_branch_id">Branch / Location</label>
-            <select id="quick_branch_id">
-              <option value="">Select branch</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="quick_class_id">Class</label>
-            <select id="quick_class_id">
-              <option value="">Select class</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="quick_attendance_date">Attendance Date</label>
-            <input type="date" id="quick_attendance_date">
-          </div>
-
-          <div class="form-group">
-            <label for="quick_term">Term</label>
-            <select id="quick_term">
+            <label for="teacher_attendance_term">Term</label>
+            <select id="teacher_attendance_term">
               <option value="">Select term</option>
               <option value="Term 1">Term 1</option>
               <option value="Term 2">Term 2</option>
@@ -133,91 +274,171 @@
             </select>
           </div>
 
-          <div class="form-group">
-            <label for="quick_academic_year">Academic Year</label>
-            <input type="text" id="quick_academic_year" placeholder="2025/2026">
+          <div>
+            <label for="teacher_academic_year">Academic Year</label>
+            <input
+              type="text"
+              id="teacher_academic_year"
+              value="2026/2027"
+              readonly
+            >
           </div>
 
-          <button type="button" class="primary-btn" id="loadQuickStudentsBtn">
-            Load Students
+          <div>
+            <label for="teacherAttendanceWeek">Week</label>
+            <select id="teacherAttendanceWeek">
+              <option value="1">Week 1</option>
+              <option value="2">Week 2</option>
+              <option value="3">Week 3</option>
+              <option value="4">Week 4</option>
+              <option value="5">Week 5</option>
+              <option value="6">Week 6</option>
+              <option value="7">Week 7</option>
+              <option value="8">Week 8</option>
+              <option value="9">Week 9</option>
+              <option value="10">Week 10</option>
+              <option value="11">Week 11</option>
+              <option value="12">Week 12</option>
+              <option value="13">Week 13</option>
+              <option value="14">Week 14</option>
+              <option value="15">Week 15</option>
+              <option value="16">Week 16</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="teacherAttendanceWeekStart">Week Starting</label>
+            <input type="date" id="teacherAttendanceWeekStart">
+          </div>
+
+        </div>
+
+        <div class="attendance-register-info">
+          <span>
+            Branch:
+            <strong id="teacherAttendanceTeacherName">Select branch</strong>
+          </span>
+
+          <span>
+            Class:
+            <strong id="teacherAttendanceClassName">Select class</strong>
+          </span>
+
+          <span>
+            Boys:
+            <strong id="teacherAttendanceBoysCount">0</strong>
+          </span>
+
+          <span>
+            Girls:
+            <strong id="teacherAttendanceGirlsCount">0</strong>
+          </span>
+
+          <span>
+            Total Enrolment:
+            <strong id="teacherAttendanceEnrolment">0</strong>
+          </span>
+        </div>
+
+        <div class="register-legend">
+          <span>P = Present</span>
+          <span>A = Absent</span>
+          <span>Blank = Not marked</span>
+        </div>
+
+        <div class="attendance-register-actions">
+          <button type="button" class="primary-btn" id="teacherMarkAllPresentBtn">
+            Mark Week All Present
+          </button>
+
+          <button type="button" class="primary-btn danger-btn" id="teacherMarkAllAbsentBtn">
+            Mark Week All Absent
+          </button>
+
+          <button type="button" class="primary-btn" id="teacherSaveAttendanceBtn">
+            Save Register
           </button>
         </div>
 
-                <div id="quickMarkAllButtons" style="display:none; margin:15px 0;">
-          <button type="button" class="primary-btn" id="markAllPresentBtn">
-            Mark All Present
-          </button>
+        <div class="attendance-register-scroll">
 
-          <button type="button" class="primary-btn danger-btn" id="markAllAbsentBtn" style="margin-left:10px;">
-            Mark All Absent
-          </button>
+          <table class="attendance-register" id="teacherAttendanceRegister">
+
+            <thead>
+              <tr>
+                <th rowspan="2" class="student-number">No.</th>
+                <th rowspan="2" class="student-name">Name of Learner</th>
+                <th rowspan="2" class="sex-column">Sex</th>
+
+                <th colspan="5" id="teacherAttendanceWeekHeading">
+                  Week
+                </th>
+
+                <th colspan="2">Week Total</th>
+                <th colspan="2">Term Total</th>
+              </tr>
+
+              <tr>
+                <th class="day-heading" id="attendanceHeadingMon">Mon</th>
+                <th class="day-heading" id="attendanceHeadingTue">Tue</th>
+                <th class="day-heading" id="attendanceHeadingWed">Wed</th>
+                <th class="day-heading" id="attendanceHeadingThu">Thu</th>
+                <th class="day-heading" id="attendanceHeadingFri">Fri</th>
+
+                <th>P</th>
+                <th>A</th>
+                <th>P</th>
+                <th>A</th>
+              </tr>
+            </thead>
+
+            <tbody id="teacherAttendanceRegisterBody">
+              <tr>
+                <td colspan="12">Loading attendance register...</td>
+              </tr>
+            </tbody>
+
+            <tfoot id="teacherAttendanceRegisterFoot"></tfoot>
+
+          </table>
+
         </div>
 
-        <div id="quickAttendanceBox" style="margin-top:15px;"></div>
-
-        <button type="button" class="primary-btn" id="saveQuickAttendanceBtn" style="display:none;">
-          Save Quick Attendance
-        </button>
-      </section>
-
-      <section class="dashboard-section">
-        <h2>Attendance Summary</h2>
-
-        <div class="summary-cards">
-          <div class="summary-card">
-            <h3 id="attendancePresentCount">0</h3>
-            <p>Total Present</p>
+        <div id="savedAttendanceSummarySection" style="margin-top: 28px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <h2 style="margin:0;">Saved Attendance Summary</h2>
+            <button type="button" class="primary-btn" id="teacherPrintAttendanceBtn">
+              Print Saved Summary
+            </button>
           </div>
+          <p>
+            Each learner is shown once. Total represents the learner's
+            total number of Present days for the selected term and academic year.
+          </p>
 
-          <div class="summary-card">
-            <h3 id="attendanceAbsentCount">0</h3>
-            <p>Total Absent</p>
-          </div>
-
-          <div class="summary-card">
-            <h3 id="attendanceTotalCount">0</h3>
-            <p>Total Records</p>
+          <div class="attendance-register-scroll">
+            <table class="attendance-register" id="teacherSavedAttendanceTable">
+              <thead>
+                <tr>
+                  <th>Admission No.</th>
+                  <th>Name of Learner</th>
+                  <th>Sex</th>
+                  <th>Class</th>
+                  <th>Total</th>
+                  <th>Term</th>
+                  <th>Academic Year</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="teacherSavedAttendanceBody">
+                <tr>
+                  <td colspan="8">Loading saved attendance...</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <button type="button" class="primary-btn" id="printAttendanceBtn">
-          Print Attendance Sheet
-        </button>
-      </section>
-
-      <section class="dashboard-section">
-        <h2>Attendance Records</h2>
-        <div class="student-search-box" style="margin: 15px 0; display:flex; gap:10px;">
-          <input type="text" id="attendanceSearchInput" placeholder="Search by student name, admission number, class, date, term, status, or teacher" style="flex:1;">
-          <button type="button" class="primary-btn" id="attendanceSearchBtn">Search</button>
-          <button type="button" class="primary-btn danger-btn" id="attendanceClearSearchBtn">Clear</button>
-        </div>
-
-
-
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Branch</th>
-              <th>Student</th>
-              <th>Admission No.</th>
-              <th>Class</th>
-              <th>Teacher</th>
-              <th>Date</th>
-              <th>Term</th>
-              <th>Academic Year</th>
-              <th>Status</th>
-              <th>Remarks</th>
-                          <th>Action</th>
-</tr>
-          </thead>
-
-          <tbody id="attendanceTableBody">
-            <tr>
-              <td colspan="11">Loading attendance...</td>
-            </tr>
-          </tbody>
-        </table>
       </section>
 
     </main>
@@ -226,7 +447,7 @@
 
   <script src="../js/api-helper.js?v=2"></script>
   <script src="../js/dashboard-actions.js?v=105"></script>
-  <script src="../js/attendance-api.js?v=80"></script>
+  <script src="../js/attendance-api.js?v=81"></script>
   <script src="../js/admin-panel-title.js?v=1"></script>
   <script src="../js/logout.js?v=2"></script>
   <script src="../js/admin-guard.js?v=1"></script>
@@ -234,12 +455,8 @@
   <script src="../js/site-settings.js?v=4"></script>
   <script src="../js/academic-session.js?v=1"></script>
   <script src="../js/admin-common-polish.js?v=1"></script>
-  <script src="../js/teacher-dropdown-final.js?v=2"></script>
-  <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>
   <script src="../js/admin-sidebar-picture-final.js?v=1"></script>
-  <script src="../js/branch-dropdowns-superadmin-final.js?v=1"></script>
   <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
-  <script src="../js/attendance-search-final.js?v=1"></script>
-  <script src="../js/admin-table-view-controls.js?v=1"></script>
+
 </body>
 </html>

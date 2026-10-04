@@ -25,8 +25,12 @@ async function getTeacherByUserId(userId) {
   return rows.length > 0 ? rows[0] : null;
 }
 
-async function isTeacherAssignedToStudent(teacherId, studentId) {
-  if (!teacherId || !studentId) return false;
+async function isTeacherAssignedToStudent(
+  teacherId,
+  studentId,
+  academicYear
+) {
+  if (!teacherId || !studentId || !academicYear) return false;
 
   const [rows] = await db.query(
     `SELECT 1
@@ -36,13 +40,90 @@ async function isTeacherAssignedToStudent(teacherId, studentId) {
       AND s.branch_id = ta.branch_id
      WHERE ta.teacher_id = ?
        AND ta.status = 'active'
+       AND UPPER(TRIM(ta.role)) = 'CLASS TEACHER'
+       AND ta.academic_year = ?
        AND s.id = ?
      LIMIT 1`,
-    [teacherId, studentId]
+    [teacherId, academicYear, studentId]
   );
 
   return rows.length > 0;
 }
+
+// Get students assigned to the logged-in teacher as Class Teacher
+exports.getTeacherAttendanceStudents = async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== "teacher") {
+      return res.status(403).json({
+        message: "Only teachers can load Class Teacher attendance students"
+      });
+    }
+
+    const teacher = await getTeacherByUserId(req.user.id);
+
+    if (!teacher) {
+      return res.status(403).json({
+        message: "Teacher profile not found for this account"
+      });
+    }
+
+    const [settingsRows] = await db.query(
+      "SELECT academic_year FROM settings WHERE id = 1 LIMIT 1"
+    );
+
+    const currentAcademicYear =
+      String(settingsRows[0]?.academic_year || "").trim();
+
+    if (!currentAcademicYear) {
+      return res.status(400).json({
+        message: "Current academic year is not configured in school settings"
+      });
+    }
+
+    const [students] = await db.query(
+      `SELECT DISTINCT
+         s.id,
+         s.student_id,
+         s.admission_number,
+         s.first_name,
+         s.surname,
+         s.other_name,
+         s.full_name,
+         s.sex,
+         s.class_id,
+         c.class_name,
+         s.status
+       FROM teacher_assignments ta
+       INNER JOIN students s
+         ON s.class_id = ta.class_id
+        AND s.branch_id = ta.branch_id
+       LEFT JOIN classes c
+         ON c.id = s.class_id
+       WHERE ta.teacher_id = ?
+         AND ta.branch_id = ?
+         AND ta.status = 'active'
+         AND s.status = 'active'
+         AND UPPER(TRIM(ta.role)) = 'CLASS TEACHER'
+         AND ta.academic_year = ?
+       ORDER BY c.class_name ASC,
+                COALESCE(
+                  s.full_name,
+                  CONCAT(s.first_name, ' ', s.surname)
+                ) ASC`,
+      [teacher.id, teacher.branch_id, currentAcademicYear]
+    );
+
+    return res.json({
+      message: "Class Teacher attendance students retrieved successfully",
+      students
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to retrieve Class Teacher attendance students",
+      error: error.message
+    });
+  }
+};
 
 // Get attendance records, optionally by branch
 exports.getAttendance = async (req, res) => {
@@ -109,6 +190,8 @@ exports.getAttendance = async (req, res) => {
             AND ta.class_id = students.class_id
             AND ta.branch_id = students.branch_id
             AND ta.status = 'active'
+            AND UPPER(TRIM(ta.role)) = 'CLASS TEACHER'
+            AND ta.academic_year = attendance.academic_year
         )`
       );
       params.push(teacher.id);
@@ -181,10 +264,14 @@ exports.createAttendance = async (req, res) => {
         });
       }
 
-      const allowed = await isTeacherAssignedToStudent(teacher.id, student_id);
+      const allowed = await isTeacherAssignedToStudent(
+        teacher.id,
+        student_id,
+        academic_year
+      );
       if (!allowed) {
         return res.status(403).json({
-          message: "You can only mark attendance for students in your assigned class"
+          message: "Only the assigned Class Teacher can mark attendance for this student"
         });
       }
 
@@ -271,7 +358,7 @@ exports.updateAttendance = async (req, res) => {
     } = req.body;
 
     const [existingRows] = await db.query(
-      "SELECT id, branch_id, student_id, class_id, teacher_id FROM attendance WHERE id = ? LIMIT 1",
+      "SELECT id, branch_id, student_id, class_id, teacher_id, academic_year FROM attendance WHERE id = ? LIMIT 1",
       [id]
     );
 
@@ -309,11 +396,18 @@ exports.updateAttendance = async (req, res) => {
       }
 
       const targetStudentId = student_id || existing.student_id;
-      const allowed = await isTeacherAssignedToStudent(teacher.id, targetStudentId);
+      const targetAcademicYear =
+        String(academic_year || existing.academic_year || "").trim();
+
+      const allowed = await isTeacherAssignedToStudent(
+        teacher.id,
+        targetStudentId,
+        targetAcademicYear
+      );
 
       if (!allowed) {
         return res.status(403).json({
-          message: "You can only update attendance for students in your assigned class"
+          message: "Only the assigned Class Teacher can update attendance for this student"
         });
       }
 
@@ -443,7 +537,8 @@ exports.bulkSaveAttendance = async (req, res) => {
       if (teacher) {
         const allowed = await isTeacherAssignedToStudent(
           teacher.id,
-          record.student_id
+          record.student_id,
+          record.academic_year
         );
 
         if (!allowed) {

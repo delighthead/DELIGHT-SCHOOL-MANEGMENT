@@ -1,32 +1,55 @@
 document.addEventListener("DOMContentLoaded", function () {
   const API = "";
 
-  const attendanceForm = document.getElementById("attendanceForm");
-  const attendanceTableBody = document.getElementById("attendanceTableBody");
-  const branchSelect = document.getElementById("attendance_branch_id");
-  const studentSelect = document.getElementById("attendance_student_id");
-  const teacherSelect = document.getElementById("attendance_teacher_id");
-  const attendanceIdInput = document.getElementById("attendance_id");
-  const attendanceDateInput = document.getElementById("attendance_date");
-  const attendanceTermInput = document.getElementById("attendance_term");
-  const attendanceYearInput = document.getElementById("attendance_academic_year");
-  const attendanceStatusInput = document.getElementById("attendance_status");
-  const attendanceRemarksInput = document.getElementById("attendance_remarks");
-  const printBtn = document.getElementById("printAttendanceBtn");
+  const body = document.getElementById("teacherAttendanceRegisterBody");
+  const foot = document.getElementById("teacherAttendanceRegisterFoot");
 
-  const quickBranch = document.getElementById("quick_branch_id");
-  const quickClass = document.getElementById("quick_class_id");
-  const quickDate = document.getElementById("quick_attendance_date");
-  const quickTerm = document.getElementById("quick_term");
-  const quickYear = document.getElementById("quick_academic_year");
-  const quickBox = document.getElementById("quickAttendanceBox");
-  const loadQuickBtn = document.getElementById("loadQuickStudentsBtn");
-  const saveQuickBtn = document.getElementById("saveQuickAttendanceBtn");
-  const quickMarkAllButtons = document.getElementById("quickMarkAllButtons");
-  const markAllPresentBtn = document.getElementById("markAllPresentBtn");
-  const markAllAbsentBtn = document.getElementById("markAllAbsentBtn");
+  const branchInput = document.getElementById("admin_attendance_branch");
+  const classInput = document.getElementById("admin_attendance_class");
 
-  let attendanceRecords = [];
+  const termInput = document.getElementById("teacher_attendance_term");
+  const yearInput = document.getElementById("teacher_academic_year");
+  const weekInput = document.getElementById("teacherAttendanceWeek");
+  const weekStartInput = document.getElementById("teacherAttendanceWeekStart");
+
+  const teacherNameEl = document.getElementById("teacherAttendanceTeacherName");
+  const classNameEl = document.getElementById("teacherAttendanceClassName");
+  const boysCountEl = document.getElementById("teacherAttendanceBoysCount");
+  const girlsCountEl = document.getElementById("teacherAttendanceGirlsCount");
+  const enrolmentEl = document.getElementById("teacherAttendanceEnrolment");
+  const weekHeadingEl = document.getElementById("teacherAttendanceWeekHeading");
+  const messageEl = document.getElementById("teacherAttendanceMessage");
+
+  const markAllPresentBtn = document.getElementById("teacherMarkAllPresentBtn");
+  const markAllAbsentBtn = document.getElementById("teacherMarkAllAbsentBtn");
+  const saveBtn = document.getElementById("teacherSaveAttendanceBtn");
+  const printBtn = document.getElementById("teacherPrintAttendanceBtn");
+
+  const dayHeadingIds = [
+    "attendanceHeadingMon",
+    "attendanceHeadingTue",
+    "attendanceHeadingWed",
+    "attendanceHeadingThu",
+    "attendanceHeadingFri"
+  ];
+
+  let loggedInTeacher = null;
+  let branches = [];
+  let classes = [];
+  let students = [];
+  let allAttendance = [];
+  let weekDates = [];
+
+  function token() {
+    return localStorage.getItem("token") || "";
+  }
+
+  function headers(json = false) {
+    const h = {};
+    if (json) h["Content-Type"] = "application/json";
+    if (token()) h.Authorization = `Bearer ${token()}`;
+    return h;
+  }
 
   function getUser() {
     try {
@@ -36,15 +59,576 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  function getToken() {
-    return localStorage.getItem("token") || "";
+  function safe(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
-  function authHeaders(json) {
-    const headers = {};
-    if (json) headers["Content-Type"] = "application/json";
-    if (getToken()) headers.Authorization = `Bearer ${getToken()}`;
-    return headers;
+  function showMessage(text, type = "success") {
+    if (!messageEl) return;
+
+    messageEl.textContent = text;
+    messageEl.className = `register-message ${type}`;
+
+    window.setTimeout(() => {
+      messageEl.className = "register-message";
+      messageEl.textContent = "";
+    }, 5000);
+  }
+
+  function normalizeSex(value) {
+    const sex = String(value || "").trim().toLowerCase();
+
+    if (sex === "male" || sex === "m" || sex === "boy") return "Male";
+    if (sex === "female" || sex === "f" || sex === "girl") return "Female";
+
+    return String(value || "").trim();
+  }
+
+  function sexLetter(value) {
+    const sex = normalizeSex(value);
+    if (sex === "Male") return "M";
+    if (sex === "Female") return "F";
+    return sex ? sex.charAt(0).toUpperCase() : "";
+  }
+
+  function studentName(student) {
+    return (
+      student.full_name ||
+      [student.first_name, student.other_name, student.surname]
+        .filter(Boolean)
+        .join(" ")
+    ).trim();
+  }
+
+  function toIsoDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function parseIsoDate(value) {
+    const parts = String(value || "").split("-").map(Number);
+
+    if (
+      parts.length !== 3 ||
+      !parts[0] ||
+      !parts[1] ||
+      !parts[2]
+    ) {
+      return null;
+    }
+
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+
+  function mondayOf(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const day = d.getDay();
+    const difference = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + difference);
+    return d;
+  }
+
+  function formatHeadingDate(iso) {
+    const date = parseIsoDate(iso);
+    if (!date) return "";
+
+    return `${String(date.getDate()).padStart(2, "0")}/${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}`;
+  }
+
+  function getTermWeekOneMonday() {
+    const academicYear = String(yearInput.value || "").trim();
+    const term = String(termInput.value || "").trim();
+
+    if (academicYear === "2026/2027" && term === "Term 1") {
+      // School reopens Tuesday, 1 September 2026.
+      // Monday 31 August is retained as the Week 1 Monday position,
+      // but is treated as a non-school day.
+      return new Date(2026, 7, 31);
+    }
+
+    const selected = parseIsoDate(weekStartInput.value);
+
+    if (selected) {
+      return mondayOf(selected);
+    }
+
+    return mondayOf(new Date());
+  }
+
+  function isNonSchoolDay(date) {
+    const iso = toIsoDate(date);
+    const academicYear = String(yearInput.value || "").trim();
+    const term = String(termInput.value || "").trim();
+
+    // Week 1 begins when school reopens on Tuesday, 1 September 2026.
+    // Monday 31 August remains only as the Monday position in the
+    // five-day register grid. It cannot be marked or counted.
+    return (
+      academicYear === "2026/2027" &&
+      term === "Term 1" &&
+      iso === "2026-08-31"
+    );
+  }
+
+  function isWithinSelectedTerm(dateValue) {
+    const iso = String(dateValue || "").slice(0, 10);
+    const academicYear = String(yearInput.value || "").trim();
+    const term = String(termInput.value || "").trim();
+
+    if (academicYear === "2026/2027" && term === "Term 1") {
+      return iso >= "2026-09-01" && iso <= "2026-12-17";
+    }
+
+    return true;
+  }
+
+  function calculateWeekDates() {
+    const weekNumber = Math.max(
+      1,
+      Math.min(16, Number(weekInput.value || 1))
+    );
+
+    const weekOneMonday = getTermWeekOneMonday();
+    const monday = new Date(weekOneMonday);
+
+    monday.setDate(
+      weekOneMonday.getDate() + ((weekNumber - 1) * 7)
+    );
+
+    weekStartInput.value = toIsoDate(monday);
+
+    weekDates = [];
+
+    for (let i = 0; i < 5; i += 1) {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+
+      weekDates.push({
+        iso: toIsoDate(date),
+        nonSchoolDay: isNonSchoolDay(date)
+      });
+    }
+
+    if (weekHeadingEl) {
+      weekHeadingEl.textContent =
+        `Week ${weekNumber} (${formatHeadingDate(weekDates[0].iso)} - ${formatHeadingDate(weekDates[4].iso)})`;
+    }
+
+    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+
+    dayHeadingIds.forEach((id, index) => {
+      const el = document.getElementById(id);
+
+      if (!el) return;
+
+      const day = weekDates[index];
+
+      el.innerHTML =
+        `${labels[index]}<br><small>${safe(formatHeadingDate(day.iso))}</small>`;
+    });
+  }
+
+  function recordDate(record) {
+    return record.attendance_date
+      ? String(record.attendance_date).slice(0, 10)
+      : "";
+  }
+
+  function findAttendance(studentId, date) {
+    return allAttendance.find(
+      (record) =>
+        String(record.student_id) === String(studentId) &&
+        recordDate(record) === date &&
+        String(record.term || "") === String(termInput.value || "") &&
+        String(record.academic_year || "") === String(yearInput.value || "")
+    );
+  }
+
+  function termTotals(studentId) {
+    let present = 0;
+    let absent = 0;
+
+    allAttendance.forEach((record) => {
+      if (
+        String(record.student_id) !== String(studentId) ||
+        String(record.term || "") !== String(termInput.value || "") ||
+        String(record.academic_year || "") !== String(yearInput.value || "") ||
+        !isWithinSelectedTerm(recordDate(record))
+      ) {
+        return;
+      }
+
+      const status = String(record.status || "").toLowerCase();
+
+      if (status === "present") present += 1;
+      if (status === "absent") absent += 1;
+    });
+
+    return { present, absent };
+  }
+
+  function statusFromRecord(record) {
+    const status = String(record?.status || "").toLowerCase();
+
+    if (status === "present") return "present";
+    if (status === "absent") return "absent";
+
+    return "";
+  }
+
+  function statusLetter(status) {
+    if (status === "present") return "P";
+    if (status === "absent") return "A";
+    if (status === "holiday") return "H";
+    return "";
+  }
+
+  function orderedStudents() {
+    return [...students].sort((a, b) => {
+      const aSex = normalizeSex(a.sex);
+      const bSex = normalizeSex(b.sex);
+
+      const rank = (sex) => {
+        if (sex === "Male") return 0;
+        if (sex === "Female") return 1;
+        return 2;
+      };
+
+      if (rank(aSex) !== rank(bSex)) {
+        return rank(aSex) - rank(bSex);
+      }
+
+      return studentName(a).localeCompare(studentName(b));
+    });
+  }
+
+  function renderSavedAttendance() {
+    const savedBody = document.getElementById("teacherSavedAttendanceBody");
+
+    if (!savedBody) return;
+
+    if (!students.length) {
+      savedBody.innerHTML = `
+        <tr>
+          <td colspan="8">No learners found.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    const rows = orderedStudents().map((student) => {
+      const totalPresent = allAttendance.filter((record) => {
+        return (
+          String(record.student_id) === String(student.id) &&
+          String(record.term || "") === String(termInput.value || "") &&
+          String(record.academic_year || "") ===
+            String(yearInput.value || "") &&
+          isWithinSelectedTerm(recordDate(record)) &&
+          String(record.status || "").toLowerCase() === "present"
+        );
+      }).length;
+
+      return `
+        <tr>
+          <td>${safe(student.admission_number || "")}</td>
+          <td class="student-name">${safe(studentName(student))}</td>
+          <td>${safe(sexLetter(student.sex))}</td>
+          <td>${safe(student.class_name || "")}</td>
+          <td><strong>${safe(totalPresent)}</strong></td>
+          <td>${safe(termInput.value || "")}</td>
+          <td>${safe(yearInput.value || "")}</td>
+          <td>
+            <button
+              type="button"
+              class="primary-btn student-attendance-print-btn"
+              data-student-id="${safe(student.id)}"
+            >Print</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    savedBody.innerHTML = rows.join("");
+
+    savedBody
+      .querySelectorAll(".student-attendance-print-btn")
+      .forEach((button) => {
+        button.addEventListener("click", () => {
+          printStudentAttendance(button.dataset.studentId);
+        });
+      });
+  }
+
+  function renderRegister() {
+    if (!body || !foot) return;
+
+    calculateWeekDates();
+
+    if (!students.length) {
+      body.innerHTML =
+        '<tr><td colspan="12">Select a branch and class, or no active students were found for the selected class.</td></tr>';
+      foot.innerHTML = "";
+      return;
+    }
+
+    const rows = [];
+
+    orderedStudents().forEach((student, index) => {
+      const cells = weekDates.map((day) => {
+        const existing = findAttendance(student.id, day.iso);
+        const status = day.nonSchoolDay
+          ? "holiday"
+          : statusFromRecord(existing);
+
+        return `
+          <td class="attendance-cell">
+            <button
+              type="button"
+              class="attendance-toggle"
+              data-student-id="${safe(student.id)}"
+              data-class-id="${safe(student.class_id || "")}"
+              data-date="${safe(day.iso)}"
+              data-status="${safe(status)}"
+              title="${safe(day.iso)}"
+              ${day.nonSchoolDay ? "disabled" : ""}
+            >${safe(day.nonSchoolDay ? "" : statusLetter(status))}</button>
+          </td>
+        `;
+      }).join("");
+
+      const term = termTotals(student.id);
+
+      rows.push(`
+        <tr data-student-row="${safe(student.id)}">
+          <td class="student-number">${index + 1}</td>
+          <td class="student-name">${safe(studentName(student))}</td>
+          <td class="sex-column">${safe(sexLetter(student.sex))}</td>
+
+          ${cells}
+
+          <td class="weekly-total week-present">0</td>
+          <td class="weekly-total week-absent">0</td>
+
+          <td class="term-total term-present">${term.present}</td>
+          <td class="term-total term-absent">${term.absent}</td>
+        </tr>
+      `);
+    });
+
+    body.innerHTML = rows.join("");
+
+    body.querySelectorAll(".attendance-toggle").forEach((button) => {
+      button.addEventListener("click", function () {
+        const current = this.dataset.status || "";
+
+        if (current === "holiday") return;
+
+        let next;
+
+        if (current === "") {
+          next = "present";
+        } else if (current === "present") {
+          next = "absent";
+        } else {
+          next = "present";
+        }
+
+        this.dataset.status = next;
+        this.textContent = statusLetter(next);
+
+        recalculateRegister();
+      });
+    });
+
+    recalculateRegister();
+    renderSavedAttendance();
+  }
+
+  function countDay(index, sex, status) {
+    let count = 0;
+
+    body.querySelectorAll("tr[data-student-row]").forEach((row) => {
+      const studentId = row.dataset.studentRow;
+      const student = students.find(
+        (item) => String(item.id) === String(studentId)
+      );
+
+      if (!student) return;
+
+      if (sex && normalizeSex(student.sex) !== sex) return;
+
+      const button = row.querySelectorAll(".attendance-toggle")[index];
+
+      if (button && button.dataset.status === status) {
+        count += 1;
+      }
+    });
+
+    return count;
+  }
+
+  function summaryRow(label, values, weekPresent = "", weekAbsent = "") {
+    return `
+      <tr>
+        <td colspan="3" class="register-summary-label">${safe(label)}</td>
+        ${values.map((value) => `<td>${safe(value)}</td>`).join("")}
+        <td class="weekly-total">${safe(weekPresent)}</td>
+        <td class="weekly-total">${safe(weekAbsent)}</td>
+        <td class="term-total"></td>
+        <td class="term-total"></td>
+      </tr>
+    `;
+  }
+
+  function recalculateRegister() {
+    if (!body || !foot) return;
+
+    let classWeekPresent = 0;
+    let classWeekAbsent = 0;
+
+    body.querySelectorAll("tr[data-student-row]").forEach((row) => {
+      const buttons = Array.from(row.querySelectorAll(".attendance-toggle"));
+
+      const present = buttons.filter(
+        (button) => button.dataset.status === "present"
+      ).length;
+
+      const absent = buttons.filter(
+        (button) => button.dataset.status === "absent"
+      ).length;
+
+      const presentCell = row.querySelector(".week-present");
+      const absentCell = row.querySelector(".week-absent");
+
+      if (presentCell) presentCell.textContent = String(present);
+      if (absentCell) absentCell.textContent = String(absent);
+
+      classWeekPresent += present;
+      classWeekAbsent += absent;
+
+      const studentId = row.dataset.studentRow;
+      const storedTerm = termTotals(studentId);
+
+      let visibleNewPresent = 0;
+      let visibleNewAbsent = 0;
+      let visibleStoredPresent = 0;
+      let visibleStoredAbsent = 0;
+
+      buttons.forEach((button) => {
+        const existing = findAttendance(studentId, button.dataset.date);
+        const oldStatus = statusFromRecord(existing);
+        const newStatus = button.dataset.status;
+
+        if (oldStatus === "present") visibleStoredPresent += 1;
+        if (oldStatus === "absent") visibleStoredAbsent += 1;
+
+        if (newStatus === "present") visibleNewPresent += 1;
+        if (newStatus === "absent") visibleNewAbsent += 1;
+      });
+
+      const termPresent =
+        storedTerm.present - visibleStoredPresent + visibleNewPresent;
+
+      const termAbsent =
+        storedTerm.absent - visibleStoredAbsent + visibleNewAbsent;
+
+      const termPresentCell = row.querySelector(".term-present");
+      const termAbsentCell = row.querySelector(".term-absent");
+
+      if (termPresentCell) termPresentCell.textContent = String(termPresent);
+      if (termAbsentCell) termAbsentCell.textContent = String(termAbsent);
+    });
+
+    const boysPresent = weekDates.map((_, index) =>
+      countDay(index, "Male", "present")
+    );
+
+    const girlsPresent = weekDates.map((_, index) =>
+      countDay(index, "Female", "present")
+    );
+
+    const totalPresent = weekDates.map(
+      (_, index) =>
+        countDay(index, null, "present")
+    );
+
+    const boysAbsent = weekDates.map((_, index) =>
+      countDay(index, "Male", "absent")
+    );
+
+    const girlsAbsent = weekDates.map((_, index) =>
+      countDay(index, "Female", "absent")
+    );
+
+    const totalAbsent = weekDates.map(
+      (_, index) =>
+        countDay(index, null, "absent")
+    );
+
+    foot.innerHTML =
+      summaryRow(
+        "Boys Present",
+        boysPresent,
+        boysPresent.reduce((a, b) => a + b, 0),
+        ""
+      ) +
+      summaryRow(
+        "Girls Present",
+        girlsPresent,
+        girlsPresent.reduce((a, b) => a + b, 0),
+        ""
+      ) +
+      summaryRow(
+        "Total Present",
+        totalPresent,
+        classWeekPresent,
+        ""
+      ) +
+      summaryRow(
+        "Boys Absent",
+        boysAbsent,
+        "",
+        boysAbsent.reduce((a, b) => a + b, 0)
+      ) +
+      summaryRow(
+        "Girls Absent",
+        girlsAbsent,
+        "",
+        girlsAbsent.reduce((a, b) => a + b, 0)
+      ) +
+      summaryRow(
+        "Total Absent",
+        totalAbsent,
+        "",
+        classWeekAbsent
+      );
+  }
+
+  async function loadSettings() {
+    try {
+      const response = await fetch(`${API}/api/settings`);
+      const data = await response.json();
+      const settings = data.settings || {};
+
+      if (settings.current_term && termInput) {
+        termInput.value = settings.current_term;
+      }
+
+      if (settings.academic_year && yearInput) {
+        yearInput.value = settings.academic_year;
+      }
+    } catch (error) {
+      console.error("Could not load school settings:", error);
+    }
   }
 
   function isBranchAdmin() {
@@ -52,629 +636,619 @@ document.addEventListener("DOMContentLoaded", function () {
     return role === "branch_admin" || role === "teacher_admin";
   }
 
-  function getAdminBranchId() {
+  function adminBranchId() {
     return getUser().branch_id || "";
   }
 
-  function safe(value) {
-    return String(value || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
+  async function loadBranches() {
+    if (!branchInput) return;
 
-  function formatStatus(status) {
-    const normalized = String(status || "").toLowerCase();
-    if (normalized === "present") return "Present";
-    if (normalized === "absent") return "Absent";
-    return status || "";
-  }
-
-  function updateSummary(records) {
-    const present = records.filter((r) => String(r.status || "").toLowerCase() === "present").length;
-    const absent = records.filter((r) => String(r.status || "").toLowerCase() === "absent").length;
-    const total = records.length;
-
-    const presentBox = document.getElementById("attendancePresentCount");
-    const absentBox = document.getElementById("attendanceAbsentCount");
-    const totalBox = document.getElementById("attendanceTotalCount");
-
-    if (presentBox) presentBox.textContent = String(present);
-    if (absentBox) absentBox.textContent = String(absent);
-    if (totalBox) totalBox.textContent = String(total);
-  }
-
-  async function loadSettingsToAttendanceFields() {
-    try {
-      const response = await fetch(`${API}/api/settings`);
-      const data = await response.json();
-      const settings = data.settings || {};
-
-      if (attendanceTermInput && settings.current_term) {
-        attendanceTermInput.value = settings.current_term;
-      }
-      if (attendanceYearInput && settings.academic_year) {
-        attendanceYearInput.value = settings.academic_year;
-      }
-
-      if (quickTerm && settings.current_term) {
-        quickTerm.value = settings.current_term;
-      }
-      if (quickYear && settings.academic_year) {
-        quickYear.value = settings.academic_year;
-      }
-    } catch (error) {
-      console.error("Could not load settings:", error);
-    }
-
-    if (attendanceDateInput && !attendanceDateInput.value) {
-      attendanceDateInput.value = new Date().toISOString().slice(0, 10);
-    }
-
-    if (quickDate && !quickDate.value) {
-      quickDate.value = new Date().toISOString().slice(0, 10);
-    }
-  }
-
-  async function loadBranchesInto(selectElement, includePlaceholder) {
-    if (!selectElement) return;
-
-    try {
-      const response = await fetch(`${API}/api/branches`, { headers: authHeaders(false) });
-      const data = await response.json();
-      const branches = data.branches || [];
-
-      selectElement.innerHTML = includePlaceholder
-        ? '<option value="">Select branch</option>'
-        : "";
-
-      branches.forEach((branch) => {
-        const option = document.createElement("option");
-        option.value = branch.id;
-        option.textContent = branch.branch_name || "Branch";
-        selectElement.appendChild(option);
-      });
-    } catch (error) {
-      console.error("Could not load branches:", error);
-      selectElement.innerHTML = '<option value="">Could not load branches</option>';
-    }
-  }
-
-  async function loadClassesInto(selectElement) {
-    if (!selectElement) return;
-
-    try {
-      const response = await fetch(`${API}/api/classes`, { headers: authHeaders(false) });
-      const data = await response.json();
-      const classes = data.classes || [];
-
-      selectElement.innerHTML = '<option value="">Select class</option>';
-
-      classes.forEach((cls) => {
-        const option = document.createElement("option");
-        option.value = cls.id;
-        option.textContent = cls.class_name || "Class";
-        selectElement.appendChild(option);
-      });
-    } catch (error) {
-      console.error("Could not load classes:", error);
-      selectElement.innerHTML = '<option value="">Could not load classes</option>';
-    }
-  }
-
-  async function loadStudentsByBranch(branchId, selectElement) {
-    if (!selectElement) return;
-
-    if (!branchId) {
-      selectElement.innerHTML = '<option value="">Select branch first</option>';
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API}/api/students?branch_id=${encodeURIComponent(branchId)}`, {
-        headers: authHeaders(false)
-      });
-      const data = await response.json();
-      const students = data.students || [];
-
-      selectElement.innerHTML = '<option value="">Select student</option>';
-
-      students.forEach((student) => {
-        const option = document.createElement("option");
-        option.value = student.id;
-        option.dataset.classId = student.class_id || "";
-        option.textContent = `${student.full_name || ""} - ${student.admission_number || ""}`;
-        selectElement.appendChild(option);
-      });
-    } catch (error) {
-      console.error("Could not load students:", error);
-      selectElement.innerHTML = '<option value="">Could not load students</option>';
-    }
-  }
-
-  async function loadTeachersByBranch(branchId) {
-    if (!teacherSelect) return;
-
-    if (!branchId) {
-      teacherSelect.innerHTML = '<option value="">Select teacher</option>';
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API}/api/teachers?branch_id=${encodeURIComponent(branchId)}`, {
-        headers: authHeaders(false)
-      });
-      const data = await response.json();
-      const teachers = data.teachers || [];
-
-      teacherSelect.innerHTML = '<option value="">Select teacher</option>';
-
-      teachers.forEach((teacher) => {
-        const option = document.createElement("option");
-        option.value = teacher.id;
-        option.textContent = teacher.full_name || teacher.teacher_id || "Teacher";
-        teacherSelect.appendChild(option);
-      });
-    } catch (error) {
-      console.error("Could not load teachers:", error);
-      teacherSelect.innerHTML = '<option value="">Could not load teachers</option>';
-    }
-  }
-
-  async function loadAttendanceRecords() {
-    if (!attendanceTableBody) return;
-
-    attendanceTableBody.innerHTML = '<tr><td colspan="11">Loading attendance...</td></tr>';
-
-    try {
-      let url = `${API}/api/attendance`;
-
-      if (isBranchAdmin() && getAdminBranchId()) {
-        url += `?branch_id=${encodeURIComponent(getAdminBranchId())}`;
-      }
-
-      const response = await fetch(url, { headers: authHeaders(false) });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Could not load attendance records.");
-      }
-
-      attendanceRecords = data.attendance || [];
-      updateSummary(attendanceRecords);
-
-      if (attendanceRecords.length === 0) {
-        attendanceTableBody.innerHTML = '<tr><td colspan="11">No attendance records found.</td></tr>';
-        return;
-      }
-
-      attendanceTableBody.innerHTML = "";
-
-      attendanceRecords.forEach((record) => {
-        const encoded = encodeURIComponent(JSON.stringify(record));
-        const row = document.createElement("tr");
-
-        row.innerHTML = `
-          <td>${safe(record.branch_name)}</td>
-          <td>${safe(record.student_name)}</td>
-          <td>${safe(record.admission_number)}</td>
-          <td>${safe(record.class_name)}</td>
-          <td>${safe(record.teacher_name)}</td>
-          <td>${safe(record.attendance_date ? String(record.attendance_date).slice(0, 10) : "")}</td>
-          <td>${safe(record.term)}</td>
-          <td>${safe(record.academic_year)}</td>
-          <td>${safe(formatStatus(record.status))}</td>
-          <td>${safe(record.remarks)}</td>
-          <td>
-            <button type="button" class="small-btn edit-attendance-btn" data-record="${encoded}">Edit</button>
-          </td>
-        `;
-
-        attendanceTableBody.appendChild(row);
-      });
-    } catch (error) {
-      console.error(error);
-      updateSummary([]);
-      attendanceTableBody.innerHTML = `<tr><td colspan="11">${safe(error.message || "Cannot connect to backend.")}</td></tr>`;
-    }
-  }
-
-  async function saveAttendance(event) {
-    event.preventDefault();
-
-    const branchId = isBranchAdmin() ? getAdminBranchId() : (branchSelect ? branchSelect.value : "");
-    const selectedStudent = studentSelect ? studentSelect.selectedOptions[0] : null;
-
-    const payload = {
-      branch_id: branchId,
-      student_id: studentSelect ? studentSelect.value : "",
-      class_id: selectedStudent ? selectedStudent.dataset.classId || null : null,
-      teacher_id: teacherSelect ? (teacherSelect.value || null) : null,
-      attendance_date: attendanceDateInput ? attendanceDateInput.value : "",
-      term: attendanceTermInput ? attendanceTermInput.value : "",
-      academic_year: attendanceYearInput ? attendanceYearInput.value.trim() : "",
-      status: attendanceStatusInput ? attendanceStatusInput.value : "",
-      remarks: attendanceRemarksInput ? attendanceRemarksInput.value.trim() : ""
-    };
-
-    if (!payload.branch_id || !payload.student_id || !payload.attendance_date || !payload.status) {
-      alert("Branch, student, date and status are required.");
-      return;
-    }
-
-    if (!["present", "absent"].includes(String(payload.status).toLowerCase())) {
-      alert("Attendance status must be Present or Absent.");
-      return;
-    }
-
-    const editingId = attendanceIdInput ? attendanceIdInput.value : "";
-    const url = editingId ? `${API}/api/attendance/${editingId}` : `${API}/api/attendance`;
-
-    try {
-      const response = await fetch(url, {
-        method: editingId ? "PUT" : "POST",
-        headers: authHeaders(true),
-        body: JSON.stringify(payload)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to save attendance.");
-      }
-
-      alert(editingId ? "Attendance updated successfully." : "Attendance saved successfully.");
-
-      if (attendanceForm) attendanceForm.reset();
-      if (attendanceIdInput) attendanceIdInput.value = "";
-
-      const submitBtn = attendanceForm ? attendanceForm.querySelector("button[type='submit']") : null;
-      if (submitBtn) submitBtn.textContent = "Save Attendance";
-
-      await loadSettingsToAttendanceFields();
-      await loadStudentsByBranch(branchId, studentSelect);
-      await loadTeachersByBranch(branchId);
-      await loadAttendanceRecords();
-    } catch (error) {
-      console.error(error);
-      alert(error.message || "Cannot connect to backend.");
-    }
-  }
-
-  async function startEditAttendance(record) {
-    if (attendanceIdInput) attendanceIdInput.value = record.id || "";
-
-    const branchId = String(record.branch_id || "");
-
-    if (branchSelect && !branchSelect.disabled) {
-      branchSelect.value = branchId;
-    }
-
-    await loadStudentsByBranch(branchId, studentSelect);
-    await loadTeachersByBranch(branchId);
-
-    if (studentSelect) studentSelect.value = record.student_id || "";
-    if (teacherSelect) teacherSelect.value = record.teacher_id || "";
-    if (attendanceDateInput) attendanceDateInput.value = record.attendance_date ? String(record.attendance_date).slice(0, 10) : "";
-    if (attendanceTermInput) attendanceTermInput.value = record.term || "";
-    if (attendanceYearInput) attendanceYearInput.value = record.academic_year || "";
-    if (attendanceStatusInput) attendanceStatusInput.value = record.status || "present";
-    if (attendanceRemarksInput) attendanceRemarksInput.value = record.remarks || "";
-
-    const submitBtn = attendanceForm ? attendanceForm.querySelector("button[type='submit']") : null;
-    if (submitBtn) submitBtn.textContent = "Update Attendance";
-
-    if (attendanceForm) {
-      attendanceForm.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }
-
-  function updateQuickTotals() {
-    const statuses = Array.from(document.querySelectorAll(".quick-status"));
-    const total = statuses.length;
-    const present = statuses.filter((el) => el.value === "present").length;
-    const absent = statuses.filter((el) => el.value === "absent").length;
-
-    const totalBox = document.getElementById("quick_total_count");
-    const presentBox = document.getElementById("quick_present_count");
-    const absentBox = document.getElementById("quick_absent_count");
-
-    if (totalBox) totalBox.textContent = String(total);
-    if (presentBox) presentBox.textContent = String(present);
-    if (absentBox) absentBox.textContent = String(absent);
-  }
-
-  function setAllQuickStatuses(status) {
-    document.querySelectorAll(".quick-status").forEach((select) => {
-      select.value = status;
+    const response = await fetch(`${API}/api/branches`, {
+      headers: headers(false)
     });
-    updateQuickTotals();
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Could not load branches.");
+    }
+
+    branches = Array.isArray(data.branches) ? data.branches : [];
+
+    branchInput.innerHTML = '<option value="">Select branch</option>';
+
+    branches.forEach((branch) => {
+      const option = document.createElement("option");
+      option.value = branch.id;
+      option.textContent = branch.branch_name || "Branch";
+      branchInput.appendChild(option);
+    });
+
+    if (isBranchAdmin()) {
+      const ownBranch = String(adminBranchId());
+
+      if (!ownBranch) {
+        throw new Error("No branch is assigned to this account.");
+      }
+
+      branchInput.value = ownBranch;
+      branchInput.disabled = true;
+    }
   }
 
-  async function loadQuickStudents() {
-    if (!quickBranch || !quickClass || !quickBox || !saveQuickBtn) return;
+  async function loadClasses() {
+    if (!classInput) return;
 
-    if (!quickBranch.value || !quickClass.value) {
-      alert("Please select branch and class.");
+    classInput.innerHTML = '<option value="">Loading classes...</option>';
+
+    const response = await fetch(`${API}/api/classes`, {
+      headers: headers(false)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Could not load classes.");
+    }
+
+    classes = Array.isArray(data.classes) ? data.classes : [];
+
+    classInput.innerHTML = '<option value="">Select class</option>';
+
+    classes.forEach((cls) => {
+      const option = document.createElement("option");
+      option.value = cls.id;
+      option.textContent = cls.class_name || "Class";
+      classInput.appendChild(option);
+    });
+  }
+
+  async function loadStudents() {
+    students = [];
+
+    if (!branchInput?.value || !classInput?.value) {
+      updateClassInfo();
+      renderRegister();
       return;
     }
 
-    quickBox.innerHTML = "<p>Loading students...</p>";
+    const response = await fetch(
+      `${API}/api/students?branch_id=${encodeURIComponent(branchInput.value)}`,
+      { headers: headers(false) }
+    );
 
-    try {
-      const response = await fetch(`${API}/api/students?branch_id=${encodeURIComponent(quickBranch.value)}`, {
-        headers: authHeaders(false)
-      });
-      const data = await response.json();
-      const students = (data.students || []).filter((student) =>
-        String(student.class_id || "") === String(quickClass.value) &&
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Could not load students.");
+    }
+
+    students = (Array.isArray(data.students) ? data.students : [])
+      .filter((student) =>
+        String(student.class_id || "") === String(classInput.value) &&
         String(student.status || "").toLowerCase() === "active"
       );
 
-      if (students.length === 0) {
-        quickBox.innerHTML = "<p>No active students found for selected class.</p>";
-        saveQuickBtn.style.display = "none";
-        if (quickMarkAllButtons) quickMarkAllButtons.style.display = "none";
-        return;
-      }
+    updateClassInfo();
+  }
 
-      let html = `
-        <div id="quickAttendanceTotals" style="display:flex; gap:20px; margin:15px 0; font-weight:bold;">
-          <div>Total Students: <span id="quick_total_count">0</span></div>
-          <div>Present: <span id="quick_present_count">0</span></div>
-          <div>Absent: <span id="quick_absent_count">0</span></div>
-        </div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Student</th>
-              <th>Admission No.</th>
-              <th>Status</th>
-              <th>Remarks</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
+  function updateClassInfo() {
+    const boys = students.filter(
+      (student) => normalizeSex(student.sex) === "Male"
+    ).length;
 
-      students.forEach((student) => {
-        html += `
-          <tr>
-            <td>${safe(student.full_name)}</td>
-            <td>${safe(student.admission_number)}</td>
-            <td>
-              <select class="quick-status" data-student-id="${student.id}">
-                <option value="present">Present</option>
-                <option value="absent">Absent</option>
-              </select>
-            </td>
-            <td>
-              <input type="text" class="quick-remarks" data-student-id="${student.id}" placeholder="Optional">
-            </td>
-          </tr>
-        `;
-      });
+    const girls = students.filter(
+      (student) => normalizeSex(student.sex) === "Female"
+    ).length;
 
-      html += "</tbody></table>";
-      quickBox.innerHTML = html;
+    if (boysCountEl) boysCountEl.textContent = String(boys);
+    if (girlsCountEl) girlsCountEl.textContent = String(girls);
+    if (enrolmentEl) enrolmentEl.textContent = String(students.length);
 
-      document.querySelectorAll(".quick-status").forEach((select) => {
-        select.addEventListener("change", updateQuickTotals);
-      });
+    if (teacherNameEl) {
+      const selected = branchInput?.selectedOptions?.[0];
+      teacherNameEl.textContent =
+        branchInput?.value && selected
+          ? selected.textContent
+          : "Select branch";
+    }
 
-      saveQuickBtn.style.display = "inline-block";
-      if (quickMarkAllButtons) quickMarkAllButtons.style.display = "block";
-      updateQuickTotals();
-    } catch (error) {
-      console.error(error);
-      quickBox.innerHTML = "<p>Could not load students.</p>";
-      saveQuickBtn.style.display = "none";
-      if (quickMarkAllButtons) quickMarkAllButtons.style.display = "none";
+    if (classNameEl) {
+      const selected = classInput?.selectedOptions?.[0];
+      classNameEl.textContent =
+        classInput?.value && selected
+          ? selected.textContent
+          : "Select class";
     }
   }
 
-  async function saveQuickAttendance() {
-    if (!quickBranch || !quickClass || !quickDate || !quickTerm || !quickYear || !saveQuickBtn) return;
+  async function loadAttendance() {
+    allAttendance = [];
 
-    if (!quickBranch.value || !quickClass.value || !quickDate.value || !quickTerm.value || !quickYear.value) {
-      alert("Please select branch, class, date, term, and academic year.");
+    if (!branchInput?.value) {
       return;
     }
 
-    const statuses = Array.from(document.querySelectorAll(".quick-status"));
-    if (statuses.length === 0) {
-      alert("No students loaded.");
-      return;
+    const response = await fetch(
+      `${API}/api/attendance?branch_id=${encodeURIComponent(branchInput.value)}`,
+      {
+        headers: headers(false)
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Could not load attendance records."
+      );
     }
 
-    const records = statuses.map((select) => {
-      const studentId = select.dataset.studentId;
-      const remarksInput = document.querySelector(`.quick-remarks[data-student-id="${studentId}"]`);
+    allAttendance = Array.isArray(data.attendance)
+      ? data.attendance
+      : [];
+  }
 
-      return {
-        branch_id: quickBranch.value,
-        student_id: studentId,
-        class_id: quickClass.value,
-        teacher_id: teacherSelect ? (teacherSelect.value || null) : null,
-        attendance_date: quickDate.value,
-        term: quickTerm.value,
-        academic_year: quickYear.value,
-        status: select.value,
-        remarks: remarksInput ? remarksInput.value.trim() : ""
-      };
+  function setWholeWeek(status) {
+    body.querySelectorAll(".attendance-toggle").forEach((button) => {
+      if (button.dataset.status === "holiday") return;
+
+      button.dataset.status = status;
+      button.textContent = statusLetter(status);
     });
 
-    saveQuickBtn.disabled = true;
-    saveQuickBtn.textContent = "Saving...";
+    recalculateRegister();
+  }
+
+  async function saveRegister() {
+    if (!branchInput?.value) {
+      showMessage("Please select a branch.", "error");
+      return;
+    }
+
+    if (!classInput?.value) {
+      showMessage("Please select a class.", "error");
+      return;
+    }
+
+    if (!termInput.value) {
+      showMessage("Please select the term.", "error");
+      return;
+    }
+
+    if (!yearInput.value.trim()) {
+      showMessage("Academic year is required.", "error");
+      return;
+    }
+
+    const buttons = Array.from(
+      body.querySelectorAll(".attendance-toggle")
+    );
+
+    const records = buttons
+      .filter(
+        (button) =>
+          button.dataset.status === "present" ||
+          button.dataset.status === "absent"
+      )
+      .map((button) => ({
+        branch_id: branchInput.value,
+        student_id: button.dataset.studentId,
+        class_id: button.dataset.classId || classInput.value,
+        teacher_id: null,
+        attendance_date: button.dataset.date,
+        term: termInput.value,
+        academic_year: yearInput.value.trim(),
+        status: button.dataset.status,
+        remarks: ""
+      }));
+
+    if (!records.length) {
+      showMessage(
+        "Mark at least one attendance cell before saving.",
+        "error"
+      );
+      return;
+    }
+
+    const originalText = saveBtn.textContent;
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
 
     try {
       const response = await fetch(`${API}/api/attendance/bulk`, {
         method: "POST",
-        headers: authHeaders(true),
+        headers: headers(true),
         body: JSON.stringify({ records })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to save quick attendance.");
+        throw new Error(
+          data.message || "Failed to save attendance register."
+        );
       }
 
-      alert("Quick attendance saved successfully.");
-      await loadAttendanceRecords();
+      await loadAttendance();
+      renderRegister();
+
+      showMessage(
+        "Attendance register saved successfully.",
+        "success"
+      );
     } catch (error) {
       console.error(error);
-      alert(error.message || "Could not save quick attendance.");
+      showMessage(
+        error.message || "Cannot connect to backend.",
+        "error"
+      );
     } finally {
-      saveQuickBtn.disabled = false;
-      saveQuickBtn.textContent = "Save Quick Attendance";
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
     }
   }
 
-  function printAttendanceSheet() {
-    const rows = attendanceRecords.map((record) => `
-      <tr>
-        <td>${safe(record.branch_name)}</td>
-        <td>${safe(record.student_name)}</td>
-        <td>${safe(record.admission_number)}</td>
-        <td>${safe(record.class_name)}</td>
-        <td>${safe(record.teacher_name)}</td>
-        <td>${safe(record.attendance_date ? String(record.attendance_date).slice(0, 10) : "")}</td>
-        <td>${safe(record.term)}</td>
-        <td>${safe(record.academic_year)}</td>
-        <td>${safe(formatStatus(record.status))}</td>
-        <td>${safe(record.remarks)}</td>
-      </tr>
-    `).join("");
+  function changeWeek() {
+    renderRegister();
+  }
 
-    const printWindow = window.open("", "_blank", "width=1100,height=750");
+  function setDefaultWeekStart() {
+    if (!weekStartInput.value) {
+      weekStartInput.value = toIsoDate(mondayOf(new Date()));
+    }
+  }
 
-    printWindow.document.open();
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Attendance Sheet</title>
-        <style>
-          body { font-family: Arial, sans-serif; color: #222; padding: 18px; }
-          .header { text-align: center; border-bottom: 3px solid #073b70; margin-bottom: 14px; padding-bottom: 8px; }
-          .header h1 { margin: 0; color: #073b70; }
-          .summary { display: flex; gap: 22px; margin-bottom: 12px; font-weight: bold; }
-          table { width: 100%; border-collapse: collapse; }
-          th, td { border: 1px solid #333; padding: 6px; font-size: 12px; text-align: left; }
-          th { background: #073b70; color: #fff; }
-          @media print { button { display: none; } }
-        </style>
-      </head>
-      <body>
-        <button onclick="window.print()">Print</button>
-        <div class="header">
-          <h1>Delight International School</h1>
-          <p><strong>Attendance Sheet</strong></p>
-        </div>
-        <div class="summary">
-          <div>Present: ${safe(document.getElementById("attendancePresentCount")?.textContent || "0")}</div>
-          <div>Absent: ${safe(document.getElementById("attendanceAbsentCount")?.textContent || "0")}</div>
-          <div>Total: ${safe(document.getElementById("attendanceTotalCount")?.textContent || "0")}</div>
-        </div>
-        <table>
-          <thead>
+  function printStudentAttendance(studentId) {
+    const student = students.find(
+      (item) => String(item.id) === String(studentId)
+    );
+
+    if (!student) {
+      alert("Learner could not be found.");
+      return;
+    }
+
+    const records = allAttendance
+      .filter((record) => {
+        const status = String(record.status || "").toLowerCase();
+
+        return (
+          String(record.student_id) === String(student.id) &&
+          String(record.term || "") === String(termInput.value || "") &&
+          String(record.academic_year || "") ===
+            String(yearInput.value || "") &&
+          isWithinSelectedTerm(recordDate(record)) &&
+          (status === "present" || status === "absent")
+        );
+      })
+      .sort((a, b) => recordDate(a).localeCompare(recordDate(b)));
+
+    const present = records.filter(
+      (record) => String(record.status || "").toLowerCase() === "present"
+    ).length;
+
+    const absent = records.filter(
+      (record) => String(record.status || "").toLowerCase() === "absent"
+    ).length;
+
+    const detailRows = records.length
+      ? records.map((record, index) => {
+          const iso = recordDate(record);
+          const date = new Date(`${iso}T12:00:00`);
+          const day = date.toLocaleDateString("en-GB", {
+            weekday: "long"
+          });
+          const displayDate = date.toLocaleDateString("en-GB");
+          const status =
+            String(record.status || "").toLowerCase() === "present"
+              ? "Present"
+              : "Absent";
+
+          return `
             <tr>
-              <th>Branch</th><th>Student</th><th>Admission No.</th><th>Class</th><th>Teacher</th>
-              <th>Date</th><th>Term</th><th>Academic Year</th><th>Status</th><th>Remarks</th>
+              <td>${index + 1}</td>
+              <td>${safe(displayDate)}</td>
+              <td>${safe(day)}</td>
+              <td>${safe(status)}</td>
             </tr>
-          </thead>
-          <tbody>
-            ${rows || '<tr><td colspan="10">No attendance records found.</td></tr>'}
-          </tbody>
-        </table>
-      </body>
-      </html>
-    `);
+          `;
+        }).join("")
+      : `
+          <tr>
+            <td colspan="4">No saved attendance records found for this learner.</td>
+          </tr>
+        `;
+
+    const printWindow = window.open(
+      "",
+      "_blank",
+      "width=900,height=700"
+    );
+
+    if (!printWindow) {
+      alert("Please allow pop-ups to print the learner attendance summary.");
+      return;
+    }
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>${safe(studentName(student))} - Attendance Summary</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      color: #000;
+    }
+
+    h1, h2 {
+      text-align: center;
+      margin: 0 0 10px;
+    }
+
+    .student-details {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    .student-details td {
+      border: 1px solid #000;
+      padding: 8px;
+    }
+
+    .attendance-details {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    .attendance-details th,
+    .attendance-details td {
+      border: 1px solid #000;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .totals {
+      margin-top: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    @media print {
+      body {
+        margin: 15mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Delight International School</h1>
+  <h2>Individual Learner Attendance Summary</h2>
+
+  <table class="student-details">
+    <tr>
+      <td><strong>Admission No.</strong></td>
+      <td>${safe(student.admission_number || "")}</td>
+      <td><strong>Name</strong></td>
+      <td>${safe(studentName(student))}</td>
+    </tr>
+    <tr>
+      <td><strong>Sex</strong></td>
+      <td>${safe(sexLetter(student.sex))}</td>
+      <td><strong>Class</strong></td>
+      <td>${safe(student.class_name || "")}</td>
+    </tr>
+    <tr>
+      <td><strong>Term</strong></td>
+      <td>${safe(termInput.value || "")}</td>
+      <td><strong>Academic Year</strong></td>
+      <td>${safe(yearInput.value || "")}</td>
+    </tr>
+  </table>
+
+  <table class="attendance-details">
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Date</th>
+        <th>Day</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${detailRows}
+    </tbody>
+  </table>
+
+  <div class="totals">
+    Present: ${present}
+    &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+    Absent: ${absent}
+    &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+    Total Recorded School Days: ${records.length}
+  </div>
+
+</body>
+</html>`);
+
     printWindow.document.close();
+    printWindow.focus();
+
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
   }
 
-  if (attendanceForm) {
-    attendanceForm.addEventListener("submit", saveAttendance);
+  function printRegister() {
+    const section = document.getElementById("savedAttendanceSummarySection");
+
+    if (!section) {
+      alert("Saved Attendance Summary could not be found.");
+      return;
+    }
+
+    const printWindow = window.open("", "_blank", "width=1000,height=700");
+
+    if (!printWindow) {
+      alert("Please allow pop-ups to print the attendance summary.");
+      return;
+    }
+
+    const printable = section.cloneNode(true);
+    const printButton = printable.querySelector("#teacherPrintAttendanceBtn");
+    if (printButton) printButton.remove();
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Saved Attendance Summary</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      color: #000;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    p {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  ${printable.innerHTML}
+</body>
+</html>`);
+
+    printWindow.document.close();
+    printWindow.focus();
+
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
   }
 
-  if (attendanceTableBody) {
-    attendanceTableBody.addEventListener("click", function (event) {
-      const editBtn = event.target.closest(".edit-attendance-btn");
-      if (!editBtn) return;
+  async function initialize() {
+    try {
+      setDefaultWeekStart();
 
+      await loadSettings();
+      await loadBranches();
+      await loadClasses();
+      await loadAttendance();
+
+      if (isBranchAdmin() && branchInput.value) {
+        updateClassInfo();
+      }
+
+      renderRegister();
+    } catch (error) {
+      console.error(error);
+
+      if (body) {
+        body.innerHTML =
+          `<tr><td colspan="12">${safe(
+            error.message || "Could not load attendance register."
+          )}</td></tr>`;
+      }
+
+      showMessage(
+        error.message || "Could not load attendance register.",
+        "error"
+      );
+    }
+  }
+
+  if (branchInput) {
+    branchInput.addEventListener("change", async () => {
       try {
-        const record = JSON.parse(decodeURIComponent(editBtn.dataset.record || ""));
-        startEditAttendance(record);
+        students = [];
+        allAttendance = [];
+        classInput.value = "";
+
+        updateClassInfo();
+        renderRegister();
+
+        if (branchInput.value) {
+          await loadAttendance();
+        }
+
+        renderRegister();
       } catch (error) {
         console.error(error);
-        alert("Could not open attendance record for editing.");
+        showMessage(
+          error.message || "Could not load branch attendance.",
+          "error"
+        );
       }
     });
   }
 
-  if (branchSelect) {
-    branchSelect.addEventListener("change", async function () {
-      const branchId = branchSelect.value;
-      await loadStudentsByBranch(branchId, studentSelect);
-      await loadTeachersByBranch(branchId);
+  if (classInput) {
+    classInput.addEventListener("change", async () => {
+      try {
+        await loadStudents();
+        renderRegister();
+      } catch (error) {
+        console.error(error);
+        showMessage(
+          error.message || "Could not load students.",
+          "error"
+        );
+      }
     });
   }
 
-  if (loadQuickBtn) {
-    loadQuickBtn.addEventListener("click", loadQuickStudents);
-  }
-
-  if (saveQuickBtn) {
-    saveQuickBtn.addEventListener("click", saveQuickAttendance);
-  }
-
   if (markAllPresentBtn) {
-    markAllPresentBtn.addEventListener("click", function () {
-      setAllQuickStatuses("present");
+    markAllPresentBtn.addEventListener("click", () => {
+      setWholeWeek("present");
     });
   }
 
   if (markAllAbsentBtn) {
-    markAllAbsentBtn.addEventListener("click", function () {
-      setAllQuickStatuses("absent");
+    markAllAbsentBtn.addEventListener("click", () => {
+      setWholeWeek("absent");
     });
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", saveRegister);
   }
 
   if (printBtn) {
-    printBtn.addEventListener("click", function (event) {
-      event.preventDefault();
-      printAttendanceSheet();
-    });
+    printBtn.addEventListener("click", printRegister);
   }
 
-  (async function init() {
-    await loadSettingsToAttendanceFields();
+  if (weekInput) {
+    weekInput.addEventListener("change", changeWeek);
+  }
 
-    if (isBranchAdmin()) {
-      const branchId = String(getAdminBranchId() || "");
+  if (weekStartInput) {
+    weekStartInput.addEventListener("change", changeWeek);
+  }
 
-      if (branchSelect) {
-        branchSelect.innerHTML = `<option value="${safe(branchId)}">My Branch</option>`;
-        branchSelect.value = branchId;
-        branchSelect.disabled = true;
-      }
+  if (termInput) {
+    termInput.addEventListener("change", renderRegister);
+  }
 
-      if (quickBranch) {
-        quickBranch.innerHTML = `<option value="${safe(branchId)}">My Branch</option>`;
-        quickBranch.value = branchId;
-        quickBranch.disabled = true;
-      }
-
-      await loadStudentsByBranch(branchId, studentSelect);
-      await loadTeachersByBranch(branchId);
-    } else {
-      await loadBranchesInto(branchSelect, true);
-      await loadBranchesInto(quickBranch, true);
-    }
-
-    await loadClassesInto(quickClass);
-    await loadAttendanceRecords();
-  })();
+  initialize();
 });

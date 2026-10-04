@@ -153,9 +153,9 @@ document.addEventListener("DOMContentLoaded", function () {
         </div>
 
         <div class="dashboard-card summary-card">
-          <h2>Attendance Today</h2>
-          <p>${s.attendance_today || 0}</p>
-          ${b ? branchLines(b.attendance_today) : ""}
+          <h2>Total Attendance</h2>
+          <p>${s.total_attendance || 0}</p>
+          ${b ? branchLines(b.total_attendance) : ""}
         </div>
       `;
     } catch (error) {
