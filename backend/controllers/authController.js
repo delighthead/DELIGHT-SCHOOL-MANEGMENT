@@ -21,8 +21,9 @@ exports.login = async (req, res) => {
     } else if (role === "teacher") {
       allowedRoles = ["teacher", "teacher_admin"];
     } else if (role === "parent") {
-      // Allow super admin to use parent portal when one account serves both identities.
-      allowedRoles = ["parent", "super_admin"];
+      // A teacher or super admin may also use the Parent portal,
+      // but only if the Parent profile/child checks below succeed.
+      allowedRoles = ["parent", "teacher", "teacher_admin", "super_admin"];
     } else {
       return res.status(400).json({
         message: "Unknown user role"
@@ -82,7 +83,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    const sessionRole = role === "parent" && user.role === "super_admin"
+    const sessionRole = role === "parent"
       ? "parent"
       : user.role;
 

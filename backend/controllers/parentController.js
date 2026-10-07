@@ -85,6 +85,8 @@ async function getLoggedInParentProfile(user) {
 
 // Add parent
 exports.createParent = async (req, res) => {
+  let connection;
+
   try {
     let {
       branch_id,
@@ -95,8 +97,6 @@ exports.createParent = async (req, res) => {
       address
     } = req.body;
 
-    // Branch-scoped administrators can only create parents
-    // inside the branch assigned to their login account.
     if (isBranchScopedAdmin(req.user)) {
       if (!req.user.branch_id) {
         return res.status(403).json({
@@ -113,28 +113,98 @@ exports.createParent = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(phone, 10);
+    ghana_card_number = String(ghana_card_number).trim().toUpperCase();
+    phone = String(phone).trim();
 
-    const [userResult] = await db.query(
-      `INSERT INTO users (branch_id, full_name, username, password, role, phone, email, status)
-       VALUES (?, ?, ?, ?, 'parent', ?, ?, 'active')`,
-      [
-        branch_id,
-        full_name,
-        ghana_card_number,
-        hashedPassword,
-        phone,
-        email || null
-      ]
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    // Do not create duplicate parent profiles.
+    const [existingParents] = await connection.query(
+      `SELECT id
+       FROM parents
+       WHERE ghana_card_number = ?
+       LIMIT 1
+       FOR UPDATE`,
+      [ghana_card_number]
     );
 
-    const [parentResult] = await db.query(
+    if (existingParents.length > 0) {
+      await connection.rollback();
+      connection.release();
+      connection = null;
+
+      return res.status(409).json({
+        message: "A parent profile already exists for this Ghana Card number"
+      });
+    }
+
+    // Reuse an existing Teacher/Teacher Admin account when the teacher
+    // is also a parent. Never change that account's role or password.
+    const [existingUsers] = await connection.query(
+      `SELECT id, role, status
+       FROM users
+       WHERE username = ?
+       LIMIT 1
+       FOR UPDATE`,
+      [ghana_card_number]
+    );
+
+    let parentUserId;
+    let reusedExistingAccount = false;
+
+    if (existingUsers.length > 0) {
+      const existingUser = existingUsers[0];
+
+      if (!["teacher", "teacher_admin"].includes(existingUser.role)) {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+
+        return res.status(409).json({
+          message: "This Ghana Card number is already used by another account"
+        });
+      }
+
+      if (existingUser.status !== "active") {
+        await connection.rollback();
+        connection.release();
+        connection = null;
+
+        return res.status(403).json({
+          message: `The existing teacher account is ${existingUser.status}`
+        });
+      }
+
+      parentUserId = existingUser.id;
+      reusedExistingAccount = true;
+    } else {
+      const hashedPassword = await bcrypt.hash(phone, 10);
+
+      const [userResult] = await connection.query(
+        `INSERT INTO users
+         (branch_id, full_name, username, password, role, phone, email, status)
+         VALUES (?, ?, ?, ?, 'parent', ?, ?, 'active')`,
+        [
+          branch_id,
+          full_name,
+          ghana_card_number,
+          hashedPassword,
+          phone,
+          email || null
+        ]
+      );
+
+      parentUserId = userResult.insertId;
+    }
+
+    const [parentResult] = await connection.query(
       `INSERT INTO parents
-      (branch_id, user_id, ghana_card_number, full_name, phone, email, address)
-      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+       (branch_id, user_id, ghana_card_number, full_name, phone, email, address)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         branch_id,
-        userResult.insertId,
+        parentUserId,
         ghana_card_number,
         full_name,
         phone,
@@ -143,40 +213,99 @@ exports.createParent = async (req, res) => {
       ]
     );
 
-    await linkParentToMatchingStudents(
-      parentResult.insertId,
-      branch_id,
-      ghana_card_number,
-      phone
+    // Link this parent only to matching students in the selected branch.
+    const cleanCard = ghana_card_number;
+    const cleanPhone = phone;
+
+    await connection.query(
+      `INSERT INTO parent_student_links (parent_id, student_id, relationship)
+       SELECT
+         ?,
+         students.id,
+         CASE
+           WHEN students.mother_ghana_card = ? OR students.mother_phone = ? THEN 'mother'
+           WHEN students.father_ghana_card = ? OR students.father_phone = ? THEN 'father'
+           ELSE 'guardian'
+         END
+       FROM students
+       WHERE students.branch_id = ?
+         AND (
+           students.mother_ghana_card = ?
+           OR students.father_ghana_card = ?
+           OR students.parent_ghana_card_number = ?
+           OR students.mother_phone = ?
+           OR students.father_phone = ?
+           OR students.parent_phone = ?
+         )
+       ON DUPLICATE KEY UPDATE
+         relationship = VALUES(relationship)`,
+      [
+        parentResult.insertId,
+        cleanCard,
+        cleanPhone,
+        cleanCard,
+        cleanPhone,
+        branch_id,
+        cleanCard,
+        cleanCard,
+        cleanCard,
+        cleanPhone,
+        cleanPhone,
+        cleanPhone
+      ]
     );
 
-    await db.query(
+    await connection.query(
       `INSERT INTO activity_logs
-      (branch_id, user_id, action, module, description)
-      VALUES (?, ?, ?, ?, ?)`,
+       (branch_id, user_id, action, module, description)
+       VALUES (?, ?, ?, ?, ?)`,
       [
         branch_id,
         req.user ? req.user.id : null,
         "Parent Added",
         "Parents",
-        `Added parent ${full_name} with Ghana Card ${ghana_card_number}.`
+        reusedExistingAccount
+          ? `Linked teacher account to parent profile for ${full_name}.`
+          : `Added parent ${full_name} with Ghana Card ${ghana_card_number}.`
       ]
     );
 
-    res.status(201).json({
-      message: "Parent added successfully",
+    await connection.commit();
+    connection.release();
+    connection = null;
+
+    const response = {
+      message: reusedExistingAccount
+        ? "Parent profile added and linked to the existing teacher account"
+        : "Parent added successfully",
       parent_database_id: parentResult.insertId,
       login_username: ghana_card_number,
-      login_password: phone
-    });
+      uses_existing_account: reusedExistingAccount
+    };
+
+    // Only a newly-created Parent account uses the phone as its
+    // initial password. Never expose/reset a teacher's existing password.
+    if (!reusedExistingAccount) {
+      response.login_password = phone;
+    }
+
+    return res.status(201).json(response);
   } catch (error) {
+    if (connection) {
+      try {
+        await connection.rollback();
+      } catch (_) {}
+
+      connection.release();
+    }
+
     if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).json({
         message: "Parent Ghana Card number or username already exists"
       });
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       message: "Failed to add parent",
       error: error.message
     });
