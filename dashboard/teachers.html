@@ -130,8 +130,61 @@
         </form>
       </section>
 
+      <!-- CLASS TEACHER ASSIGNMENT -->
       <section class="dashboard-section">
-        <h2>Assign Teacher to Class / Subject</h2>
+        <h2>Assign Class Teacher</h2>
+        <p>
+          Assign a teacher to be responsible for one class.
+          This assignment controls which students the teacher can mark attendance for.
+        </p>
+
+        <form class="admin-form" id="classTeacherAssignForm">
+          <div>
+            <label for="class_teacher_branch_id">Branch</label>
+            <select id="class_teacher_branch_id">
+              <option value="">Select branch</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="class_teacher_teacher_id">Select Teacher</label>
+            <select id="class_teacher_teacher_id">
+              <option value="">Select teacher</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="class_teacher_class_id">Class</label>
+            <select id="class_teacher_class_id">
+              <option value="">Select class</option>
+            </select>
+            <small class="assignment-help">
+              Select the class for which this teacher is the Class Teacher.
+            </small>
+          </div>
+
+          <div>
+            <label for="class_teacher_academic_year">Academic Year</label>
+            <input
+              type="text"
+              id="class_teacher_academic_year"
+              placeholder="Example: 2026/2027"
+            >
+          </div>
+
+          <button type="submit">Save Class Teacher Assignment</button>
+        </form>
+      </section>
+
+
+      <!-- SUBJECT TEACHER ASSIGNMENT -->
+      <section class="dashboard-section">
+        <h2>Assign Subjects to Teach</h2>
+        <p>
+          Select the classes and subjects this teacher teaches.
+          These assignments are separate from the Class Teacher assignment.
+        </p>
+
         <form class="admin-form" id="teacherAssignForm">
           <div>
             <label for="assign_branch_id">Branch</label>
@@ -148,11 +201,15 @@
           </div>
 
           <div>
-            <label>Assign Classes</label>
+            <label>Classes to Teach</label>
 
-            <div id="assign_class_checkboxes"
-                 class="assignment-checkbox-grid">
-              <p style="margin:0;">Select a branch first to load classes.</p>
+            <div
+              id="assign_class_checkboxes"
+              class="assignment-checkbox-grid"
+            >
+              <p style="margin:0;">
+                Select a branch first to load classes.
+              </p>
             </div>
 
             <small class="assignment-help">
@@ -161,11 +218,12 @@
           </div>
 
           <div>
-            <label>Subjects</label>
+            <label>Subjects to Teach</label>
 
-            <div id="assign_subject_checkboxes"
-                 class="assignment-checkbox-grid">
-
+            <div
+              id="assign_subject_checkboxes"
+              class="assignment-checkbox-grid"
+            >
               <label>
                 <input type="checkbox" name="assign_subjects" value="ENGLISH">
                 ENGLISH
@@ -230,7 +288,6 @@
                 <input type="checkbox" name="assign_subjects" value="OUR WORLD OUR PEOPLE">
                 OUR WORLD OUR PEOPLE
               </label>
-
             </div>
 
             <small class="assignment-help">
@@ -239,50 +296,18 @@
           </div>
 
           <div>
-            <label for="assign_role">Role</label>
-            <select id="assign_role">
-              <option value="">Select role</option>
-              <option value="Class Teacher">Class Teacher</option>
-              <option value="Subject Teacher" selected>Subject Teacher</option>
-            </select>
-          </div>
-
-          <div>
             <label for="assign_academic_year">Academic Year</label>
-            <input type="text" id="assign_academic_year" placeholder="Example: 2025/2026">
+            <input
+              type="text"
+              id="assign_academic_year"
+              placeholder="Example: 2026/2027"
+            >
           </div>
 
-          <button type="submit">Assign Teacher</button>
+          <button type="submit">Save Subject Teaching Assignment</button>
         </form>
       </section>
 
-      <section class="dashboard-section">
-        <h2>Manage Teacher Assignments</h2>
-        <p style="color:#64748b; margin-top:-8px;">
-          Edit, change, or remove teacher class and subject assignments.
-        </p>
-
-        <div style="overflow-x:auto;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Branch</th>
-                <th>Teacher</th>
-                <th>Class</th>
-                <th>Subject</th>
-                <th>Role</th>
-                <th>Academic Year</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="teacherAssignmentsTableBody">
-              <tr>
-                <td colspan="7">Loading teacher assignments...</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
 
       <section class="dashboard-section">
         <h2>Teacher List</h2>
@@ -298,6 +323,31 @@
             </select>
             entries
           </label>
+
+          <div style="
+            display:flex;
+            align-items:center;
+            gap:8px;
+            flex-wrap:wrap;
+          ">
+            <label for="teacherListSearch"
+              style="font-weight:600;">
+              Search:
+            </label>
+
+            <input
+              type="search"
+              id="teacherListSearch"
+              placeholder="Teacher ID, Ghana Card or Phone"
+              autocomplete="off"
+              style="
+                min-width:280px;
+                padding:9px 12px;
+                border:1px solid #cbd5e1;
+                border-radius:7px;
+              "
+            >
+          </div>
 
           <span id="teacherListEntriesInfo">Showing 0 entries</span>
         </div>
@@ -329,6 +379,70 @@
           <div class="submission-pagination" id="teacherListPagination"></div>
         </div>
       </section>
+
+      <section
+        class="dashboard-section"
+        id="teacherAssignmentsSection"
+      >
+        <h2>Teacher Assignments</h2>
+
+        <div
+          id="teacherAssignmentsSelectedTeacher"
+          style="
+            display:none;
+            margin-bottom:12px;
+            padding:10px 12px;
+            background:#eef6ff;
+            border-left:4px solid #0b5cab;
+            border-radius:6px;
+            font-weight:600;
+          "
+        ></div>
+
+        <div style="
+          display:flex;
+          justify-content:flex-end;
+          margin-bottom:10px;
+        ">
+          <button
+            type="button"
+            id="showAllTeacherAssignmentsBtn"
+            class="small-btn"
+            style="
+              background:#475569;
+              color:#fff;
+              border:none;
+              cursor:pointer;
+            "
+          >
+            Show All Assignments
+          </button>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Branch</th>
+                <th>Teacher</th>
+                <th>Class</th>
+                <th>Subject</th>
+                <th>Role</th>
+                <th>Academic Year</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody id="teacherAssignmentsTableBody">
+              <tr>
+                <td colspan="7">
+                  Loading teacher assignments...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -337,10 +451,10 @@
   <script src="../js/api-helper.js?v=2"></script>
   <script src="../js/teacher-form-dropdown-fix.js?v=2"></script>
   <script src="../js/teacher-edit-button-style.js?v=1"></script>
-  <script src="../js/teachers-api.js?v=10"></script>
+  <script src="../js/teachers-api.js?v=19"></script>
   <script src="../js/make-teacher-admin-final.js?v=2"></script>
   <script src="../js/assign-role-dropdown-force.js?v=1"></script>
-  <script src="../js/assign-teacher-submit-final.js?v=3"></script>
+  <script src="../js/assign-teacher-submit-final.js?v=4"></script>
   <script src="../js/admin-table-view-controls.js?v=1"></script>
 </body>
 </html>

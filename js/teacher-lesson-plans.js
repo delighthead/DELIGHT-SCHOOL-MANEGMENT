@@ -52,7 +52,11 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     assignments = Array.isArray(data.assignments)
-      ? data.assignments
+      ? data.assignments.filter(item =>
+          String(item.role || "").trim().toUpperCase() === "SUBJECT TEACHER" &&
+          String(item.subject || "").trim() &&
+          String(item.subject || "").trim().toUpperCase() !== "CLASS TEACHER"
+        )
       : [];
 
     const classes = [];
@@ -78,7 +82,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!classes.length) {
       classSelect.innerHTML =
-        '<option value="">No assigned classes found</option>';
+        '<option value="">No subject teaching assignments found</option>';
     }
   }
 

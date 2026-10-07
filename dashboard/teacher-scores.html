@@ -84,15 +84,24 @@
 
         <form class="admin-form" id="teacherScoreForm">
           <div>
-            <label>Student</label>
-            <select id="teacher_score_student_id" required>
-              <option value="">Loading assigned students...</option>
+            <label>Class</label>
+            <select id="teacher_score_class_id" required>
+              <option value="">Select class</option>
             </select>
           </div>
 
           <div>
             <label>Subject</label>
-            <input type="text" id="teacher_score_subject" placeholder="Example: English" required>
+            <select id="teacher_score_subject" required>
+              <option value="">Select subject</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Student</label>
+            <select id="teacher_score_student_id" required>
+              <option value="">Select class and subject first</option>
+            </select>
           </div>
 
           <div>

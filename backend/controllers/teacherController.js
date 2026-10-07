@@ -203,7 +203,15 @@ exports.getTeachers = async (req, res) => {
         teachers.status,
         teachers.created_at,
         GROUP_CONCAT(DISTINCT classes.class_name ORDER BY classes.class_name SEPARATOR ', ') AS assigned_classes,
-        GROUP_CONCAT(DISTINCT teacher_assignments.subject ORDER BY teacher_assignments.subject SEPARATOR ', ') AS assigned_subjects
+        GROUP_CONCAT(
+          DISTINCT CASE
+            WHEN UPPER(TRIM(teacher_assignments.role)) = 'SUBJECT TEACHER'
+            THEN teacher_assignments.subject
+            ELSE NULL
+          END
+          ORDER BY teacher_assignments.subject
+          SEPARATOR ', '
+        ) AS assigned_subjects
       FROM teachers
       LEFT JOIN branches ON teachers.branch_id = branches.id
       LEFT JOIN teacher_assignments 
@@ -245,15 +253,25 @@ exports.assignTeacher = async (req, res) => {
       academic_year
     } = req.body;
 
-    if (!teacher_database_id || !class_name || !subject) {
+    if (!teacher_database_id || !class_name) {
       return res.status(400).json({
-        message: "Teacher, class, and subject are required"
+        message: "Teacher and class are required"
       });
     }
 
-    const allowedAssignmentRoles = ["Admin", "Class Teacher", "Subject Teacher"];
-    const branchScopedRoles = ["Class Teacher", "Subject Teacher"];
-    const normalizedRole = role || "Subject Teacher";
+    const allowedAssignmentRoles = [
+      "Admin",
+      "Class Teacher",
+      "Subject Teacher"
+    ];
+
+    const branchScopedRoles = [
+      "Class Teacher",
+      "Subject Teacher"
+    ];
+
+    const normalizedRole =
+      String(role || "Subject Teacher").trim();
 
     if (!allowedAssignmentRoles.includes(normalizedRole)) {
       return res.status(400).json({
@@ -261,7 +279,29 @@ exports.assignTeacher = async (req, res) => {
       });
     }
 
-    const teacher = await getTeacherById(teacher_database_id);
+    /*
+     * Class Teacher and Subject Teacher are separate assignments.
+     *
+     * The existing database requires teacher_assignments.subject
+     * to be NOT NULL, so Class Teacher records use the reserved
+     * internal value "CLASS TEACHER".
+     */
+    let finalSubject;
+
+    if (normalizedRole === "Class Teacher") {
+      finalSubject = "CLASS TEACHER";
+    } else {
+      finalSubject = String(subject || "").trim();
+
+      if (!finalSubject) {
+        return res.status(400).json({
+          message: "Subject is required for a Subject Teacher assignment"
+        });
+      }
+    }
+
+    const teacher =
+      await getTeacherById(teacher_database_id);
 
     if (!teacher) {
       return res.status(404).json({
@@ -269,52 +309,110 @@ exports.assignTeacher = async (req, res) => {
       });
     }
 
-    if (isBranchScopedAdmin(req.user) && Number(teacher.branch_id) !== Number(req.user.branch_id)) {
+    if (
+      isBranchScopedAdmin(req.user) &&
+      Number(teacher.branch_id) !==
+        Number(req.user.branch_id)
+    ) {
       return res.status(403).json({
-        message: "You can only assign teachers in your own branch"
+        message:
+          "You can only assign teachers in your own branch"
       });
     }
 
-    if (isBranchScopedAdmin(req.user) && !branchScopedRoles.includes(normalizedRole)) {
+    if (
+      isBranchScopedAdmin(req.user) &&
+      !branchScopedRoles.includes(normalizedRole)
+    ) {
       return res.status(403).json({
-        message: "Branch admin can only assign Class Teacher or Subject Teacher roles"
+        message:
+          "Branch admin can only assign Class Teacher or Subject Teacher roles"
       });
     }
 
-    const effectiveBranchId = isBranchScopedAdmin(req.user)
-      ? req.user.branch_id
-      : (branch_id || teacher.branch_id || 4);
+    const effectiveBranchId =
+      isBranchScopedAdmin(req.user)
+        ? req.user.branch_id
+        : (branch_id || teacher.branch_id || 4);
 
-    const class_id = await getOrCreateClass(class_name, effectiveBranchId);
-    const finalAcademicYear = academic_year || "2025/2026";
+    const class_id =
+      await getOrCreateClass(
+        class_name,
+        effectiveBranchId
+      );
+
+    const finalAcademicYear =
+      academic_year || "2025/2026";
 
     /*
-     * Prevent duplicate active teacher assignments.
-     * Same teacher + branch + class + subject + academic year
-     * should only have one active assignment.
+     * Duplicate protection is role-aware.
+     *
+     * Class Teacher:
+     * teacher + branch + class + role + academic year
+     *
+     * Subject Teacher:
+     * teacher + branch + class + subject + role + academic year
      */
-    const [existingAssignments] = await db.query(
-      `SELECT id
-       FROM teacher_assignments
-       WHERE teacher_id = ?
-         AND branch_id = ?
-         AND class_id = ?
-         AND UPPER(TRIM(subject)) = UPPER(TRIM(?))
-         AND academic_year = ?
-         AND status = 'active'
-       LIMIT 1`,
-      [
+    let duplicateSql;
+    let duplicateParams;
+
+    if (normalizedRole === "Class Teacher") {
+      duplicateSql = `
+        SELECT id
+        FROM teacher_assignments
+        WHERE teacher_id = ?
+          AND branch_id = ?
+          AND class_id = ?
+          AND UPPER(TRIM(role)) = 'CLASS TEACHER'
+          AND academic_year = ?
+          AND status = 'active'
+        LIMIT 1
+      `;
+
+      duplicateParams = [
         teacher_database_id,
         effectiveBranchId,
         class_id,
-        subject,
         finalAcademicYear
-      ]
-    );
+      ];
+    } else {
+      duplicateSql = `
+        SELECT id
+        FROM teacher_assignments
+        WHERE teacher_id = ?
+          AND branch_id = ?
+          AND class_id = ?
+          AND UPPER(TRIM(subject)) =
+              UPPER(TRIM(?))
+          AND UPPER(TRIM(role)) =
+              UPPER(TRIM(?))
+          AND academic_year = ?
+          AND status = 'active'
+        LIMIT 1
+      `;
+
+      duplicateParams = [
+        teacher_database_id,
+        effectiveBranchId,
+        class_id,
+        finalSubject,
+        normalizedRole,
+        finalAcademicYear
+      ];
+    }
+
+    const [existingAssignments] =
+      await db.query(
+        duplicateSql,
+        duplicateParams
+      );
 
     if (existingAssignments.length > 0) {
       return res.status(200).json({
-        message: "Teacher assignment already exists",
+        message:
+          normalizedRole === "Class Teacher"
+            ? "Class Teacher assignment already exists"
+            : "Subject Teacher assignment already exists",
         duplicate: true,
         assignment_id: existingAssignments[0].id
       });
@@ -322,30 +420,48 @@ exports.assignTeacher = async (req, res) => {
 
     const [result] = await db.query(
       `INSERT INTO teacher_assignments
-      (branch_id, teacher_id, class_id, subject, role, academic_year, status)
-      VALUES (?, ?, ?, ?, ?, ?, 'active')`,
+       (
+         branch_id,
+         teacher_id,
+         class_id,
+         subject,
+         role,
+         academic_year,
+         status
+       )
+       VALUES (?, ?, ?, ?, ?, ?, 'active')`,
       [
         effectiveBranchId,
         teacher_database_id,
         class_id,
-        subject,
+        finalSubject,
         normalizedRole,
         finalAcademicYear
       ]
     );
 
-    res.status(201).json({
-      message: "Teacher assigned successfully",
+    return res.status(201).json({
+      message:
+        normalizedRole === "Class Teacher"
+          ? "Class Teacher assigned successfully"
+          : "Subject Teacher assigned successfully",
       duplicate: false,
       assignment_id: result.insertId
     });
+
   } catch (error) {
-    res.status(500).json({
+    console.error(
+      "Assign teacher error:",
+      error
+    );
+
+    return res.status(500).json({
       message: "Failed to assign teacher",
       error: error.message
     });
   }
 };
+
 
 // Get students for teacher's assigned classes
 exports.getTeacherStudents = async (req, res) => {
@@ -965,6 +1081,652 @@ exports.getTeacherAssignments = async (req, res) => {
 };
 
 
+
+// Admin: Safely set the active CLASS TEACHER assignment for one teacher.
+// Subject Teacher assignments are intentionally NOT touched.
+exports.updateClassTeacherAssignment = async (req, res) => {
+  let conn;
+
+  try {
+    const {
+      teacher_id,
+      branch_id,
+      class_id,
+      academic_year
+    } = req.body;
+
+    const teacherId = Number(teacher_id);
+    const classId = Number(class_id);
+
+    if (
+      !Number.isInteger(teacherId) ||
+      teacherId <= 0
+    ) {
+      return res.status(400).json({
+        message: "Please select a valid teacher"
+      });
+    }
+
+    if (
+      !Number.isInteger(classId) ||
+      classId <= 0
+    ) {
+      return res.status(400).json({
+        message: "Please select a valid class"
+      });
+    }
+
+    conn = await db.getConnection();
+    await conn.beginTransaction();
+
+    const [teacherRows] = await conn.query(
+      `SELECT id, branch_id
+       FROM teachers
+       WHERE id = ?
+       LIMIT 1
+       FOR UPDATE`,
+      [teacherId]
+    );
+
+    if (!teacherRows.length) {
+      await conn.rollback();
+
+      return res.status(404).json({
+        message: "Teacher not found"
+      });
+    }
+
+    const teacher = teacherRows[0];
+
+    if (isBranchScopedAdmin(req.user)) {
+      if (!req.user.branch_id) {
+        await conn.rollback();
+
+        return res.status(403).json({
+          message:
+            "No branch is assigned to this administrator"
+        });
+      }
+
+      if (
+        Number(teacher.branch_id) !==
+        Number(req.user.branch_id)
+      ) {
+        await conn.rollback();
+
+        return res.status(403).json({
+          message:
+            "You can only edit teacher assignments in your own branch"
+        });
+      }
+    }
+
+    const effectiveBranchId =
+      isBranchScopedAdmin(req.user)
+        ? Number(req.user.branch_id)
+        : Number(branch_id || teacher.branch_id);
+
+    if (
+      !Number.isInteger(effectiveBranchId) ||
+      effectiveBranchId <= 0 ||
+      Number(teacher.branch_id) !== effectiveBranchId
+    ) {
+      await conn.rollback();
+
+      return res.status(400).json({
+        message:
+          "The selected branch does not match this teacher"
+      });
+    }
+
+    /*
+     * Verify class exists.
+     * Existing system uses shared class definitions while
+     * branch ownership lives on teacher_assignments.
+     */
+    const [classRows] = await conn.query(
+      `SELECT id, class_name
+       FROM classes
+       WHERE id = ?
+       LIMIT 1`,
+      [classId]
+    );
+
+    if (!classRows.length) {
+      await conn.rollback();
+
+      return res.status(404).json({
+        message: "Selected class was not found"
+      });
+    }
+
+    const finalAcademicYear =
+      String(
+        academic_year || "2026/2027"
+      ).trim();
+
+    /*
+     * One active Class Teacher per class / branch / academic year.
+     * Do not overwrite another teacher's assignment automatically.
+     */
+    const [classOwnerRows] = await conn.query(
+      `SELECT
+         ta.id,
+         ta.teacher_id,
+         t.full_name AS teacher_name
+       FROM teacher_assignments ta
+       LEFT JOIN teachers t
+         ON t.id = ta.teacher_id
+       WHERE ta.branch_id = ?
+         AND ta.class_id = ?
+         AND ta.academic_year = ?
+         AND ta.status = 'active'
+         AND UPPER(TRIM(ta.role)) = 'CLASS TEACHER'
+         AND ta.teacher_id <> ?
+       LIMIT 1
+       FOR UPDATE`,
+      [
+        effectiveBranchId,
+        classId,
+        finalAcademicYear,
+        teacherId
+      ]
+    );
+
+    if (classOwnerRows.length) {
+      await conn.rollback();
+
+      const ownerName =
+        classOwnerRows[0].teacher_name ||
+        "another teacher";
+
+      return res.status(409).json({
+        message:
+          `This class already has ${ownerName} assigned as Class Teacher for ${finalAcademicYear}.`
+      });
+    }
+
+    /*
+     * Lock only this teacher's active Class Teacher rows.
+     * Subject Teacher rows are never selected here.
+     */
+    const [existingRows] = await conn.query(
+      `SELECT id, class_id
+       FROM teacher_assignments
+       WHERE teacher_id = ?
+         AND branch_id = ?
+         AND academic_year = ?
+         AND status = 'active'
+         AND UPPER(TRIM(role)) = 'CLASS TEACHER'
+       FOR UPDATE`,
+      [
+        teacherId,
+        effectiveBranchId,
+        finalAcademicYear
+      ]
+    );
+
+    /*
+     * If there is already a Class Teacher record, reuse the
+     * first row and deactivate any accidental extra rows.
+     */
+    if (existingRows.length) {
+      const keepId =
+        existingRows[0].id;
+
+      await conn.query(
+        `UPDATE teacher_assignments
+         SET class_id = ?,
+             subject = 'CLASS TEACHER',
+             role = 'Class Teacher',
+             academic_year = ?,
+             status = 'active'
+         WHERE id = ?`,
+        [
+          classId,
+          finalAcademicYear,
+          keepId
+        ]
+      );
+
+      const extraIds =
+        existingRows
+          .slice(1)
+          .map(row => row.id);
+
+      if (extraIds.length) {
+        const placeholders =
+          extraIds.map(() => "?").join(",");
+
+        await conn.query(
+          `UPDATE teacher_assignments
+           SET status = 'inactive'
+           WHERE id IN (${placeholders})`,
+          extraIds
+        );
+      }
+
+      await conn.commit();
+
+      return res.json({
+        message:
+          "Class Teacher assignment updated successfully",
+        assignment_id: keepId,
+        updated: true
+      });
+    }
+
+    /*
+     * No existing Class Teacher row:
+     * create one without affecting subject assignments.
+     */
+    const [result] = await conn.query(
+      `INSERT INTO teacher_assignments
+       (
+         branch_id,
+         teacher_id,
+         class_id,
+         subject,
+         role,
+         academic_year,
+         status
+       )
+       VALUES (?, ?, ?, 'CLASS TEACHER', 'Class Teacher', ?, 'active')`,
+      [
+        effectiveBranchId,
+        teacherId,
+        classId,
+        finalAcademicYear
+      ]
+    );
+
+    await conn.commit();
+
+    return res.status(201).json({
+      message:
+        "Class Teacher assigned successfully",
+      assignment_id: result.insertId,
+      updated: false
+    });
+
+  } catch (error) {
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (_) {}
+    }
+
+    console.error(
+      "Class Teacher assignment update error:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        "Failed to update Class Teacher assignment",
+      error: error.message
+    });
+
+  } finally {
+    if (conn) {
+      conn.release();
+    }
+  }
+};
+
+
+// Admin: Safely replace active SUBJECT TEACHER assignments for one teacher.
+// Class Teacher assignments are intentionally NOT touched by this function.
+exports.updateTeacherAssignmentsFull = async (req, res) => {
+  let conn;
+
+  try {
+    const {
+      teacher_id,
+      branch_id,
+      class_ids,
+      subjects,
+      academic_year
+    } = req.body;
+
+    const teacherId = Number(teacher_id);
+
+    const cleanClassIds = Array.isArray(class_ids)
+      ? [...new Set(
+          class_ids
+            .map(id => Number(id))
+            .filter(id =>
+              Number.isInteger(id) && id > 0
+            )
+        )]
+      : [];
+
+    const cleanSubjects = Array.isArray(subjects)
+      ? [...new Set(
+          subjects
+            .map(subject =>
+              String(subject || "").trim()
+            )
+            .filter(Boolean)
+        )]
+      : [];
+
+    if (
+      !Number.isInteger(teacherId) ||
+      teacherId <= 0
+    ) {
+      return res.status(400).json({
+        message: "Please select a valid teacher"
+      });
+    }
+
+    if (!cleanClassIds.length) {
+      return res.status(400).json({
+        message: "Please select at least one class"
+      });
+    }
+
+    if (!cleanSubjects.length) {
+      return res.status(400).json({
+        message: "Please select at least one subject"
+      });
+    }
+
+    conn = await db.getConnection();
+    await conn.beginTransaction();
+
+    /*
+     * Lock and verify teacher.
+     */
+    const [teacherRows] = await conn.query(
+      `SELECT id, branch_id
+       FROM teachers
+       WHERE id = ?
+       LIMIT 1
+       FOR UPDATE`,
+      [teacherId]
+    );
+
+    if (!teacherRows.length) {
+      await conn.rollback();
+
+      return res.status(404).json({
+        message: "Teacher not found"
+      });
+    }
+
+    const teacher = teacherRows[0];
+
+    /*
+     * Branch security.
+     */
+    if (isBranchScopedAdmin(req.user)) {
+      if (!req.user.branch_id) {
+        await conn.rollback();
+
+        return res.status(403).json({
+          message:
+            "No branch is assigned to this administrator"
+        });
+      }
+
+      if (
+        Number(teacher.branch_id) !==
+        Number(req.user.branch_id)
+      ) {
+        await conn.rollback();
+
+        return res.status(403).json({
+          message:
+            "You can only edit teacher assignments in your own branch"
+        });
+      }
+    }
+
+    const effectiveBranchId =
+      isBranchScopedAdmin(req.user)
+        ? Number(req.user.branch_id)
+        : Number(branch_id || teacher.branch_id);
+
+    if (
+      !Number.isInteger(effectiveBranchId) ||
+      effectiveBranchId <= 0 ||
+      Number(teacher.branch_id) !==
+        effectiveBranchId
+    ) {
+      await conn.rollback();
+
+      return res.status(400).json({
+        message:
+          "The selected branch does not match this teacher"
+      });
+    }
+
+    /*
+     * Verify selected class IDs exist.
+     */
+    const classPlaceholders =
+      cleanClassIds.map(() => "?").join(",");
+
+    const [classRows] = await conn.query(
+      `SELECT id
+       FROM classes
+       WHERE id IN (${classPlaceholders})`,
+      cleanClassIds
+    );
+
+    if (
+      classRows.length !==
+      cleanClassIds.length
+    ) {
+      await conn.rollback();
+
+      return res.status(400).json({
+        message:
+          "One or more selected classes were not found"
+      });
+    }
+
+    const finalAcademicYear =
+      String(
+        academic_year || "2026/2027"
+      ).trim();
+
+    /*
+     * Build desired Subject Teacher Class x Subject rows.
+     */
+    const desired = [];
+
+    for (const classId of cleanClassIds) {
+      for (const subject of cleanSubjects) {
+        desired.push({
+          class_id: classId,
+          subject
+        });
+      }
+    }
+
+    /*
+     * CRITICAL:
+     * Only lock SUBJECT TEACHER assignments.
+     *
+     * Class Teacher assignments are separate and must survive
+     * any changes made through the Subject Teaching editor.
+     */
+    const [existingRows] = await conn.query(
+      `SELECT
+         id,
+         class_id,
+         subject,
+         role,
+         academic_year
+       FROM teacher_assignments
+       WHERE teacher_id = ?
+         AND branch_id = ?
+         AND academic_year = ?
+         AND status = 'active'
+         AND UPPER(TRIM(role)) = 'SUBJECT TEACHER'
+       FOR UPDATE`,
+      [
+        teacherId,
+        effectiveBranchId,
+        finalAcademicYear
+      ]
+    );
+
+    const makeKey = (
+      classId,
+      subject
+    ) =>
+      `${Number(classId)}|${String(
+        subject || ""
+      ).trim().toUpperCase()}`;
+
+    const existingByKey = new Map();
+
+    for (const row of existingRows) {
+      existingByKey.set(
+        makeKey(
+          row.class_id,
+          row.subject
+        ),
+        row
+      );
+    }
+
+    const desiredKeys = new Set();
+
+    let kept = 0;
+    let created = 0;
+    let removed = 0;
+
+    /*
+     * Keep/create Subject Teacher rows only.
+     */
+    for (const item of desired) {
+      const key =
+        makeKey(
+          item.class_id,
+          item.subject
+        );
+
+      desiredKeys.add(key);
+
+      const existing =
+        existingByKey.get(key);
+
+      if (existing) {
+        await conn.query(
+          `UPDATE teacher_assignments
+           SET role = 'Subject Teacher',
+               academic_year = ?,
+               status = 'active'
+           WHERE id = ?`,
+          [
+            finalAcademicYear,
+            existing.id
+          ]
+        );
+
+        kept++;
+      } else {
+        await conn.query(
+          `INSERT INTO teacher_assignments
+           (
+             branch_id,
+             teacher_id,
+             class_id,
+             subject,
+             role,
+             academic_year,
+             status
+           )
+           VALUES (?, ?, ?, ?, 'Subject Teacher', ?, 'active')`,
+          [
+            effectiveBranchId,
+            teacherId,
+            item.class_id,
+            item.subject,
+            finalAcademicYear
+          ]
+        );
+
+        created++;
+      }
+    }
+
+    /*
+     * Deactivate only Subject Teacher rows that were removed
+     * from the new Subject Teaching selection.
+     *
+     * Class Teacher rows cannot enter removeIds because they
+     * were deliberately excluded from existingRows.
+     */
+    const removeIds =
+      existingRows
+        .filter(row =>
+          !desiredKeys.has(
+            makeKey(
+              row.class_id,
+              row.subject
+            )
+          )
+        )
+        .map(row => row.id);
+
+    if (removeIds.length) {
+      const removePlaceholders =
+        removeIds.map(() => "?").join(",");
+
+      await conn.query(
+        `UPDATE teacher_assignments
+         SET status = 'inactive'
+         WHERE id IN (${removePlaceholders})`,
+        removeIds
+      );
+
+      removed =
+        removeIds.length;
+    }
+
+    await conn.commit();
+
+    return res.json({
+      message:
+        "Subject teaching assignments updated successfully",
+      kept,
+      created,
+      removed,
+      total_active:
+        desired.length
+    });
+
+  } catch (error) {
+    if (conn) {
+      try {
+        await conn.rollback();
+      } catch (_) {}
+    }
+
+    console.error(
+      "Subject teacher assignment update error:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        "Failed to update subject teaching assignments",
+      error: error.message
+    });
+
+  } finally {
+    if (conn) {
+      conn.release();
+    }
+  }
+};
+
+
 // Admin: Safely update a grouped teacher assignment
 exports.updateTeacherAssignmentGroup = async (req, res) => {
   let conn;
@@ -1127,9 +1889,15 @@ exports.updateTeacherAssignmentGroup = async (req, res) => {
       });
     }
 
+    /*
+     * Classes with branch_id = NULL are global/shared classes.
+     * If a class is explicitly branch-owned, it must belong to
+     * the same branch as the teacher assignment.
+     */
     if (
+      classRows[0].branch_id != null &&
       Number(classRows[0].branch_id) !==
-      Number(first.branch_id)
+        Number(first.branch_id)
     ) {
       await conn.rollback();
 

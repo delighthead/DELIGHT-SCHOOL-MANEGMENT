@@ -31,6 +31,13 @@ router.post(
   scoreController.uploadScoreExcel
 );
 
+// Logged-in teacher: students from Subject Teacher assignments only
+router.get(
+  "/teacher-subject-students",
+  verifyToken,
+  scoreController.getTeacherSubjectStudents
+);
+
 // Teachers and admins can view/create scores within their branch
 router.get("/", verifyToken, requireAdminOrTeacher, applyUserBranchSecurity, scoreController.getScores);
 router.post("/", verifyToken, requireAdminOrTeacher, applyUserBranchSecurity, scoreController.createScore);

@@ -70,6 +70,20 @@ router.get(
 );
 
 router.put(
+  "/assignments/class-teacher/update",
+  teacherController.updateClassTeacherAssignment
+);
+
+router.put(
+  "/assignments/full/update",
+  verifyToken,
+  requireAdmin,
+  applyBranchSecurity,
+  teacherController.updateTeacherAssignmentsFull
+);
+
+
+router.put(
   "/assignments/group/update",
   verifyToken,
   requireAdmin,

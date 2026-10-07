@@ -1,9 +1,12 @@
 document.addEventListener("DOMContentLoaded", function () {
   const scoreForm = document.getElementById("teacherScoreForm");
+  const classSelect = document.getElementById("teacher_score_class_id");
+  const subjectSelect = document.getElementById("teacher_score_subject");
   const studentSelect = document.getElementById("teacher_score_student_id");
   const scoreTableBody = document.getElementById("teacherScoreTableBody");
 
   let loggedInTeacher = null;
+  let subjectTeacherStudents = [];
 
   function getLoggedInUser() {
     const storedUser = localStorage.getItem("user");
@@ -54,22 +57,133 @@ document.addEventListener("DOMContentLoaded", function () {
     return student.full_name || `${student.first_name || ""} ${student.surname || ""}`.trim();
   }
 
+  function loadSubjectsForClass() {
+    if (!classSelect || !subjectSelect || !studentSelect) return;
+
+    const classId = Number(classSelect.value);
+
+    subjectSelect.innerHTML =
+      '<option value="">Select subject</option>';
+
+    studentSelect.innerHTML =
+      '<option value="">Select subject first</option>';
+
+    if (!classId) return;
+
+    const subjects = [
+      ...new Set(
+        subjectTeacherStudents
+          .filter(student => Number(student.class_id) === classId)
+          .map(student => String(student.subject || "").trim())
+          .filter(Boolean)
+      )
+    ].sort();
+
+    subjects.forEach(function (subject) {
+      const option = document.createElement("option");
+      option.value = subject;
+      option.textContent = subject;
+      subjectSelect.appendChild(option);
+    });
+  }
+
+  function loadStudentsForSubject() {
+    if (!classSelect || !subjectSelect || !studentSelect) return;
+
+    const classId = Number(classSelect.value);
+    const subject = String(subjectSelect.value || "").trim();
+
+    studentSelect.innerHTML =
+      '<option value="">Select student</option>';
+
+    if (!classId || !subject) return;
+
+    const seen = new Set();
+
+    subjectTeacherStudents
+      .filter(student =>
+        Number(student.class_id) === classId &&
+        String(student.subject || "").trim().toUpperCase() ===
+          subject.toUpperCase()
+      )
+      .forEach(function (student) {
+        if (seen.has(Number(student.id))) return;
+        seen.add(Number(student.id));
+
+        const option = document.createElement("option");
+        option.value = student.id;
+        option.textContent =
+          `${studentName(student)} - ${student.admission_number || ""}`;
+        studentSelect.appendChild(option);
+      });
+  }
+
   async function loadAssignedStudents() {
-    if (!studentSelect) return;
+    if (!classSelect || !subjectSelect || !studentSelect) return;
 
     loggedInTeacher = await getLoggedInTeacher();
 
-    const response = await fetch(`/api/teachers/${loggedInTeacher.id}/students`);
+    const response = await fetch(
+      "/api/scores/teacher-subject-students",
+      {
+        headers: getAuthOnlyHeaders()
+      }
+    );
+
     const data = await response.json();
 
-    studentSelect.innerHTML = '<option value="">Select student</option>';
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+        "Could not load Subject Teacher assignments."
+      );
+    }
 
-    (data.students || []).forEach(function (student) {
-      const option = document.createElement("option");
-      option.value = student.id;
-      option.textContent = `${studentName(student)} - ${student.admission_number || ""} - ${student.class_name || ""}`;
-      studentSelect.appendChild(option);
+    subjectTeacherStudents = Array.isArray(data.students)
+      ? data.students
+      : [];
+
+    classSelect.innerHTML =
+      '<option value="">Select class</option>';
+    subjectSelect.innerHTML =
+      '<option value="">Select subject</option>';
+    studentSelect.innerHTML =
+      '<option value="">Select class and subject first</option>';
+
+    const classes = new Map();
+
+    subjectTeacherStudents.forEach(function (student) {
+      const classId = Number(student.class_id);
+
+      if (classId && !classes.has(classId)) {
+        classes.set(classId, student.class_name || "");
+      }
     });
+
+    [...classes.entries()]
+      .sort((a, b) =>
+        String(a[1]).localeCompare(String(b[1]))
+      )
+      .forEach(function ([classId, className]) {
+        const option = document.createElement("option");
+        option.value = classId;
+        option.textContent = className;
+        classSelect.appendChild(option);
+      });
+  }
+
+  if (classSelect) {
+    classSelect.addEventListener(
+      "change",
+      loadSubjectsForClass
+    );
+  }
+
+  if (subjectSelect) {
+    subjectSelect.addEventListener(
+      "change",
+      loadStudentsForSubject
+    );
   }
 
   async function loadTeacherScores() {
@@ -97,11 +211,9 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
 
-      const assignedResponse = await fetch(`/api/teachers/${loggedInTeacher.id}/students`);
-      const assignedData = await assignedResponse.json();
-      const assignedIds = new Set((assignedData.students || []).map(s => Number(s.id)));
-
-      const scores = (data.scores || []).filter(score => assignedIds.has(Number(score.student_id)));
+      const scores = Array.isArray(data.scores)
+        ? data.scores
+        : [];
 
       if (scores.length === 0) {
         scoreTableBody.innerHTML = `
@@ -176,7 +288,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
         alert("Score uploaded successfully. Waiting for admin approval.");
         scoreForm.reset();
-        document.getElementById("teacher_score_academic_year").value = "2025/2026";
+        const academicYearInput =
+          document.getElementById(
+            "teacher_score_academic_year"
+          );
+
+        if (academicYearInput) {
+          academicYearInput.value =
+            scoreData.academic_year ||
+            "2026/2027";
+        }
         await loadAssignedStudents();
         await loadTeacherScores();
       } catch (error) {

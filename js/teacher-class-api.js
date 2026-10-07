@@ -38,10 +38,21 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       const teacher = await getLoggedInTeacher();
 
-      const response = await fetch(`/api/teachers/${teacher.id}/students`);
+      const response = await fetch("/api/attendance/teacher-students", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`
+        }
+      });
+
       const data = await response.json();
 
-      const students = data.students || [];
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Could not load your Class Teacher students."
+        );
+      }
+
+      const students = Array.isArray(data.students) ? data.students : [];
       const firstStudent = students[0] || {};
 
       if (classBox) {

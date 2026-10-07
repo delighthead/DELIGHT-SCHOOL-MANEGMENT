@@ -80,43 +80,43 @@ async function getTeacherByUserId(userId) {
   return rows.length > 0 ? rows[0] : null;
 }
 
-async function isTeacherAssignedToStudent(teacherId, studentId) {
-  if (!teacherId || !studentId) return false;
+async function isTeacherAssignedToSubject({
+  teacherId,
+  classId,
+  branchId,
+  subject,
+  academicYear
+}) {
+  if (
+    !teacherId ||
+    !classId ||
+    !branchId ||
+    !String(subject || "").trim() ||
+    !String(academicYear || "").trim()
+  ) {
+    return false;
+  }
 
   const [rows] = await db.query(
     `SELECT 1
-     FROM teacher_assignments ta
-     INNER JOIN students s
-       ON s.class_id = ta.class_id
-      AND s.branch_id = ta.branch_id
-     WHERE ta.teacher_id = ?
-       AND ta.status = 'active'
-       AND s.id = ?
+     FROM teacher_assignments
+     WHERE teacher_id = ?
+       AND class_id = ?
+       AND branch_id = ?
+       AND status = 'active'
+       AND UPPER(TRIM(role)) = 'SUBJECT TEACHER'
+       AND UPPER(TRIM(subject)) = UPPER(TRIM(?))
+       AND academic_year = ?
      LIMIT 1`,
-    [teacherId, studentId]
+    [
+      teacherId,
+      classId,
+      branchId,
+      String(subject).trim(),
+      String(academicYear).trim()
+    ]
   );
 
-  return rows.length > 0;
-}
-
-async function isTeacherAssignedToClass(teacherId, classId, branchId) {
-  if (!teacherId || !classId) return false;
-
-  const params = [teacherId, classId];
-  let sql = `SELECT 1
-             FROM teacher_assignments
-             WHERE teacher_id = ?
-               AND class_id = ?
-               AND status = 'active'`;
-
-  if (branchId) {
-    sql += " AND branch_id = ?";
-    params.push(branchId);
-  }
-
-  sql += " LIMIT 1";
-
-  const [rows] = await db.query(sql, params);
   return rows.length > 0;
 }
 
@@ -259,6 +259,10 @@ exports.getScores = async (req, res) => {
             AND ta.class_id = scores.class_id
             AND ta.branch_id = scores.branch_id
             AND ta.status = 'active'
+            AND UPPER(TRIM(ta.role)) = 'SUBJECT TEACHER'
+            AND UPPER(TRIM(ta.subject)) =
+                UPPER(TRIM(scores.subject))
+            AND ta.academic_year = scores.academic_year
         )`
       );
       params.push(teacher.id);
@@ -279,6 +283,83 @@ exports.getScores = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: "Failed to retrieve scores",
+      error: error.message
+    });
+  }
+};
+
+// Teacher: Get students from active Subject Teacher assignments only
+exports.getTeacherSubjectStudents = async (req, res) => {
+  try {
+    if (!req.user || req.user.role !== "teacher") {
+      return res.status(403).json({
+        message: "Teacher access required"
+      });
+    }
+
+    const teacher = await getTeacherByUserId(req.user.id);
+
+    if (!teacher) {
+      return res.status(404).json({
+        message: "Teacher record not found"
+      });
+    }
+
+    const [settingsRows] = await db.query(
+      "SELECT academic_year FROM settings WHERE id = 1 LIMIT 1"
+    );
+
+    const currentAcademicYear =
+      String(settingsRows[0]?.academic_year || "").trim();
+
+    if (!currentAcademicYear) {
+      return res.status(400).json({
+        message: "Current academic year is not configured in school settings"
+      });
+    }
+
+    const [students] = await db.query(
+      `SELECT DISTINCT
+         s.id,
+         s.student_id,
+         s.admission_number,
+         s.first_name,
+         s.surname,
+         s.other_name,
+         s.status,
+         c.id AS class_id,
+         c.class_name,
+         ta.subject,
+         ta.academic_year
+       FROM teacher_assignments ta
+       INNER JOIN classes c
+         ON c.id = ta.class_id
+       INNER JOIN students s
+         ON s.class_id = ta.class_id
+        AND s.branch_id = ta.branch_id
+       WHERE ta.teacher_id = ?
+         AND ta.branch_id = ?
+         AND ta.status = 'active'
+         AND UPPER(TRIM(ta.role)) = 'SUBJECT TEACHER'
+         AND ta.academic_year = ?
+         AND s.status = 'active'
+       ORDER BY
+         c.class_name,
+         ta.subject,
+         s.surname,
+         s.first_name`,
+      [teacher.id, teacher.branch_id, currentAcademicYear]
+    );
+
+    return res.json({
+      message: "Subject Teacher students retrieved successfully",
+      students
+    });
+  } catch (error) {
+    console.error("Get Subject Teacher students error:", error);
+
+    return res.status(500).json({
+      message: "Failed to retrieve Subject Teacher students",
       error: error.message
     });
   }
@@ -314,14 +395,6 @@ exports.createScore = async (req, res) => {
       }
 
       branch_id = teacher.branch_id;
-
-      const allowed = await isTeacherAssignedToStudent(teacher.id, student_id);
-      if (!allowed) {
-        return res.status(403).json({
-          message: "You can only upload scores for students in your assigned class"
-        });
-      }
-
       approval_status = "pending";
     }
 
@@ -346,6 +419,25 @@ exports.createScore = async (req, res) => {
       return res.status(400).json({
         message: "Selected student does not belong to the provided branch"
       });
+    }
+
+    if (req.user && req.user.role === "teacher") {
+      const teacher = await getTeacherByUserId(req.user.id);
+
+      const allowed = await isTeacherAssignedToSubject({
+        teacherId: teacher ? teacher.id : null,
+        classId: students[0].class_id,
+        branchId: students[0].branch_id,
+        subject,
+        academicYear: academic_year
+      });
+
+      if (!allowed) {
+        return res.status(403).json({
+          message:
+            "You can only enter scores for a subject and class assigned to you as Subject Teacher"
+        });
+      }
     }
 
     const scoreSummary = buildScoreSummary(assessment_score, examination_score, remarks);
@@ -468,20 +560,18 @@ exports.updateScore = async (req, res) => {
         });
       }
 
-      const [assignmentRows] = await db.query(
-        `SELECT 1
-         FROM teacher_assignments
-         WHERE teacher_id = ?
-           AND class_id = ?
-           AND branch_id = ?
-           AND status = 'active'
-         LIMIT 1`,
-        [teacher.id, existing.class_id, existing.branch_id]
-      );
+      const allowed = await isTeacherAssignedToSubject({
+        teacherId: teacher.id,
+        classId: existing.class_id,
+        branchId: existing.branch_id,
+        subject: existing.subject,
+        academicYear: existing.academic_year
+      });
 
-      if (assignmentRows.length === 0) {
+      if (!allowed) {
         return res.status(403).json({
-          message: "You can only edit scores for your assigned class"
+          message:
+            "You can only edit scores for a subject and class assigned to you as Subject Teacher"
         });
       }
 
@@ -661,10 +751,18 @@ exports.downloadScoreTemplate = async (req, res) => {
 
       branch_id = teacher.branch_id;
 
-      const allowedClass = await isTeacherAssignedToClass(teacher.id, class_id, branch_id);
-      if (!allowedClass) {
+      const allowedSubject = await isTeacherAssignedToSubject({
+        teacherId: teacher.id,
+        classId: class_id,
+        branchId: branch_id,
+        subject,
+        academicYear: academic_year
+      });
+
+      if (!allowedSubject) {
         return res.status(403).json({
-          message: "You can only download templates for your assigned class"
+          message:
+            "You can only download templates for a subject and class assigned to you as Subject Teacher"
         });
       }
     }
@@ -887,7 +985,14 @@ exports.uploadScoreExcel = async (req, res) => {
       const student = students[0];
 
       if (teacher) {
-        const allowed = await isTeacherAssignedToStudent(teacher.id, student.id);
+        const allowed = await isTeacherAssignedToSubject({
+          teacherId: teacher.id,
+          classId: student.class_id,
+          branchId: branch_id,
+          subject,
+          academicYear: academic_year
+        });
+
         if (!allowed) {
           skippedCount++;
           continue;
