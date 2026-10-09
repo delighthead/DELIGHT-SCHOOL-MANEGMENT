@@ -512,7 +512,20 @@ exports.bulkSaveAttendance = async (req, res) => {
     for (const record of records) {
       const normalizedStatus = normalizeAttendanceStatus(record.status);
 
-      if (!normalizedStatus) {
+      const isClearRequest = record.status === "";
+
+      if (!normalizedStatus && !isClearRequest) {
+        continue;
+      }
+
+      // Clearing requires the full attendance record identity.
+      if (
+        isClearRequest &&
+        (!record.student_id ||
+         !/^\d{4}-\d{2}-\d{2}$/.test(String(record.attendance_date || "")) ||
+         !record.term ||
+         !record.academic_year)
+      ) {
         continue;
       }
 
@@ -560,6 +573,24 @@ exports.bulkSaveAttendance = async (req, res) => {
         Number(student.branch_id) !==
         Number(req.user.branch_id)
       ) {
+        continue;
+      }
+
+      if (isClearRequest) {
+        // Delete only the explicitly cleared cell, after authorization.
+        await db.query(
+          `DELETE FROM attendance
+           WHERE student_id = ?
+             AND attendance_date = ?
+             AND term = ?
+             AND academic_year = ?`,
+          [
+            record.student_id,
+            record.attendance_date,
+            record.term,
+            record.academic_year
+          ]
+        );
         continue;
       }
 

@@ -439,7 +439,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } else if (current === "present") {
           next = "absent";
         } else {
-          next = "present";
+          next = "";
         }
 
         this.dataset.status = next;
@@ -826,11 +826,13 @@ document.addEventListener("DOMContentLoaded", function () {
     );
 
     const records = buttons
-      .filter(
-        (button) =>
-          button.dataset.status === "present" ||
-          button.dataset.status === "absent"
-      )
+      .filter((button) => {
+        const original = statusFromRecord(
+          findAttendance(button.dataset.studentId, button.dataset.date)
+        );
+        return button.dataset.status !== original &&
+          button.dataset.status !== "holiday";
+      })
       .map((button) => ({
         branch_id: branchInput.value,
         student_id: button.dataset.studentId,
@@ -845,7 +847,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!records.length) {
       showMessage(
-        "Mark at least one attendance cell before saving.",
+        "No attendance changes to save.",
         "error"
       );
       return;
