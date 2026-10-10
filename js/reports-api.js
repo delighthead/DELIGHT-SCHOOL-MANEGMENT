@@ -45,7 +45,16 @@ document.addEventListener("DOMContentLoaded", function () {
       });
 
       const data = await response.json();
-      const branches = data.branches || [];
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || `Failed to load branches (${response.status})`
+        );
+      }
+
+      const branches = Array.isArray(data.branches)
+        ? data.branches
+        : [];
 
       branchSelect.innerHTML = '<option value="">Select branch</option>';
 
@@ -127,6 +136,7 @@ document.addEventListener("DOMContentLoaded", function () {
           <td>
             <button class="small-btn success view-report-btn"
               data-branch-id="${report.branch_id || ""}"
+              data-student-id="${report.student_id || ""}"
               data-class-id="${report.class_id || ""}"
               data-class-name="${report.class_name || ""}"
               data-term="${report.term || ""}"
@@ -156,9 +166,10 @@ document.addEventListener("DOMContentLoaded", function () {
     event.preventDefault();
 
     const reportData = {
-      branch_id: isAdmin() ? getAdminId() : document.getElementById("report_branch_id").value,
-      report_name: document.getElementById("report_name").value.trim(),
+      branch_id: document.getElementById("report_branch_id").value,
+      report_name: "Terminal Exams",
       report_type: document.getElementById("report_type").value,
+      student_id: document.getElementById("report_student_id").value,
       class_id: document.getElementById("report_class_id").value,
       term: document.getElementById("report_term").value,
       academic_year: document.getElementById("report_academic_year").value.trim(),
@@ -193,412 +204,190 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+
   async function openPrintableReport(button) {
     const branchId = button.dataset.branchId;
+    const studentId = button.dataset.studentId;
+    const classId = button.dataset.classId;
     const className = button.dataset.className;
     const term = button.dataset.term;
     const academicYear = button.dataset.academicYear;
-    const reportName = button.dataset.reportName;
-    const teacherComment = decodeURIComponent(button.dataset.teacherComment || "");
-    const headteacherComment = decodeURIComponent(button.dataset.headteacherComment || "");
-    const reopeningDate = decodeURIComponent(button.dataset.reopeningDate || "");
 
-    const gradingSettings = await getGradingSettings();
+    const report = {
+      branch_id: branchId,
+      class_id: classId,
+      class_name: className,
+      term,
+      academic_year: academicYear,
+      teacher_comment: decodeURIComponent(
+        button.dataset.teacherComment || ""
+      ),
+      headteacher_comment: decodeURIComponent(
+        button.dataset.headteacherComment || ""
+      ),
+      reopening_date: decodeURIComponent(
+        button.dataset.reopeningDate || ""
+      )
+    };
 
-    const settingsResponse = await fetch("/api/settings");
-    const settingsData = await settingsResponse.json();
-    const settings = settingsData.settings || {};
+    const renderer = window.DelightTerminalReport;
 
-    let scoresUrl = "/api/scores";
-    if (branchId) {
-      scoresUrl += `?branch_id=${branchId}`;
+    if (!renderer) {
+      alert("Report card module is not loaded. Refresh the page.");
+      return;
     }
-
-    const scoresResponse = await fetch(scoresUrl, {
-      headers: getAuthOnlyHeaders()
-    });
-
-    const scoresData = await scoresResponse.json();
-    const allScores = scoresData.scores || [];
-
-    const filteredScores = allScores.filter(score => {
-      return String(score.class_name || "") === String(className || "") &&
-        String(score.term || "") === String(term || "") &&
-        String(score.academic_year || "") === String(academicYear || "");
-    });
-
-    let rows = "";
-    let summaryHtml = "";
-
-    if (filteredScores.length === 0) {
-      rows = `<tr><td colspan="8">No student scores found for this report.</td></tr>`;
-    } else {
-      let totalScore = 0;
-      let subjectCount = 0;
-
-      filteredScores.forEach(score => {
-        const scoreTotal = Number(score.total_score || 0);
-        totalScore += scoreTotal;
-        subjectCount++;
-
-        const grading = calculateGradeFromSettings(score.total_score, gradingSettings);
-
-        rows += `
-          <tr>
-            <td>${score.student_name || ""}</td>
-            <td>${score.admission_number || ""}</td>
-            <td>${score.subject || ""}</td>
-            <td>${score.assessment_score || ""}</td>
-            <td>${score.examination_score || ""}</td>
-            <td>${score.total_score || ""}</td>
-            <td>${grading.grade || score.grade || ""}</td>
-            <td>${grading.remark || score.remarks || ""}</td>
-          </tr>
-        `;
-      });
-
-      const averageScore = subjectCount > 0 ? (totalScore / subjectCount).toFixed(2) : "0.00";
-      const overall = calculateGradeFromSettings(averageScore, gradingSettings);
-
-      summaryHtml = `
-        <div class="summary-box">
-          <h3>Student Performance Summary</h3>
-          <div class="summary-grid">
-            <div><strong>Number of Subjects:</strong> ${subjectCount}</div>
-            <div><strong>Total Score:</strong> ${totalScore.toFixed(2)}</div>
-            <div><strong>Average Score:</strong> ${averageScore}</div>
-            <div><strong>Overall Grade:</strong> ${overall.grade || ""}</div>
-            <div><strong>Overall Remark:</strong> ${overall.remark || ""}</div>
-          </div>
-        </div>
-      `;
-    }
-
-    let attendanceHtml = `
-      <div class="attendance-box">
-        <h3>Attendance</h3>
-        <div class="attendance-grid">
-          <div><strong>Days School Opened:</strong> __________________</div>
-          <div><strong>Days Present:</strong> __________________</div>
-          <div><strong>Days Absent:</strong> __________________</div>
-          <div><strong>Reopening Date:</strong> ${reopeningDate || "__________________"}</div>
-        </div>
-      </div>
-    `;
-
-    try {
-      let attendanceUrl = "/api/attendance";
-
-      if (branchId) {
-        attendanceUrl += `?branch_id=${branchId}`;
-      }
-
-      const attendanceResponse = await fetch(attendanceUrl, {
-        headers: getAuthOnlyHeaders()
-      });
-
-      const attendanceData = await attendanceResponse.json();
-      const allAttendance = attendanceData.attendance || attendanceData.records || [];
-
-      const reportAttendance = allAttendance.filter(att => {
-        return String(att.class_name || "") === String(className || "") &&
-          String(att.term || "") === String(term || "") &&
-          String(att.academic_year || "") === String(academicYear || "");
-      });
-
-      const uniqueDates = new Set();
-
-      let presentCount = 0;
-      let absentCount = 0;
-
-      reportAttendance.forEach(att => {
-        if (att.attendance_date) {
-          uniqueDates.add(String(att.attendance_date).slice(0, 10));
-        }
-
-        const status = String(att.status || "").toLowerCase();
-
-        if (status === "present") {
-          presentCount++;
-        }
-
-        if (status === "absent") {
-          absentCount++;
-        }
-      });
-
-      attendanceHtml = `
-        <div class="attendance-box">
-          <h3>Attendance</h3>
-          <div class="attendance-grid">
-            <div><strong>Days School Opened:</strong> ${uniqueDates.size}</div>
-            <div><strong>Days Present:</strong> ${presentCount}</div>
-            <div><strong>Days Absent:</strong> ${absentCount}</div>
-            <div><strong>Reopening Date:</strong> ${reopeningDate || "__________________"}</div>
-          </div>
-        </div>
-      `;
-    } catch (error) {
-      console.error("Could not load attendance for report:", error);
-    }
-
-    const logo = settings.school_logo
-      ? `<img src="${settings.school_logo}" style="width:80px;height:80px;object-fit:contain;">`
-      : "";
 
     const printWindow = window.open("", "_blank");
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>${reportName || "Student Report"}</title>
-        <style>
-          @page {
-            size: A4 portrait;
-            margin: 8mm;
-          }
+    if (!printWindow) {
+      alert("Please allow pop-ups to print report cards.");
+      return;
+    }
 
-          * {
-            box-sizing: border-box;
-          }
-
-          body {
-            font-family: Arial, sans-serif;
-            padding: 0;
-            margin: 0;
-            color: #222;
-            font-size: 13px;
-          }
-
-          .report-header {
-            text-align: center;
-            border-bottom: 2px solid #111;
-            padding-bottom: 4px;
-            margin-bottom: 6px;
-          }
-
-          .report-header img {
-            width: 65px !important;
-            height: 65px !important;
-            object-fit: contain;
-            margin-bottom: 2px;
-          }
-
-          .report-header h1 {
-            margin: 1px 0;
-            font-size: 22px;
-            line-height: 1.1;
-          }
-
-          .report-header p {
-            margin: 1px 0;
-            font-size: 13px;
-            line-height: 1.15;
-          }
-
-          .report-info {
-            margin-bottom: 5px;
-            display: grid;
-            grid-template-columns: max-content max-content;
-            column-gap: 35px;
-            row-gap: 2px;
-            font-size: 13px;
-            line-height: 1.2;
-            width: fit-content;
-          }
-
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 4px;
-            table-layout: fixed;
-          }
-
-          th, td {
-            border: 1px solid #333;
-            padding: 5px;
-            font-size: 12px;
-            text-align: left;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            line-height: 1.2;
-          }
-
-          th {
-            background: #f0f0f0;
-            font-weight: bold;
-          }
-
-          th:nth-child(1), td:nth-child(1) { width: 15%; }
-          th:nth-child(2), td:nth-child(2) { width: 12%; }
-          th:nth-child(3), td:nth-child(3) { width: 17%; }
-          th:nth-child(4), td:nth-child(4) { width: 10%; }
-          th:nth-child(5), td:nth-child(5) { width: 11%; }
-          th:nth-child(6), td:nth-child(6) { width: 8%; }
-          th:nth-child(7), td:nth-child(7) { width: 7%; }
-          th:nth-child(8), td:nth-child(8) { width: 20%; }
-          
-          .summary-box {
-            margin-top: 10px;
-            border: 1px solid #333;
-            padding: 8px;
-            width: fit-content;
-            max-width: 100%;
-          }
-
-          .summary-box h3 {
-            margin: 0 0 6px 0;
-            font-size: 14px;
-          }
-
-          .summary-grid {
-            display: grid;
-            grid-template-columns: max-content max-content;
-            column-gap: 35px;
-            row-gap: 4px;
-            font-size: 13px;
-          }
-          
-          .attendance-comment-box {
-            margin-top: 10px;
-            font-size: 13px;
-          }
-
-          .attendance-box,
-          .comment-box {
-            border: 1px solid #333;
-            padding: 7px;
-            margin-top: 8px;
-          }
-
-          .attendance-box h3,
-          .comment-box h3 {
-            margin: 0 0 6px 0;
-            font-size: 14px;
-          }
-
-          .attendance-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px 20px;
-          }
-
-          .comment-box p {
-            margin: 5px 0;
-            line-height: 1.2;
-          }
-
-          .signature-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-top: 28px;
-            text-align: center;
-          }
-
-          .signature-line {
-            border-top: 1px solid #333;
-            margin-bottom: 5px;
-            height: 1px;
-          }
-
-          .print-btn {
-            margin-bottom: 6px;
-            padding: 8px 14px;
-            border: none;
-            background: #111827;
-            color: white;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 13px;
-          }
-
-          @media print {
-            .print-btn {
-              display: none;
-            }
-
-            body {
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <button class="print-btn" onclick="window.print()">Print Report</button>
-
-        <div class="report-header">
-          ${logo}
-          <h1>${settings.school_name || "Delight International School"}</h1>
-          <p>${settings.school_motto || ""}</p>
-          <p>${settings.school_address || ""}</p>
-          <p>${settings.school_phone || ""} ${settings.school_email ? " | " + settings.school_email : ""}</p>
-        </div>
-
-        <div class="report-info">
-          <div><strong>Report:</strong> ${reportName || ""}</div>
-          <div><strong>Class:</strong> ${className || ""}</div>
-          <div><strong>Term:</strong> ${term || ""}</div>
-          <div><strong>Academic Year:</strong> ${academicYear || ""}</div>
-        </div>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Student</th>
-              <th>Admission No.</th>
-              <th>Subject</th>
-              <th>Assessment</th>
-              <th>Examination</th>
-              <th>Total</th>
-              <th>Grade</th>
-              <th>Remark</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows}
-          </tbody>
-        </table>
-
-        ${summaryHtml}
-
-        <div class="attendance-comment-box">
-          ${attendanceHtml}
-
-          <div class="comment-box">
-            <h3>Teacher’s Comment</h3>
-            <p>${teacherComment || "__________________________________________________________________________________"}</p>
-          </div>
-
-          <div class="comment-box">
-            <h3>Headteacher’s Comment</h3>
-            <p>${headteacherComment || "__________________________________________________________________________________"}</p>
-          </div>
-
-          <div class="signature-grid">
-            <div>
-              <div class="signature-line"></div>
-              <strong>Class Teacher Signature</strong>
-            </div>
-
-            <div>
-              <div class="signature-line"></div>
-              <strong>Headteacher Signature</strong>
-            </div>
-
-            <div>
-              <div class="signature-line"></div>
-              <strong>Parent Signature</strong>
-            </div>
-          </div>
-        </div>
-      </body>
-      </html>
-    `);
-
+    printWindow.document.write(
+      "<html><head><title>Preparing Reports</title></head>" +
+      "<body><p>Preparing student report cards...</p></body></html>"
+    );
     printWindow.document.close();
+
+    try {
+      const headers = getAuthOnlyHeaders();
+
+      async function fetchJson(url) {
+        const response = await fetch(url, {
+          headers,
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Could not retrieve report data (${response.status}).`
+          );
+        }
+
+        return response.json();
+      }
+
+      const branchQuery = `branch_id=${encodeURIComponent(branchId)}`;
+
+      const [
+        studentsData,
+        scoresData,
+        attendanceData,
+        settingsData,
+        gradingSettings
+      ] = await Promise.all([
+        fetchJson(`/api/students?${branchQuery}`),
+        fetchJson(
+          `/api/scores?${branchQuery}` +
+          `&class_id=${encodeURIComponent(classId)}` +
+          `&term=${encodeURIComponent(term)}` +
+          `&academic_year=${encodeURIComponent(academicYear)}` +
+          `&approval_status=approved`
+        ),
+        fetchJson(`/api/attendance?${branchQuery}`),
+        fetchJson("/api/settings"),
+        getGradingSettings()
+      ]);
+
+      const students = (studentsData.students || [])
+        .filter(student =>
+          String(student.branch_id) === String(branchId) &&
+          String(student.class_id) === String(classId) &&
+          String(student.status || "").toLowerCase() === "active" &&
+          (!studentId || String(student.id) === String(studentId))
+        )
+        .sort((a, b) =>
+          String(a.full_name || "").localeCompare(
+            String(b.full_name || "")
+          )
+        );
+
+      if (students.length === 0) {
+        throw new Error(
+          "No active students found for the selected report."
+        );
+      }
+
+      const scores = (scoresData.scores || []).filter(score =>
+        String(score.branch_id) === String(branchId) &&
+        String(score.class_name || "") === String(className || "") &&
+        String(score.term || "") === String(term || "") &&
+        String(score.academic_year || "") === String(academicYear || "") &&
+        String(score.approval_status || "").toLowerCase() === "approved"
+      );
+
+      const attendance = (
+        attendanceData.attendance ||
+        attendanceData.records ||
+        []
+      ).filter(record =>
+        String(record.branch_id) === String(branchId) &&
+        String(record.class_name || "") === String(className || "") &&
+        String(record.term || "") === String(term || "") &&
+        String(record.academic_year || "") === String(academicYear || "")
+      );
+
+      const settings = { ...(settingsData.settings || {}) };
+
+      if (settings.school_logo &&
+          settings.school_logo.startsWith("/uploads/")) {
+        settings.school_logo =
+          `${window.location.protocol}//${window.location.hostname}:5000` +
+          settings.school_logo;
+      }
+
+      const cards = students.map(student => {
+        const reportStudent = { ...student };
+
+        if (reportStudent.profile_picture &&
+            reportStudent.profile_picture.startsWith("/uploads/")) {
+          reportStudent.profile_picture =
+            `${window.location.protocol}//${window.location.hostname}:5000` +
+            reportStudent.profile_picture;
+        }
+
+        return renderer.buildReportCard({
+          student: reportStudent,
+          settings,
+          report,
+          scores,
+          attendance,
+          gradingSettings
+        });
+      }).join("\n");
+
+      printWindow.document.open();
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>Terminal Reports - ${renderer.escapeHtml(className)}</title>
+          <style>${renderer.REPORT_STYLES}</style>
+        </head>
+        <body>
+          ${cards}
+        </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+
+    } catch (error) {
+      console.error("Report card printing error:", error);
+
+      printWindow.document.open();
+      printWindow.document.write(
+        "<html><body><h3>Could not prepare report cards</h3>" +
+        "<p>" + renderer.escapeHtml(error.message) + "</p>" +
+        "</body></html>"
+      );
+      printWindow.document.close();
+
+      alert(error.message);
+    }
   }
 
   if (reportForm) {
@@ -620,3 +409,156 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
+
+
+// DELIGHT TERMINAL REPORT STUDENT SELECTOR
+document.addEventListener("DOMContentLoaded", function () {
+  const branch = document.getElementById("report_branch_id");
+  const classSelect = document.getElementById("report_class_id");
+  const studentSelect = document.getElementById("report_student_id");
+
+  if (!branch || !classSelect || !studentSelect) return;
+
+  const API = window.API_BASE_URL || "";
+
+  let requestNumber = 0;
+  let lastSelection = "";
+
+  function authHeaders() {
+    const token =
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token");
+
+    return token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+  }
+
+  function showMessage(message) {
+    studentSelect.replaceChildren(
+      new Option(message, "")
+    );
+    studentSelect.value = "";
+  }
+
+  async function loadStudents() {
+    const branchId = branch.value;
+    const classId = classSelect.value;
+
+    const currentRequest = ++requestNumber;
+
+    if (!branchId || !classId) {
+      showMessage("Select branch and class first");
+      return;
+    }
+
+    showMessage("Loading students...");
+
+    try {
+      const response = await fetch(
+        `${API}/api/students?branch_id=${encodeURIComponent(branchId)}`,
+        {
+          headers: authHeaders(),
+          cache: "no-store"
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to load students"
+        );
+      }
+
+      if (
+        currentRequest !== requestNumber ||
+        branch.value !== branchId ||
+        classSelect.value !== classId
+      ) {
+        return;
+      }
+
+      const students = (
+        Array.isArray(data.students) ? data.students : []
+      )
+        .filter(student =>
+          String(student.branch_id) === String(branchId) &&
+          String(student.class_id) === String(classId) &&
+          String(student.status || "").toLowerCase() === "active"
+        )
+        .sort((a, b) =>
+          String(a.full_name || "")
+            .localeCompare(String(b.full_name || ""))
+        );
+
+      if (students.length === 0) {
+        showMessage("No students found in this class");
+        return;
+      }
+
+      studentSelect.replaceChildren();
+
+      studentSelect.add(
+        new Option("Select student", "")
+      );
+
+      studentSelect.add(
+        new Option(
+          `All Students (${students.length})`,
+          "all"
+        )
+      );
+
+      for (const student of students) {
+        const name =
+          student.full_name || "Unnamed Student";
+
+        const admission =
+          student.admission_number || "No admission number";
+
+        studentSelect.add(
+          new Option(
+            `${name} (${admission})`,
+            String(student.id)
+          )
+        );
+      }
+
+    } catch (error) {
+      if (currentRequest !== requestNumber) return;
+
+      console.error(
+        "Report student loading error:",
+        error
+      );
+
+      showMessage("Could not load students");
+    }
+  }
+
+  function selectionChanged() {
+    const selection =
+      `${branch.value}|${classSelect.value}`;
+
+    if (selection === lastSelection) return;
+
+    lastSelection = selection;
+    loadStudents();
+  }
+
+  branch.addEventListener(
+    "change",
+    selectionChanged
+  );
+
+  classSelect.addEventListener(
+    "change",
+    selectionChanged
+  );
+
+  // Detect selections populated by other dashboard scripts.
+  setInterval(selectionChanged, 500);
+
+  selectionChanged();
+});

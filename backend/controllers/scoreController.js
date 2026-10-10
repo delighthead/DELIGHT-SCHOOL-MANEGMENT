@@ -10,34 +10,75 @@ function toSafeNumber(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function calculateGrade(total) {
-  if (total >= 80) return "A";
-  if (total >= 70) return "B";
-  if (total >= 60) return "C";
-  if (total >= 50) return "D";
-  return "F";
+const {
+  calculateNumericalGrade
+} = require("../utils/numericalGrading");
+
+async function getActiveNumericalGrading() {
+  const [rows] = await db.query(
+    "SELECT * FROM settings WHERE id = 1 LIMIT 1"
+  );
+
+  const settings = rows[0];
+
+  if (!settings) {
+    return null;
+  }
+
+  const grades = [];
+
+  for (let grade = 1; grade <= 9; grade++) {
+    const min = Number(settings[`grade_${grade}_min`]);
+    const remark = String(
+      settings[`grade_${grade}_remark`] || ""
+    ).trim();
+
+    if (!Number.isFinite(min) || !remark) {
+      return null;
+    }
+
+    grades.push({
+      grade: String(grade),
+      min,
+      remark
+    });
+  }
+
+  return grades.sort((a, b) => b.min - a.min);
 }
 
-function calculateRemark(total) {
-  if (total >= 80) return "Excellent";
-  if (total >= 70) return "Very Good";
-  if (total >= 60) return "Good";
-  if (total >= 50) return "Fair";
-  return "Needs Improvement";
-}
-
-function buildScoreSummary(assessmentScore, examinationScore, remarksInput) {
+async function buildScoreSummary(
+  assessmentScore,
+  examinationScore,
+  remarksInput
+) {
   const assessment = toSafeNumber(assessmentScore);
   const examination = toSafeNumber(examinationScore);
   const total = assessment + examination;
-  const grade = calculateGrade(total);
-  const remarks = String(remarksInput || "").trim() || calculateRemark(total);
+
+  let grading = calculateNumericalGrade(total);
+
+  const settings = await getActiveNumericalGrading();
+
+  if (settings && total >= 0 && total <= 100) {
+    const found = settings.find(item => total >= item.min);
+
+    if (found) {
+      grading = {
+        grade: found.grade,
+        remark: found.remark
+      };
+    }
+  }
+
+  const remarks =
+    String(remarksInput || "").trim() || grading.remark;
 
   return {
     assessment,
     examination,
     total,
-    grade,
+    grade: grading.grade,
     remarks
   };
 }
@@ -440,7 +481,7 @@ exports.createScore = async (req, res) => {
       }
     }
 
-    const scoreSummary = buildScoreSummary(assessment_score, examination_score, remarks);
+    const scoreSummary = await buildScoreSummary(assessment_score, examination_score, remarks);
 
     const [result] = await db.query(
       `INSERT INTO scores
@@ -582,7 +623,7 @@ exports.updateScore = async (req, res) => {
     const finalBranchId = branch_id || existing.branch_id;
     const finalApprovalStatus = approval_status || existing.approval_status || "pending";
 
-    const scoreSummary = buildScoreSummary(
+    const scoreSummary = await buildScoreSummary(
       assessment_score ?? existing.assessment_score,
       examination_score ?? existing.examination_score,
       remarks ?? existing.remarks
@@ -999,7 +1040,7 @@ exports.uploadScoreExcel = async (req, res) => {
         }
       }
 
-      const scoreSummary = buildScoreSummary(assessmentScore, examinationScore, remarks);
+      const scoreSummary = await buildScoreSummary(assessmentScore, examinationScore, remarks);
 
       const [existing] = await db.query(
         `SELECT id, branch_id, class_id, subject, term, academic_year

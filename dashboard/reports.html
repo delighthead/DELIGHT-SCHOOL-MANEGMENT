@@ -37,70 +37,90 @@
         <h2>Create Report Record</h2>
 
         <form class="admin-form" id="reportForm">
-          <div>
-            <label>Branch / Location</label>
-            <select id="report_branch_id" required>
-              <option value="">Loading branches...</option>
-            </select>
-          </div>
 
-          <div>
-            <label>Report Name</label>
-            <input type="text" id="report_name" placeholder="Example: Basic 4 Terminal Report" required>
-          </div>
+  <div>
+    <label for="report_branch_id">Branch / Location</label>
+    <select id="report_branch_id" required>
+      <option value="">Loading branches...</option>
+    </select>
+  </div>
 
-          <div>
-            <label>Report Type</label>
-            <select id="report_type" required>
-              <option value="">Select report type</option>
-              <option>Terminal Report</option>
-              <option>Attendance Report</option>
-              <option>Fees Report</option>
-              <option>Scores Report</option>
-              <option>General Report</option>
-            </select>
-          </div>
+  <div>
+    <label for="report_type">Report Type</label>
+    <select id="report_type" required>
+      <option value="Terminal Exams" selected>Terminal Exams</option>
+    </select>
+  </div>
 
-          <div>
-            <label>Class</label>
-            <select id="report_class_id">
-              <option value="">Select branch first</option>
-            </select>
-          </div>
+  <div>
+    <label for="report_class_id">Class</label>
+    <select id="report_class_id" required>
+      <option value="">Select branch first</option>
+    </select>
+  </div>
 
-          <div>
-            <label>Term</label>
-            <select id="report_term">
-              <option value="">Select term</option>
-              <option>Term 1</option>
-              <option>Term 2</option>
-              <option>Term 3</option>
-            </select>
-          </div>
+  <div>
+    <label for="report_student_id">Student</label>
+    <select id="report_student_id" required>
+      <option value="">Select class first</option>
+    </select>
+  </div>
 
-          <div>
-            <label>Academic Year</label>
-            <input type="text" id="report_academic_year" value="2025/2026">
-          </div>
+  <div>
+    <label for="report_term">Term</label>
+    <select id="report_term" required>
+      <option value="">Select term</option>
+      <option value="Term 1">Term 1</option>
+      <option value="Term 2">Term 2</option>
+      <option value="Term 3">Term 3</option>
+    </select>
+  </div>
 
-          <button type="submit">Create Report</button>
-        
-          <div class="form-group">
-            <label for="reopening_date">Reopening Date</label>
-            <input type="text" id="reopening_date" placeholder="Example: 10th September 2026">
-          </div>
+  <div>
+    <label for="report_academic_year">Academic Year</label>
+    <input
+      type="text"
+      id="report_academic_year"
+      placeholder="Academic year"
+      readonly
+      required
+    >
+  </div>
 
-          <div class="form-group">
-            <label for="teacher_comment">Teacher’s Comment</label>
-            <textarea id="teacher_comment" rows="3" placeholder="Enter teacher’s comment"></textarea>
-          </div>
+  <div>
+    <label for="reopening_date">Reopening Date</label>
+    <input
+      type="text"
+      id="reopening_date"
+      placeholder="Example: 10th September 2026"
+    >
+  </div>
 
-          <div class="form-group">
-            <label for="headteacher_comment">Headteacher’s Comment</label>
-            <textarea id="headteacher_comment" rows="3" placeholder="Enter headteacher’s comment"></textarea>
-          </div>
+  <div>
+    <label for="teacher_comment">Teacher's Comment</label>
+    <textarea
+      id="teacher_comment"
+      rows="3"
+      placeholder="Enter teacher's comment"
+    ></textarea>
+  </div>
 
-        </form>
+  <div>
+    <label for="headteacher_comment">Headteacher's Comment</label>
+    <textarea
+      id="headteacher_comment"
+      rows="3"
+      placeholder="Enter headteacher's comment"
+    ></textarea>
+  </div>
+
+  <div style="grid-column: 1 / -1;">
+    <button type="submit" style="width: 100%;">
+      Create Report
+    </button>
+  </div>
+
+</form>
       </section>
 
       <section class="dashboard-section">
@@ -144,13 +164,14 @@
   <script src="../js/api-helper.js?v=2"></script>
   <script src="../js/dashboard-actions.js?v=105"></script>
   <script src="../js/admin-panel-title.js?v=1"></script>
-  <script src="../js/reports-api.js?v=110"></script>
+  <script src="../js/reports-api.js?v=114"></script>
   <script src="../js/logout.js?v=2"></script>
   <script src="../js/admin-guard.js?v=1"></script>
   <script src="../js/site-footer-settings.js?v=1"></script>
   <script src="../js/site-settings.js?v=4"></script>
   <script src="../js/academic-session.js?v=1"></script>
   <script src="../js/grading-settings.js?v=1"></script>
+  <script src="../js/terminal-report-card.js?v=7"></script>
   <script src="../js/admin-common-polish.js?v=1"></script>
   <script src="../js/teacher-dropdown-final.js?v=2"></script>
   <script src="../js/assign-teacher-subject-dropdown.js?v=1"></script>

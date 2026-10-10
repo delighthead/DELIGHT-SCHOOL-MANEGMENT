@@ -138,36 +138,68 @@
               </tr>
             </thead>
 
-            <tbody>
+            <tbody id="gradingSystemTableBody">
               <tr>
-                <td>A</td>
-                <td><input type="number" id="grade_a_min" value="80"></td>
-                <td><input type="number" id="grade_a_max" value="100"></td>
-                <td><input type="text" id="grade_a_remark" value="Excellent"></td>
+                <td>1</td>
+                <td><input type="number" id="grade_1_min" value="80" min="0" max="100" step="0.01" required></td>
+                <td><input type="number" id="grade_1_max" value="100" min="0" max="100" step="0.01" required></td>
+                <td><input type="text" id="grade_1_remark" value="Highest" required></td>
               </tr>
+
               <tr>
-                <td>B</td>
-                <td><input type="number" id="grade_b_min" value="70"></td>
-                <td><input type="number" id="grade_b_max" value="79"></td>
-                <td><input type="text" id="grade_b_remark" value="Very Good"></td>
+                <td>2</td>
+                <td><input type="number" id="grade_2_min" value="70" min="0" max="100" step="0.01" required></td>
+                <td><input type="number" id="grade_2_max" value="79" min="0" max="100" step="0.01" required></td>
+                <td><input type="text" id="grade_2_remark" value="Higher" required></td>
               </tr>
+
               <tr>
-                <td>C</td>
-                <td><input type="number" id="grade_c_min" value="60"></td>
-                <td><input type="number" id="grade_c_max" value="69"></td>
-                <td><input type="text" id="grade_c_remark" value="Good"></td>
+                <td>3</td>
+                <td><input type="number" id="grade_3_min" value="65" min="0" max="100" step="0.01" required></td>
+                <td><input type="number" id="grade_3_max" value="69" min="0" max="100" step="0.01" required></td>
+                <td><input type="text" id="grade_3_remark" value="High" required></td>
               </tr>
+
               <tr>
-                <td>D</td>
-                <td><input type="number" id="grade_d_min" value="50"></td>
-                <td><input type="number" id="grade_d_max" value="59"></td>
-                <td><input type="text" id="grade_d_remark" value="Pass"></td>
+                <td>4</td>
+                <td><input type="number" id="grade_4_min" value="60" min="0" max="100" step="0.01" required></td>
+                <td><input type="number" id="grade_4_max" value="64" min="0" max="100" step="0.01" required></td>
+                <td><input type="text" id="grade_4_remark" value="High Average" required></td>
               </tr>
+
               <tr>
-                <td>F</td>
-                <td><input type="number" id="grade_f_min" value="0"></td>
-                <td><input type="number" id="grade_f_max" value="49"></td>
-                <td><input type="text" id="grade_f_remark" value="Needs Improvement"></td>
+                <td>5</td>
+                <td><input type="number" id="grade_5_min" value="55" min="0" max="100" step="0.01" required></td>
+                <td><input type="number" id="grade_5_max" value="59" min="0" max="100" step="0.01" required></td>
+                <td><input type="text" id="grade_5_remark" value="Average" required></td>
+              </tr>
+
+              <tr>
+                <td>6</td>
+                <td><input type="number" id="grade_6_min" value="50" min="0" max="100" step="0.01" required></td>
+                <td><input type="number" id="grade_6_max" value="54" min="0" max="100" step="0.01" required></td>
+                <td><input type="text" id="grade_6_remark" value="Low Average" required></td>
+              </tr>
+
+              <tr>
+                <td>7</td>
+                <td><input type="number" id="grade_7_min" value="45" min="0" max="100" step="0.01" required></td>
+                <td><input type="number" id="grade_7_max" value="49" min="0" max="100" step="0.01" required></td>
+                <td><input type="text" id="grade_7_remark" value="Low" required></td>
+              </tr>
+
+              <tr>
+                <td>8</td>
+                <td><input type="number" id="grade_8_min" value="40" min="0" max="100" step="0.01" required></td>
+                <td><input type="number" id="grade_8_max" value="44" min="0" max="100" step="0.01" required></td>
+                <td><input type="text" id="grade_8_remark" value="Lower" required></td>
+              </tr>
+
+              <tr>
+                <td>9</td>
+                <td><input type="number" id="grade_9_min" value="0" min="0" max="100" step="0.01" required></td>
+                <td><input type="number" id="grade_9_max" value="39" min="0" max="100" step="0.01" required></td>
+                <td><input type="text" id="grade_9_remark" value="Lowest" required></td>
               </tr>
             </tbody>
           </table>
@@ -261,7 +293,7 @@
 
   </div>
 
-  <script src="../js/settings-api.js?v=8"></script>
+  <script src="../js/settings-api.js?v=9"></script>
   <script src="../js/logout.js?v=2"></script>
   <script src="../js/admin-guard.js?v=1"></script>
   <script src="../js/site-footer-settings.js?v=1"></script>

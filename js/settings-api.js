@@ -65,6 +65,17 @@ document.addEventListener("DOMContentLoaded", function () {
       setValue("total_max_score", settings.total_max_score);
       setValue("pass_mark", settings.pass_mark);
 
+      // Load numerical grading settings (Grades 1–9).
+      for (let grade = 1; grade <= 9; grade++) {
+        for (const field of ["min", "max", "remark"]) {
+          const key = `grade_${grade}_${field}`;
+
+          if (settings[key] !== undefined && settings[key] !== null) {
+            setValue(key, settings[key]);
+          }
+        }
+      }
+
       setValue("default_username", settings.default_username);
       setValue("default_password", settings.default_password);
       setValue("allow_password_reset", settings.allow_password_reset);
@@ -160,6 +171,89 @@ document.addEventListener("DOMContentLoaded", function () {
       };
 
       await saveSettings(payload, "Academic settings saved successfully");
+    });
+  }
+
+  // Save numerical grading settings (Grades 1–9).
+  if (gradingSettingsForm) {
+    gradingSettingsForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const payload = {};
+      const ranges = [];
+
+      for (let grade = 1; grade <= 9; grade++) {
+        const minInput = document.getElementById(`grade_${grade}_min`);
+        const maxInput = document.getElementById(`grade_${grade}_max`);
+        const remarkInput = document.getElementById(`grade_${grade}_remark`);
+
+        if (!minInput || !maxInput || !remarkInput) {
+          alert(`Grade ${grade} settings are missing.`);
+          return;
+        }
+
+        const min = Number(minInput.value);
+        const max = Number(maxInput.value);
+        const remark = remarkInput.value.trim();
+
+        if (
+          minInput.value.trim() === "" ||
+          maxInput.value.trim() === "" ||
+          !Number.isFinite(min) ||
+          !Number.isFinite(max) ||
+          min < 0 ||
+          max > 100 ||
+          min > max ||
+          !remark
+        ) {
+          alert(`Please check the minimum, maximum and remark for Grade ${grade}.`);
+          return;
+        }
+
+        payload[`grade_${grade}_min`] = min;
+        payload[`grade_${grade}_max`] = max;
+        payload[`grade_${grade}_remark`] = remark;
+
+        ranges.push({ grade, min, max });
+      }
+
+      // Validate numerical grading boundaries.
+      // Decimal scores are graded using minimum-score boundaries.
+      for (let i = 0; i < ranges.length - 1; i++) {
+        const current = ranges[i];
+        const next = ranges[i + 1];
+
+        if (current.min <= next.min) {
+          alert(
+            `Grade ${current.grade} must have a higher minimum score than Grade ${next.grade}.`
+          );
+          return;
+        }
+
+        if (current.min <= next.max) {
+          alert(
+            `Grade ${current.grade} overlaps with Grade ${next.grade}.`
+          );
+          return;
+        }
+
+        if (current.min - next.max > 1.000001) {
+          alert(
+            `There is a gap between Grade ${current.grade} and Grade ${next.grade}.`
+          );
+          return;
+        }
+      }
+
+      if (ranges[0].max !== 100 || ranges[8].min !== 0) {
+        alert("The grading system must cover scores from 0 to 100.");
+        return;
+      }
+
+      await saveSettings(
+        payload,
+        "Numerical grading system saved successfully"
+      );
     });
   }
 
