@@ -333,7 +333,10 @@ document.addEventListener("DOMContentLoaded", function () {
       if (settings.school_logo &&
           settings.school_logo.startsWith("/uploads/")) {
         settings.school_logo =
-          `${window.location.protocol}//${window.location.hostname}:5000` +
+          `${window.location.protocol}//${window.location.hostname}` +
+          (["localhost", "127.0.0.1"].includes(window.location.hostname)
+            ? ":5000"
+            : "") +
           settings.school_logo;
       }
 
@@ -343,7 +346,10 @@ document.addEventListener("DOMContentLoaded", function () {
         if (reportStudent.profile_picture &&
             reportStudent.profile_picture.startsWith("/uploads/")) {
           reportStudent.profile_picture =
-            `${window.location.protocol}//${window.location.hostname}:5000` +
+            `${window.location.protocol}//${window.location.hostname}` +
+          (["localhost", "127.0.0.1"].includes(window.location.hostname)
+            ? ":5000"
+            : "") +
             reportStudent.profile_picture;
         }
 
