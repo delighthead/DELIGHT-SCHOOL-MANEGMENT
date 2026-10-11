@@ -15,4 +15,7 @@ router.get("/", verifyToken, requireAdmin, applyUserBranchSecurity, reportContro
 // Only admins can create reports
 router.post("/", verifyToken, requireAdmin, applyBranchSecurity, reportController.createReport);
 
+// Delete a report record (branch permissions enforced by controller)
+router.delete("/:id", verifyToken, requireAdmin, applyUserBranchSecurity, reportController.deleteReport);
+
 module.exports = router;

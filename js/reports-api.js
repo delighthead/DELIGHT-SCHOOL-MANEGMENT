@@ -147,6 +147,17 @@ document.addEventListener("DOMContentLoaded", function () {
               data-reopening-date="${encodeURIComponent(report.reopening_date || "")}">
               View / Print
             </button>
+            <button
+              type="button"
+              class="small-btn success save-report-btn">
+              Save / PDF
+            </button>
+            <button
+              type="button"
+              class="small-btn danger delete-report-btn"
+              data-report-id="${report.id}">
+              Delete
+            </button>
           </td>
         `;
 
@@ -205,7 +216,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
 
-  async function openPrintableReport(button) {
+  async function openPrintableReport(button, saveAsPdf = false) {
     const branchId = button.dataset.branchId;
     const studentId = button.dataset.studentId;
     const classId = button.dataset.classId;
@@ -379,6 +390,17 @@ document.addEventListener("DOMContentLoaded", function () {
         </html>
       `);
 
+      if (saveAsPdf) {
+        printWindow.addEventListener("load", () => {
+          setTimeout(() => {
+            if (!printWindow.closed) {
+              printWindow.focus();
+              printWindow.print();
+            }
+          }, 500);
+        }, { once: true });
+      }
+
       printWindow.document.close();
 
     } catch (error) {
@@ -401,7 +423,70 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   if (reportTableBody) {
-    reportTableBody.addEventListener("click", function (event) {
+    reportTableBody.addEventListener("click", async function (event) {
+      const deleteButton = event.target.closest(".delete-report-btn");
+
+      if (deleteButton) {
+        const reportId = deleteButton.dataset.reportId;
+
+        if (!reportId) {
+          alert("Report ID is missing.");
+          return;
+        }
+
+        const confirmed = confirm(
+          "Are you sure you want to delete this report record?\n\n" +
+          "This action cannot be undone.\n" +
+          "Student information and examination scores will not be deleted."
+        );
+
+        if (!confirmed) return;
+
+        deleteButton.disabled = true;
+        deleteButton.textContent = "Deleting...";
+
+        try {
+          const response = await fetch(
+            `/api/reports/${encodeURIComponent(reportId)}`,
+            {
+              method: "DELETE",
+              headers: getAuthOnlyHeaders()
+            }
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || "Could not delete report.");
+          }
+
+          alert("Report record deleted successfully.");
+          await loadReports();
+
+        } catch (error) {
+          console.error("Delete report error:", error);
+          alert(error.message);
+          deleteButton.disabled = false;
+          deleteButton.textContent = "Delete";
+        }
+
+        return;
+      }
+
+      const saveButton = event.target.closest(".save-report-btn");
+
+      if (saveButton) {
+        const viewButton = saveButton.parentElement.querySelector(
+          ".view-report-btn"
+        );
+
+        if (viewButton) {
+          openPrintableReport(viewButton, true);
+        }
+
+        return;
+      }
+
       const button = event.target.closest(".view-report-btn");
       if (button) {
         openPrintableReport(button);

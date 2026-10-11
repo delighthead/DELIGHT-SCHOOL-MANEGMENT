@@ -182,3 +182,57 @@ exports.createReport = async (req, res) => {
     });
   }
 };
+
+
+// Delete only the selected report record.
+exports.deleteReport = async (req, res) => {
+  try {
+    const reportId = Number(req.params.id);
+
+    if (!Number.isSafeInteger(reportId) || reportId <= 0) {
+      return res.status(400).json({
+        message: "Invalid report ID."
+      });
+    }
+
+    const role = req.user.role;
+    // Only Super Admin can delete reports across branches.
+    // All other administrators are restricted to their assigned branch.
+    const restrictedRole = role !== "super_admin";
+
+    let sql = "DELETE FROM reports WHERE id = ?";
+    const params = [reportId];
+
+    if (restrictedRole) {
+      const branchId = Number(req.user.branch_id);
+
+      if (!Number.isSafeInteger(branchId) || branchId <= 0) {
+        return res.status(403).json({
+          message: "Valid branch access is required."
+        });
+      }
+
+      sql += " AND branch_id = ?";
+      params.push(branchId);
+    }
+
+    const [result] = await db.query(sql, params);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        message: "Report not found or access denied."
+      });
+    }
+
+    return res.json({
+      message: "Report record deleted successfully."
+    });
+
+  } catch (error) {
+    console.error("Delete report error:", error);
+
+    return res.status(500).json({
+      message: "Failed to delete report."
+    });
+  }
+};
