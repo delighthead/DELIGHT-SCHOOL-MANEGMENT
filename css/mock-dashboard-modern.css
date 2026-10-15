@@ -1,0 +1,1587 @@
+/*
+==================================================
+DELIGHT INTERNATIONAL SCHOOL MANAGEMENT SYSTEM
+BASIC 9 MOCK EXAMINATION MODULE
+MODERN DASHBOARD DESIGN
+==================================================
+
+Theme:
+Primary: Dark Blue
+Secondary: Gold
+Background: Light Grey
+Cards: White
+
+This stylesheet is dedicated to the Mock
+Examination Module.
+
+It must not affect other school dashboards.
+==================================================
+*/
+
+/* Dashboard-specific styles will be added
+   after the HTML structure is prepared. */
+
+
+
+/* STEP 396: MODERN SIDEBAR */
+
+/* Dashboard layout */
+.dashboard-layout:has(.mock-modern-sidebar) {
+    display: grid;
+    grid-template-columns: 270px minmax(0, 1fr);
+    min-height: 100vh;
+}
+
+/* Fixed sidebar */
+.mock-modern-sidebar {
+    position: sticky;
+    top: 0;
+    width: 270px;
+    height: 100vh;
+    box-sizing: border-box;
+    padding: 24px 16px;
+
+    background: linear-gradient(
+        180deg,
+        #062b55 0%,
+        #003366 55%,
+        #021d3a 100%
+    );
+
+    color: white;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow-y: auto;
+    z-index: 100;
+}
+
+/* School branding */
+.mock-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 8px 25px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+
+.mock-school-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #ffcc00;
+    color: #003366;
+
+    font-size: 26px;
+    font-weight: 800;
+    border-radius: 14px;
+}
+
+.mock-sidebar-brand h2 {
+    color: #ffcc00;
+    font-size: 18px;
+    margin: 0 0 5px;
+}
+
+.mock-sidebar-brand p {
+    color: #d7e5f5;
+    font-size: 11px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Navigation */
+.mock-modern-navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.mock-modern-navigation a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 13px 14px;
+    margin: 0;
+
+    color: #e5edf7;
+    text-decoration: none;
+
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 9px;
+
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.mock-modern-navigation a span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 22px;
+    min-width: 22px;
+    font-size: 19px;
+}
+
+/* Hover */
+.mock-modern-navigation a:hover {
+    background: rgba(255,204,0,0.15);
+    color: #ffcc00;
+}
+
+/* Active menu */
+.mock-modern-navigation a.active {
+    background: #ffcc00;
+    color: #003366;
+    font-weight: 700;
+}
+
+/* Sidebar footer */
+.mock-sidebar-footer {
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+}
+
+.mock-sidebar-footer a {
+    display: block;
+    padding: 12px 14px;
+    margin-bottom: 6px;
+
+    color: #e5edf7;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.mock-sidebar-footer a:hover {
+    background: rgba(255,255,255,0.1);
+    color: #ffcc00;
+}
+
+/* Main dashboard */
+.dashboard-layout:has(.mock-modern-sidebar) .dashboard-main {
+    min-width: 0;
+    padding: 30px;
+    background: #f3f6fb;
+}
+
+/* Tablet */
+@media (max-width: 1000px) {
+    .dashboard-layout:has(.mock-modern-sidebar) {
+        grid-template-columns: 230px minmax(0, 1fr);
+    }
+
+    .mock-modern-sidebar {
+        width: 230px;
+    }
+
+    .dashboard-layout:has(.mock-modern-sidebar) .dashboard-main {
+        padding: 20px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+    .dashboard-layout:has(.mock-modern-sidebar) {
+        display: block;
+    }
+
+    .mock-modern-sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        max-height: none;
+    }
+
+    .mock-modern-navigation {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .mock-modern-navigation a {
+        padding: 11px 9px;
+        font-size: 12px;
+    }
+
+    .dashboard-layout:has(.mock-modern-sidebar) .dashboard-main {
+        padding: 14px;
+    }
+}
+
+/* Print */
+@media print {
+    .mock-modern-sidebar {
+        display: none !important;
+    }
+
+    .dashboard-layout:has(.mock-modern-sidebar) {
+        display: block !important;
+    }
+
+    .dashboard-layout:has(.mock-modern-sidebar) .dashboard-main {
+        padding: 0 !important;
+    }
+}
+
+
+/* STEP 400: HIDDEN NAVIGATION PROTECTION */
+
+/*
+ * Respect the HTML hidden attribute.
+ * Administrator-only navigation must remain invisible
+ * until existing role checks explicitly reveal it.
+ */
+.mock-modern-navigation a[hidden] {
+    display: none !important;
+}
+
+/* Improve keyboard navigation */
+.mock-modern-navigation a:focus-visible {
+    outline: 3px solid #ffcc00;
+    outline-offset: 2px;
+}
+
+/* Smooth section navigation */
+#mockOverview,
+#mockAdminSection,
+#mockScoreSection {
+    scroll-margin-top: 24px;
+}
+
+
+
+/* STEP 403: DASHBOARD WORKSPACES */
+
+/* Workspace containers */
+.mock-workspace {
+    width: 100%;
+    min-width: 0;
+    animation: mockWorkspaceFade 0.25s ease-in-out;
+}
+
+/* Hide inactive workspaces */
+.mock-workspace[hidden] {
+    display: none !important;
+}
+
+/* Workspace headings */
+.mock-workspace-header {
+    margin-bottom: 24px;
+}
+
+.mock-workspace-header h2 {
+    margin: 0 0 8px;
+    color: #003366;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.mock-workspace-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* Workspace content */
+.mock-workspace-content {
+    display: grid;
+    gap: 22px;
+}
+
+/* Workspace transition */
+@keyframes mockWorkspaceFade {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dashboard content cards */
+.mock-workspace .dashboard-section {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 8px 25px rgba(15, 23, 42, 0.06);
+}
+
+/* Mobile workspace layout */
+@media (max-width: 700px) {
+    .mock-workspace-header h2 {
+        font-size: 20px;
+    }
+
+    .mock-workspace .dashboard-section {
+        padding: 16px;
+    }
+}
+
+
+
+/* STEP 407: MANAGEMENT PANEL VISIBILITY */
+
+/* Keep inactive management panels hidden */
+.mock-management-panel[hidden] {
+    display: none !important;
+}
+
+/* Give each management panel its own spacing */
+.mock-management-panel {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 0;
+}
+
+/* Separate panels when both are displayed */
+.mock-management-panel + .mock-management-panel {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+/* Keep the Manage Subjects workspace compact */
+#mockManageSubjects {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+#mockManageSubjects h2 {
+    margin-top: 0;
+}
+
+/* Management panel headings */
+.mock-management-panel h2 {
+    color: #003366;
+    margin-bottom: 10px;
+}
+
+/* Management panel descriptions */
+.mock-management-panel > p {
+    color: #64748b;
+    margin-bottom: 22px;
+}
+
+
+
+/* STEP 411: WORKSPACE VISIBILITY */
+
+.dashboard-main > .dashboard-section[hidden] {
+    display: none !important;
+}
+
+#mockAdminSection[hidden] {
+    display: none !important;
+}
+
+.mock-management-panel[hidden] {
+    display: none !important;
+}
+
+
+/* STEP 433E: CONFIGURED SUBJECTS TABLE */
+
+#mockManageSubjects .mock-configured-subjects {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+#mockManageSubjects .mock-configured-subjects h3 {
+    color: #073763;
+    font-size: 19px;
+    font-weight: 700;
+    margin: 0 0 8px;
+}
+
+#mockConfiguredSubjectsContext {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 18px;
+    line-height: 1.6;
+}
+
+#mockManageSubjects .mock-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+#mockManageSubjects .mock-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+}
+
+#mockManageSubjects .mock-table thead {
+    background: #073763;
+    color: #ffffff;
+}
+
+#mockManageSubjects .mock-table th {
+    padding: 15px 16px;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+#mockManageSubjects .mock-table td {
+    padding: 15px 16px;
+    font-size: 14px;
+    color: #243247;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#mockManageSubjects .mock-table tbody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+#mockManageSubjects .mock-table tbody tr:hover {
+    background: #fff9e6;
+}
+
+#mockManageSubjects .mock-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+#mockManageSubjects .mock-table td:last-child {
+    color: #047857;
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    #mockManageSubjects .mock-table {
+        min-width: 620px;
+    }
+
+    #mockManageSubjects .mock-table th,
+    #mockManageSubjects .mock-table td {
+        padding: 12px;
+        font-size: 13px;
+    }
+}
+
+
+/* STEP 433H-2: EXAMINATION INFORMATION BAR */
+
+#mockScoreExamInfo.mock-score-exam-info {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin: 20px 0 24px;
+    padding: 20px;
+    background: #f0f7ff;
+    border: 1px solid #d6e6f5;
+    border-left: 5px solid #ffcc00;
+    border-radius: 10px;
+}
+
+#mockScoreExamInfo .mock-exam-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+#mockScoreExamInfo .mock-exam-info-label {
+    color: #526781;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#mockScoreExamInfo .mock-exam-info-item strong {
+    color: #073763;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+#mockScoreStatusInfo[data-status="active"] {
+    color: #047857;
+}
+
+#mockScoreStatusInfo[data-status="draft"] {
+    color: #a16207;
+}
+
+#mockScoreStatusInfo[data-status="completed"] {
+    color: #475569;
+}
+
+@media (max-width: 1000px) {
+    #mockScoreExamInfo.mock-score-exam-info {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 600px) {
+    #mockScoreExamInfo.mock-score-exam-info {
+        grid-template-columns: 1fr;
+        padding: 16px;
+        gap: 14px;
+    }
+}
+
+
+/* STEP 449G — PROFESSIONAL MOCK RESULTS STYLING */
+
+#mockResultsWorkspace {
+  --results-blue: #103d70;
+  --results-gold: #ffc400;
+  --results-border: #d9e2ec;
+}
+
+#mockResultsWorkspace .mock-results-summary {
+  background: #eef4fb !important;
+  border: 1px solid #d7e3f0;
+  border-left: 5px solid var(--results-gold);
+  padding: 22px !important;
+  border-radius: 12px !important;
+}
+
+#mockResultsWorkspace .mock-results-summary h3 {
+  color: var(--results-blue) !important;
+  font-size: 19px;
+  font-weight: 800;
+  margin-bottom: 16px;
+}
+
+#mockResultsWorkspace .mock-results-summary p {
+  margin: 9px 0;
+  line-height: 1.6;
+  color: #334155;
+}
+
+#mockResultsWorkspace .mock-results-summary strong {
+  color: #172b4d;
+}
+
+#mockResultsWorkspace .mock-results-controls {
+  display: flex !important;
+  gap: 16px !important;
+  align-items: end !important;
+  margin: 24px 0 !important;
+}
+
+#mockResultsWorkspace .mock-results-controls label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #253858;
+}
+
+#mockResultsWorkspace #mockResultsSubject {
+  min-width: 250px !important;
+  height: 44px;
+  padding: 10px 14px !important;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #172b4d;
+  font-size: 14px;
+  margin-top: 7px;
+}
+
+#mockResultsWorkspace #mockResultsSubject:focus {
+  outline: 2px solid #82b5ed;
+  outline-offset: 2px;
+}
+
+#mockResultsWorkspace #loadMockResultsBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 11px 24px;
+  border: none;
+  border-radius: 8px;
+  background: var(--results-blue);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#mockResultsWorkspace #loadMockResultsBtn:hover {
+  background: #17619e;
+}
+
+#mockResultsWorkspace #loadMockResultsBtn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+#mockResultsWorkspace .mock-results-table {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0;
+  border: 1px solid var(--results-border);
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 14px;
+  background: #fff;
+}
+
+#mockResultsWorkspace .mock-results-table thead th {
+  background: var(--results-blue);
+  color: #fff;
+  padding: 15px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 3px solid var(--results-gold);
+}
+
+#mockResultsWorkspace .mock-results-table tbody td {
+  padding: 14px 12px;
+  color: #253858;
+  border-bottom: 1px solid var(--results-border);
+  vertical-align: middle;
+}
+
+#mockResultsWorkspace .mock-results-table tbody tr:nth-child(even) {
+  background: #f4f8fd;
+}
+
+#mockResultsWorkspace .mock-results-table tbody tr:hover {
+  background: #eaf3ff;
+}
+
+#mockResultsWorkspace .mock-results-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+#mockResultsWorkspace .mock-results-table tbody td:nth-child(1) {
+  font-weight: 700;
+  color: var(--results-blue);
+}
+
+#mockResultsWorkspace .mock-results-table tbody td:nth-child(6),
+#mockResultsWorkspace .mock-results-table tbody td:nth-child(7) {
+  font-weight: 700;
+}
+
+#mockResultsWorkspace #mockResultsMessage {
+  margin-top: 20px !important;
+  padding: 12px 15px;
+  background: #eefaf2;
+  border-radius: 8px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  #mockResultsWorkspace .mock-results-controls {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  #mockResultsWorkspace #mockResultsSubject,
+  #mockResultsWorkspace #loadMockResultsBtn {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  #mockResultsWorkspace .mock-results-table {
+    min-width: 850px;
+  }
+}
+
+@media print {
+  #mockResultsWorkspace .mock-results-controls,
+  #mockResultsWorkspace #mockResultsMessage {
+    display: none !important;
+  }
+
+  #mockResultsWorkspace .mock-results-table thead th {
+    background: #103d70 !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  #mockResultsWorkspace .mock-results-table tbody tr {
+    break-inside: avoid;
+  }
+}
+
+/* END STEP 449G */
+
+
+
+/* STEP 450J — PROFESSIONAL MOCK REPORT REMARKS */
+
+.mock-report-remarks-panel {
+  margin-top: 28px;
+  margin-bottom: 24px;
+  padding: 24px;
+  background: #f2f6fc;
+  border: 1px solid #dce6f3;
+  border-left: 4px solid #d4a017;
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.mock-report-remarks-panel[hidden] {
+  display: none !important;
+}
+
+.mock-report-remarks-header {
+  margin-bottom: 22px;
+}
+
+.mock-report-remarks-header h3 {
+  margin: 0 0 8px;
+  color: #08376a;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.mock-report-remarks-header p {
+  margin: 0;
+  color: #52647c;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.mock-report-remarks-field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #dce5ef;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.mock-report-remarks-field label {
+  display: block;
+  width: 100%;
+  color: #123c68;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.mock-report-remarks-field textarea {
+  display: block;
+  width: 100%;
+  min-height: 105px;
+  padding: 13px 15px;
+  background: #ffffff;
+  border: 1px solid #bdcce0;
+  border-radius: 8px;
+  color: #243447;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.mock-report-remarks-field textarea:focus {
+  outline: none;
+  border-color: #0872b9;
+  box-shadow: 0 0 0 3px rgba(8, 114, 185, 0.12);
+}
+
+.mock-report-remarks-field textarea:disabled {
+  background: #f1f4f8;
+  color: #68798d;
+  cursor: not-allowed;
+}
+
+.mock-report-remarks-field button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 11px 20px;
+  background: #075d99;
+  border: 1px solid #075d99;
+  border-radius: 7px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.mock-report-remarks-field button:hover:not(:disabled) {
+  background: #064979;
+  transform: translateY(-1px);
+}
+
+.mock-report-remarks-field button:disabled {
+  background: #a5b4c5;
+  border-color: #a5b4c5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+#mockRemarksSaveStatus {
+  margin: 0;
+  padding: 12px 15px;
+  background: #e7eff9;
+  border-radius: 7px;
+  color: #24466b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .mock-report-remarks-panel {
+    padding: 15px;
+    margin-top: 20px;
+  }
+
+  .mock-report-remarks-field {
+    padding: 15px;
+  }
+
+  .mock-report-remarks-field textarea {
+    min-height: 120px;
+  }
+
+  .mock-report-remarks-field button {
+    width: 100%;
+  }
+}
+
+/* END STEP 450J */
+
+
+/* =========================================================
+   STEP 452D — PROFESSIONAL DASHBOARD OVERVIEW
+   ========================================================= */
+
+/* Dashboard statistics grid */
+#mockDashboardOverview #mockDashboardStats {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 18px !important;
+  margin-bottom: 26px !important;
+}
+
+/* Individual statistic cards */
+#mockDashboardOverview .mock-dashboard-stat {
+  position: relative;
+  min-height: 125px;
+  padding: 23px 24px;
+  box-sizing: border-box;
+
+  background: linear-gradient(
+    145deg,
+    #ffffff 0%,
+    #f1f6fd 100%
+  );
+
+  border: 1px solid #dce7f4;
+  border-left: 5px solid #ffca05;
+  border-radius: 14px;
+
+  box-shadow: 0 6px 20px rgba(0, 51, 102, 0.07);
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+#mockDashboardOverview .mock-dashboard-stat:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px rgba(0, 51, 102, 0.12);
+}
+
+/* Card headings */
+#mockDashboardOverview .mock-dashboard-stat h3 {
+  margin: 0 0 13px;
+  color: #53657c;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+/* Card values */
+#mockDashboardOverview .mock-dashboard-stat strong {
+  display: block;
+  color: #083d70;
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+/* Status value */
+#mockDashboardOverview #mockDashStatus {
+  font-size: 23px;
+  text-transform: capitalize;
+  color: #087443;
+}
+
+/* Refresh dashboard button */
+#mockDashboardOverview #mockDashRefreshBtn {
+  appearance: none;
+
+  padding: 13px 24px;
+
+  background: linear-gradient(
+    135deg,
+    #073b70,
+    #0875a7
+  );
+
+  color: #ffffff;
+
+  border: none;
+  border-radius: 9px;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow: 0 5px 15px rgba(0, 51, 102, 0.18);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+#mockDashboardOverview #mockDashRefreshBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 51, 102, 0.25);
+}
+
+#mockDashboardOverview #mockDashRefreshBtn:focus-visible {
+  outline: 3px solid #ffca05;
+  outline-offset: 3px;
+}
+
+/* Dashboard update message */
+#mockDashboardOverview #mockDashMessage {
+  margin: 0 !important;
+  padding: 13px 16px;
+
+  background: #eefaf2;
+  border: 1px solid #d4edda;
+  border-radius: 9px;
+
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Subject performance table */
+#mockDashboardOverview .mock-results-table {
+  width: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0;
+
+  border: 1px solid #dce6f3;
+  border-radius: 11px;
+  overflow: hidden;
+
+  background: #ffffff;
+  font-size: 14px;
+}
+
+/* Table headings */
+#mockDashboardOverview .mock-results-table thead th {
+  padding: 15px 14px;
+
+  background: #103d70;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+
+  border-bottom: 3px solid #ffca05;
+}
+
+/* Table cells */
+#mockDashboardOverview .mock-results-table tbody td {
+  padding: 13px 14px;
+
+  color: #253858;
+  border-bottom: 1px solid #e3eaf3;
+
+  vertical-align: middle;
+}
+
+/* Alternate rows */
+#mockDashboardOverview .mock-results-table tbody tr:nth-child(even) {
+  background: #f4f8fd;
+}
+
+/* Row hover */
+#mockDashboardOverview .mock-results-table tbody tr:hover {
+  background: #eaf3ff;
+}
+
+/* Subject names */
+#mockDashboardOverview .mock-results-table tbody td:first-child {
+  color: #083d70;
+  font-weight: 700;
+}
+
+/* Numeric columns */
+#mockDashboardOverview .mock-results-table tbody td:not(:first-child) {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+#mockDashboardOverview .mock-results-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Tablet */
+@media (max-width: 1100px) {
+  #mockDashboardOverview #mockDashboardStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 650px) {
+  #mockDashboardOverview #mockDashboardStats {
+    grid-template-columns: 1fr !important;
+  }
+
+  #mockDashboardOverview .mock-dashboard-stat {
+    min-height: 105px;
+    padding: 18px;
+  }
+
+  #mockDashboardOverview .mock-dashboard-stat strong {
+    font-size: 27px;
+  }
+
+  #mockDashboardOverview .mock-results-table {
+    min-width: 650px;
+  }
+}
+
+/* END STEP 452D */
+
+
+
+/* =====================================================
+   STEP 454B — SIDEBAR AND MESSAGE FIX
+   ===================================================== */
+
+/* Keep desktop sidebar aligned with the viewport top */
+@media screen and (min-width: 701px) {
+
+  .dashboard-layout:has(.mock-modern-sidebar) {
+    align-items: start;
+  }
+
+  .dashboard-layout .mock-modern-sidebar {
+    position: sticky !important;
+    top: 0 !important;
+    align-self: start !important;
+    margin-top: 0 !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow-y: auto;
+  }
+
+}
+
+/* Hide score-management notifications on Dashboard Overview */
+body.mock-dashboard-overview-active #mockMessage {
+  display: none !important;
+}
+
+/* Keep mobile sidebar in normal document flow */
+@media screen and (max-width: 700px) {
+
+  .dashboard-layout .mock-modern-sidebar {
+    position: relative !important;
+    top: auto !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+}
+
+/* END STEP 454B */
+
+
+
+/* =====================================================
+   STEP 456A — PROFESSIONAL MOCK RESULTS BUTTONS
+   ===================================================== */
+
+/* Print Results and Export to Excel */
+#mockResultsWorkspace #printMockResultsBtn,
+#mockResultsWorkspace #exportMockResultsBtn {
+
+  appearance: none !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  min-height: 42px !important;
+  padding: 11px 22px !important;
+
+  background: linear-gradient(
+    135deg,
+    #103d70,
+    #0875a7
+  ) !important;
+
+  color: #ffffff !important;
+
+  border: none !important;
+  border-radius: 8px !important;
+
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+
+  line-height: 1.3 !important;
+  text-decoration: none !important;
+
+  cursor: pointer !important;
+
+  box-shadow: 0 4px 12px rgba(0, 51, 102, 0.15);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+/* Hover */
+#mockResultsWorkspace #printMockResultsBtn:hover:not(:disabled),
+#mockResultsWorkspace #exportMockResultsBtn:hover:not(:disabled) {
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 7px 16px rgba(0, 51, 102, 0.24);
+}
+
+/* Keyboard accessibility */
+#mockResultsWorkspace #printMockResultsBtn:focus-visible,
+#mockResultsWorkspace #exportMockResultsBtn:focus-visible {
+
+  outline: 3px solid #ffca05 !important;
+  outline-offset: 3px;
+}
+
+/* Disabled state */
+#mockResultsWorkspace #printMockResultsBtn:disabled,
+#mockResultsWorkspace #exportMockResultsBtn:disabled {
+
+  background: #a9b8ca !important;
+  color: #ffffff !important;
+
+  opacity: 0.75 !important;
+
+  cursor: not-allowed !important;
+
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Small screens */
+@media (max-width: 650px) {
+
+  #mockResultsWorkspace #printMockResultsBtn,
+  #mockResultsWorkspace #exportMockResultsBtn {
+
+    min-height: 42px !important;
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* END STEP 456A */
+
+
+
+/* =====================================================
+   STEP 456B — EXPORT RESULTS BUTTON DESIGN
+   ===================================================== */
+
+#mockExportWorkspace #mockExportLoadBtn,
+#mockExportWorkspace #mockExportDownloadBtn {
+  appearance: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  min-height: 42px !important;
+  padding: 11px 22px !important;
+
+  background: linear-gradient(
+    135deg,
+    #103d70,
+    #0875a7
+  ) !important;
+
+  color: #ffffff !important;
+
+  border: none !important;
+  border-radius: 8px !important;
+
+  font-family: inherit !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+
+  cursor: pointer !important;
+
+  box-shadow: 0 4px 12px rgba(0, 51, 102, 0.15);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+#mockExportWorkspace #mockExportLoadBtn:hover:not(:disabled),
+#mockExportWorkspace #mockExportDownloadBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 16px rgba(0, 51, 102, 0.24);
+}
+
+#mockExportWorkspace #mockExportLoadBtn:focus-visible,
+#mockExportWorkspace #mockExportDownloadBtn:focus-visible {
+  outline: 3px solid #ffca05 !important;
+  outline-offset: 3px;
+}
+
+#mockExportWorkspace #mockExportLoadBtn:disabled,
+#mockExportWorkspace #mockExportDownloadBtn:disabled {
+  background: #a9b8ca !important;
+  color: #ffffff !important;
+  opacity: 0.75 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 650px) {
+  #mockExportWorkspace #mockExportLoadBtn,
+#mockExportWorkspace #mockExportDownloadBtn {
+    min-height: 42px !important;
+    padding: 10px 16px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* END STEP 456B */
+
+
+
+/* =========================================================
+   STEP 457B — SUBJECT PERFORMANCE PIE CHART
+   ========================================================= */
+
+#mockDashboardOverview .mock-pie-section {
+  margin: 28px 0 32px;
+  padding: 26px;
+  border: 1px solid #dce6f3;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #ffffff, #f5f9fe);
+  box-shadow: 0 6px 20px rgba(0, 51, 102, 0.06);
+}
+
+#mockDashboardOverview .mock-pie-heading h3 {
+  margin: 0 0 7px;
+  color: #083d70;
+  font-size: 19px;
+}
+
+#mockDashboardOverview .mock-pie-heading p {
+  margin: 0;
+  color: #60738d;
+  font-size: 13px;
+}
+
+#mockDashboardOverview .mock-pie-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) minmax(300px, 1.3fr);
+  align-items: center;
+  gap: 35px;
+  margin-top: 26px;
+}
+
+#mockDashboardOverview .mock-pie-chart-container {
+  width: min(100%, 340px);
+  aspect-ratio: 1;
+  position: relative;
+  margin: 0 auto;
+}
+
+#mockDashboardOverview .mock-subject-pie-chart {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #e8eef7;
+  box-shadow: 0 10px 28px rgba(0, 51, 102, 0.13);
+}
+
+#mockDashboardOverview .mock-pie-centre {
+  position: absolute;
+  inset: 27%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 51, 102, 0.1);
+  pointer-events: none;
+}
+
+#mockDashboardOverview .mock-pie-centre strong {
+  color: #083d70;
+  font-size: 29px;
+  font-weight: 800;
+}
+
+#mockDashboardOverview .mock-pie-centre span {
+  color: #60738d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+#mockDashboardOverview .mock-pie-ranking h4 {
+  margin: 0 0 16px;
+  color: #083d70;
+  font-size: 16px;
+}
+
+#mockDashboardOverview .mock-pie-legend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 9px 0;
+  border-bottom: 1px solid #e3eaf3;
+  font-size: 13px;
+}
+
+#mockDashboardOverview .mock-pie-legend-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+#mockDashboardOverview .mock-pie-legend-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  border-radius: 4px;
+}
+
+#mockDashboardOverview .mock-pie-legend-row strong {
+  color: #083d70;
+  font-variant-numeric: tabular-nums;
+}
+
+#mockDashboardOverview .mock-pie-note {
+  margin: 22px 0 0;
+  color: #60738d;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 800px) {
+  #mockDashboardOverview .mock-pie-layout {
+    grid-template-columns: 1fr;
+  }
+
+  #mockDashboardOverview .mock-pie-section {
+    padding: 18px;
+  }
+
+  #mockDashboardOverview .mock-pie-chart-container {
+    width: min(100%, 290px);
+  }
+}
+
+/* END STEP 457B */
+
+
+
+/* =====================================================
+   STEP 458A — HORIZONTAL SUBJECT BAR CHART
+   ===================================================== */
+
+#mockDashboardOverview .mock-pie-layout {
+  display: grid !important;
+  grid-template-columns: minmax(0, 2.4fr) minmax(220px, 1fr) !important;
+  gap: 30px !important;
+  align-items: center !important;
+}
+
+#mockDashboardOverview .mock-pie-chart-container {
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
+  aspect-ratio: auto !important;
+  margin: 0 !important;
+}
+
+#mockDashboardOverview .mock-subject-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  width: 100%;
+}
+
+#mockDashboardOverview .mock-subject-bar-row {
+  display: grid;
+  grid-template-columns: minmax(155px, 1.2fr) minmax(120px, 2fr) 55px;
+  align-items: center;
+  gap: 13px;
+}
+
+#mockDashboardOverview .mock-subject-bar-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: #173b65;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+#mockDashboardOverview .mock-subject-bar-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  border-radius: 7px;
+  background: #e8f0fb;
+  color: #083d70;
+  font-size: 11px;
+}
+
+#mockDashboardOverview .mock-subject-bar-track {
+  height: 19px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #e5edf7;
+}
+
+#mockDashboardOverview .mock-subject-bar-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.4s ease;
+}
+
+#mockDashboardOverview .mock-subject-bar-value {
+  text-align: right;
+  color: #083d70;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+#mockDashboardOverview .mock-bar-summary {
+  padding: 28px 22px;
+  border: 1px solid #dce6f3;
+  border-radius: 13px;
+  background: #eef5fc;
+  text-align: center;
+}
+
+#mockDashboardOverview .mock-bar-summary h4 {
+  margin: 0 0 20px;
+  color: #083d70;
+  font-size: 17px;
+}
+
+#mockDashboardOverview .mock-bar-summary p {
+  color: #53657c;
+  font-size: 13px;
+}
+
+#mockDashboardOverview .mock-bar-summary strong {
+  display: block;
+  margin: 12px 0;
+  color: #083d70;
+  font-size: 43px;
+  font-weight: 800;
+}
+
+#mockDashboardOverview .mock-bar-summary span {
+  color: #53657c;
+  font-size: 12px;
+}
+
+#mockDashboardOverview .mock-bar-summary-note {
+  margin-top: 24px;
+  line-height: 1.7;
+}
+
+@media (max-width: 900px) {
+
+  #mockDashboardOverview .mock-pie-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+}
+
+@media (max-width: 550px) {
+
+  #mockDashboardOverview .mock-subject-bar-row {
+    grid-template-columns: minmax(110px, 1fr) minmax(70px, 1.2fr) 45px;
+    gap: 7px;
+  }
+
+  #mockDashboardOverview .mock-subject-bar-label {
+    font-size: 10px;
+  }
+
+  #mockDashboardOverview .mock-subject-bar-value {
+    font-size: 11px;
+  }
+
+}
+
+/* END STEP 458A */

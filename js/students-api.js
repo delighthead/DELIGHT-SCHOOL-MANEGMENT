@@ -233,6 +233,22 @@ document.addEventListener("DOMContentLoaded", function () {
       studentsCache.forEach(function (student) {
         const row = document.createElement("tr");
 
+        const currentStatus = String(student.status || "active").toLowerCase();
+
+        const statusLabels = {
+          active: "Active",
+          inactive: "Disabled / Locked",
+          stopped: "Stopped",
+          transferred: "Transferred",
+          completed: "Completed"
+        };
+
+        row.dataset.branchId = String(student.branch_id || "");
+        row.dataset.branchName = String(student.branch_name || "");
+        row.dataset.classId = String(student.class_id || "");
+        row.dataset.className = String(student.class_name || "");
+        row.dataset.status = currentStatus;
+
         row.innerHTML = `
           <td>${student.admission_number || ""}</td>
           <td>${student.full_name || ""}</td>
@@ -240,7 +256,7 @@ document.addEventListener("DOMContentLoaded", function () {
           <td>${student.class_name || ""}</td>
           <td>${student.mother_phone || ""}</td>
           <td>${student.father_phone || ""}</td>
-          <td>${student.status || ""}</td>
+          <td>${statusLabels[currentStatus] || currentStatus}</td>
           <td>
             <button type="button" class="small-btn success edit-student-btn" data-id="${student.id}">Edit</button>
 
@@ -248,11 +264,28 @@ document.addEventListener("DOMContentLoaded", function () {
               data-student="${encodeURIComponent(JSON.stringify(student))}">
               Print Profile
             </button>
+
+            <select class="student-status-action" data-id="${student.id}" data-name="${student.full_name || ""}">
+              <option value="active" ${currentStatus === "active" ? "selected" : ""}>Active</option>
+              <option value="inactive" ${currentStatus === "inactive" ? "selected" : ""}>Disabled / Locked</option>
+              <option value="stopped" ${currentStatus === "stopped" ? "selected" : ""}>Stopped</option>
+              <option value="transferred" ${currentStatus === "transferred" ? "selected" : ""}>Transferred</option>
+              <option value="completed" ${currentStatus === "completed" ? "selected" : ""}>Completed</option>
+            </select>
+
+            <button type="button"
+              class="small-btn update-student-status-btn"
+              data-id="${student.id}"
+              style="background:#004b80;color:#fff;border:none;padding:7px 12px;border-radius:5px;font-weight:600;cursor:pointer;opacity:1;">
+              Update Status
+            </button>
           </td>
         `;
 
         studentTableBody.appendChild(row);
       });
+
+      document.dispatchEvent(new CustomEvent("students:loaded"));
     } catch (error) {
       console.error(error);
       studentTableBody.innerHTML = `
@@ -262,6 +295,97 @@ document.addEventListener("DOMContentLoaded", function () {
       `;
     }
   }
+
+  studentTableBody?.addEventListener("click", async function (event) {
+    const button = event.target.closest(".update-student-status-btn");
+    if (!button) return;
+
+    const studentId = Number(button.dataset.id);
+    const row = button.closest("tr");
+    const statusSelect = row?.querySelector(".student-status-action");
+
+    if (!studentId || !statusSelect) return;
+
+    const newStatus = statusSelect.value;
+    const oldStatus = row.dataset.status || "active";
+
+    const statusLabels = {
+      active: "Active",
+      inactive: "Disabled / Locked",
+      stopped: "Stopped",
+      transferred: "Transferred",
+      completed: "Completed"
+    };
+
+    if (newStatus === oldStatus) {
+      alert(`This student is already ${statusLabels[newStatus] || newStatus}.`);
+      return;
+    }
+
+    const student = studentsCache.find(
+      item => Number(item.id) === studentId
+    );
+
+    const studentName =
+      student?.full_name ||
+      statusSelect.dataset.name ||
+      "this student";
+
+    const confirmed = confirm(
+      `Change ${studentName} from ${statusLabels[oldStatus] || oldStatus} to ${statusLabels[newStatus] || newStatus}?`
+    );
+
+    if (!confirmed) {
+      statusSelect.value = oldStatus;
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Updating...";
+
+    try {
+      const response = await fetch(
+        `/api/students/${studentId}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            ...getAuthOnlyHeaders(),
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            status: newStatus
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to update student status"
+        );
+      }
+
+      alert(
+        `${studentName} status changed to ${statusLabels[newStatus] || newStatus}.`
+      );
+
+      await loadStudents();
+    } catch (error) {
+      console.error("Student status update error:", error);
+
+      statusSelect.value = oldStatus;
+
+      alert(
+        error.message || "Unable to update student status."
+      );
+    } finally {
+      if (document.body.contains(button)) {
+        button.disabled = false;
+        button.textContent = "Update Status";
+      }
+    }
+  });
 
   async function loadClasses() {
     if (!classSelect) return;
@@ -441,6 +565,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         localStorage.removeItem("editing_student_id");
         studentForm.reset();
+
+        // Clear any camera/photo preview after a successful save.
+        document.dispatchEvent(new CustomEvent("studentPhotoReset"));
 
         if (admissionInput) {
           admissionInput.readOnly = true;
@@ -698,3 +825,473 @@ window.printStudentProfileFromButton = async function (button) {
 };
 
 
+
+
+// ==========================================================
+// STUDENT CAMERA / PHOTO CAPTURE
+// ==========================================================
+document.addEventListener("DOMContentLoaded", function () {
+  const pictureInput = document.getElementById("student_profile_picture");
+  const openCameraBtn = document.getElementById("openStudentCamera");
+  const cameraPanel = document.getElementById("studentCameraPanel");
+  const video = document.getElementById("studentCameraVideo");
+  const canvas = document.getElementById("studentCameraCanvas");
+  const captureBtn = document.getElementById("captureStudentPhoto");
+  const closeCameraBtn = document.getElementById("closeStudentCamera");
+  const previewWrap = document.getElementById("studentPhotoPreviewWrap");
+  const preview = document.getElementById("studentPhotoPreview");
+
+  if (
+    !pictureInput ||
+    !openCameraBtn ||
+    !cameraPanel ||
+    !video ||
+    !canvas ||
+    !captureBtn ||
+    !closeCameraBtn ||
+    !previewWrap ||
+    !preview
+  ) {
+    return;
+  }
+
+  let cameraStream = null;
+  let previewUrl = null;
+
+  function revokePreviewUrl() {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      previewUrl = null;
+    }
+  }
+
+  function showPreview(file) {
+    if (!file) {
+      revokePreviewUrl();
+      preview.removeAttribute("src");
+      previewWrap.hidden = true;
+      return;
+    }
+
+    revokePreviewUrl();
+    previewUrl = URL.createObjectURL(file);
+    preview.src = previewUrl;
+    previewWrap.hidden = false;
+  }
+
+  function stopCamera() {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(function (track) {
+        track.stop();
+      });
+      cameraStream = null;
+    }
+
+    video.srcObject = null;
+    cameraPanel.hidden = true;
+  }
+
+  pictureInput.addEventListener("change", function () {
+    const file = pictureInput.files && pictureInput.files[0];
+
+    if (!file) {
+      showPreview(null);
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      pictureInput.value = "";
+      showPreview(null);
+      return;
+    }
+
+    showPreview(file);
+  });
+
+  openCameraBtn.addEventListener("click", async function () {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Camera access is not supported by this browser.");
+      return;
+    }
+
+    try {
+      stopCamera();
+
+      cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "user" }
+        },
+        audio: false
+      });
+
+      video.srcObject = cameraStream;
+      cameraPanel.hidden = false;
+
+      await video.play();
+    } catch (error) {
+      console.error("Unable to open camera:", error);
+      alert(
+        "Unable to open the camera. Please allow camera permission in your browser or choose a photo instead."
+      );
+    }
+  });
+
+  captureBtn.addEventListener("click", function () {
+    if (!cameraStream || !video.videoWidth || !video.videoHeight) {
+      alert("Camera is not ready yet.");
+      return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext("2d");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(
+      function (blob) {
+        if (!blob) {
+          alert("Unable to capture the photo. Please try again.");
+          return;
+        }
+
+        const file = new File(
+          [blob],
+          "student-camera-" + Date.now() + ".jpg",
+          { type: "image/jpeg" }
+        );
+
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        pictureInput.files = transfer.files;
+
+        showPreview(file);
+        stopCamera();
+      },
+      "image/jpeg",
+      0.9
+    );
+  });
+
+  closeCameraBtn.addEventListener("click", function () {
+    stopCamera();
+  });
+
+  document.addEventListener("studentPhotoReset", function () {
+    stopCamera();
+    showPreview(null);
+  });
+
+  window.addEventListener("beforeunload", function () {
+    stopCamera();
+    revokePreviewUrl();
+  });
+});
+
+
+// STUDENT EXCEL TEMPLATE DOWNLOAD
+document.addEventListener("DOMContentLoaded", function () {
+  const downloadBtn = document.getElementById("downloadStudentExcelTemplate");
+  if (!downloadBtn) return;
+
+  downloadBtn.addEventListener("click", async function () {
+    const originalText = downloadBtn.textContent;
+
+    try {
+      downloadBtn.disabled = true;
+      downloadBtn.textContent = "Preparing Template...";
+
+      const token = localStorage.getItem("token");
+
+      const response = await fetch("/api/students/excel-template", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        let message = "Failed to download Excel template.";
+
+        try {
+          const data = await response.json();
+          if (data.message) message = data.message;
+        } catch (_) {}
+
+        throw new Error(message);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "Delight_Student_Import_Template.xlsx";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Student Excel template download error:", error);
+      alert(error.message || "Failed to download Excel template.");
+    } finally {
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = originalText;
+    }
+  });
+});
+
+// STUDENT EXCEL PREVIEW / VALIDATION
+document.addEventListener("DOMContentLoaded", function () {
+  const fileInput = document.getElementById("studentExcelFile");
+  const previewBtn = document.getElementById("previewStudentExcel");
+  const summary = document.getElementById("studentExcelSummary");
+  const previewWrap = document.getElementById("studentExcelPreviewWrap");
+  const previewBody = document.getElementById("studentExcelPreviewBody");
+  const importBtn = document.getElementById("importStudentExcel");
+
+  if (
+    !fileInput ||
+    !previewBtn ||
+    !summary ||
+    !previewWrap ||
+    !previewBody ||
+    !importBtn
+  ) {
+    return;
+  }
+
+  let validatedFile = null;
+
+  const disableImport = function () {
+    validatedFile = null;
+    importBtn.disabled = true;
+    importBtn.title = "Preview and validate the Excel file first";
+  };
+
+  fileInput.addEventListener("change", function () {
+    disableImport();
+    summary.style.display = "none";
+    previewWrap.style.display = "none";
+    previewBody.innerHTML = "";
+  });
+
+  const escapeHtml = value =>
+    String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  previewBtn.addEventListener("click", async function () {
+    const file = fileInput.files && fileInput.files[0];
+
+    if (!file) {
+      alert("Please choose the completed student Excel file first.");
+      return;
+    }
+
+    const extension = file.name.split(".").pop().toLowerCase();
+
+    if (!["xlsx", "xls"].includes(extension)) {
+      alert("Please select an Excel .xlsx or .xls file.");
+      return;
+    }
+
+    const originalText = previewBtn.textContent;
+
+    try {
+      previewBtn.disabled = true;
+      previewBtn.textContent = "Validating...";
+
+      summary.style.display = "none";
+      previewWrap.style.display = "none";
+      previewBody.innerHTML = "";
+
+      const formData = new FormData();
+      formData.append("excel_file", file);
+
+      const response = await fetch("/api/students/excel-preview", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        let message = result.message || "Failed to validate Excel file.";
+
+        if (
+          Array.isArray(result.missing_headers) &&
+          result.missing_headers.length
+        ) {
+          message +=
+            "\n\nMissing columns:\n- " +
+            result.missing_headers.join("\n- ");
+        }
+
+        throw new Error(message);
+      }
+
+      summary.style.display = "block";
+      summary.innerHTML =
+        `<strong>Total:</strong> ${Number(result.total_rows || 0)} &nbsp; | &nbsp; ` +
+        `<strong>Valid:</strong> ${Number(result.valid_rows || 0)} &nbsp; | &nbsp; ` +
+        `<strong>Errors:</strong> ${Number(result.error_rows || 0)}`;
+
+      const rows = Array.isArray(result.rows) ? result.rows : [];
+
+      for (const row of rows) {
+        const data = row.data || {};
+        const errors = Array.isArray(row.errors) ? row.errors : [];
+
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${escapeHtml(row.excel_row)}</td>
+          <td>${row.valid ? "Valid" : "Error"}</td>
+          <td>${escapeHtml(data.admission_number || "Auto")}</td>
+          <td>${escapeHtml(data.branch)}</td>
+          <td>${escapeHtml(data.full_name)}</td>
+          <td>${escapeHtml(data.sex)}</td>
+          <td>${escapeHtml(data.class_name)}</td>
+          <td>${escapeHtml(errors.join(" "))}</td>
+        `;
+
+        previewBody.appendChild(tr);
+      }
+
+      previewWrap.style.display = "block";
+
+      if (
+        Number(result.error_rows || 0) === 0 &&
+        Number(result.valid_rows || 0) > 0
+      ) {
+        validatedFile = file;
+        importBtn.disabled = false;
+        importBtn.title = "Import the validated students";
+      } else {
+        disableImport();
+      }
+    } catch (error) {
+      disableImport();
+      console.error("Student Excel preview error:", error);
+      alert(error.message || "Failed to validate Excel file.");
+    } finally {
+      previewBtn.disabled = false;
+      previewBtn.textContent = originalText;
+    }
+  });
+
+  importBtn.addEventListener("click", async function () {
+    if (!validatedFile) {
+      alert("Please preview and validate the Excel file first.");
+      disableImport();
+      return;
+    }
+
+    const confirmed = confirm(
+      "Import all validated students now?\n\n" +
+      "Admission numbers will be generated automatically and " +
+      "registration SMS messages will be sent where parent phone numbers are available."
+    );
+
+    if (!confirmed) return;
+
+    const originalText = importBtn.textContent;
+
+    try {
+      importBtn.disabled = true;
+      previewBtn.disabled = true;
+      fileInput.disabled = true;
+      importBtn.textContent = "Importing Students...";
+
+      const formData = new FormData();
+      formData.append("excel_file", validatedFile);
+
+      const response = await fetch("/api/students/excel-import", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`
+        },
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        let message =
+          result.message || "Failed to import students.";
+
+        if (
+          Array.isArray(result.errors) &&
+          result.errors.length
+        ) {
+          const rowErrors = result.errors.map(item => {
+            const errors = Array.isArray(item.errors)
+              ? item.errors.join(" ")
+              : "";
+
+            return `Row ${item.excel_row}: ${errors}`;
+          });
+
+          message += "\n\n" + rowErrors.join("\n");
+        }
+
+        if (Number(result.imported_count || 0) > 0) {
+          message +=
+            `\n\n${result.imported_count} student(s) had already been imported before the error occurred.`;
+        }
+
+        throw new Error(message);
+      }
+
+      const imported =
+        Array.isArray(result.imported_students)
+          ? result.imported_students
+          : [];
+
+      let message =
+        `${Number(result.imported_count || 0)} student(s) imported successfully.`;
+
+      if (imported.length) {
+        message +=
+          "\n\nAdmission Numbers:\n" +
+          imported
+            .map(student =>
+              `${student.admission_number} - ${student.full_name}`
+            )
+            .join("\n");
+      }
+
+      alert(message);
+
+      fileInput.value = "";
+      validatedFile = null;
+      summary.style.display = "none";
+      previewWrap.style.display = "none";
+      previewBody.innerHTML = "";
+      disableImport();
+
+      // Refresh the page so the Student List shows the new records.
+      window.location.reload();
+    } catch (error) {
+      console.error("Student Excel import error:", error);
+      alert(error.message || "Failed to import students.");
+
+      // Require another preview before retrying.
+      disableImport();
+    } finally {
+      previewBtn.disabled = false;
+      fileInput.disabled = false;
+      importBtn.textContent = originalText;
+    }
+  });
+
+});

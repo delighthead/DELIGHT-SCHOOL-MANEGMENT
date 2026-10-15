@@ -151,6 +151,54 @@
 
       <section class="dashboard-section">
         <h2>Fees Records</h2>
+
+        <!-- STEP 460C — SUPER ADMIN FEES RECORD FILTERS -->
+        <div id="feesRecordsFilters"
+             style="
+               display:grid;
+               grid-template-columns:repeat(3,minmax(0,1fr));
+               gap:12px;
+               margin:18px 0 15px;
+             ">
+
+          <div style="min-width:0;">
+            <label for="feesFilterBranch"
+                   style="display:block;font-weight:600;margin-bottom:6px;">
+              Branch
+            </label>
+
+            <select id="feesFilterBranch"
+                    style="width:100%;padding:10px;border:1px solid #d5deea;border-radius:6px;">
+              <option value="">All Branches</option>
+            </select>
+          </div>
+
+          <div style="min-width:0;">
+            <label for="feesFilterClass"
+                   style="display:block;font-weight:600;margin-bottom:6px;">
+              Class
+            </label>
+
+            <select id="feesFilterClass"
+                    style="width:100%;padding:10px;border:1px solid #d5deea;border-radius:6px;">
+              <option value="">All Classes</option>
+            </select>
+          </div>
+
+          <div style="min-width:0;">
+            <label for="feesFilterStudent"
+                   style="display:block;font-weight:600;margin-bottom:6px;">
+              Student
+            </label>
+
+            <select id="feesFilterStudent"
+                    style="width:100%;padding:10px;border:1px solid #d5deea;border-radius:6px;">
+              <option value="">All Students</option>
+            </select>
+          </div>
+
+        </div>
+
         <div class="student-search-box" style="margin: 15px 0; display:flex; gap:10px;">
           <input type="text" id="feesSearchInput" placeholder="Search by student name, admission number, class, term, or status" style="flex:1;">
           <button type="button" class="primary-btn" id="feesSearchBtn">Search</button>
@@ -207,5 +255,6 @@
   <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>
   <script src="../js/fees-search-final.js?v=1"></script>
   <script src="../js/admin-table-view-controls.js?v=1"></script>
+  <script src="../js/fees-record-filters.js?v=1"></script>
 </body>
 </html>

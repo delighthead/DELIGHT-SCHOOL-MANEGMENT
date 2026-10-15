@@ -66,23 +66,7 @@
 
 
   function calculateJhsAggregate(scores, gradingSettings) {
-    const normalize = value =>
-      String(value || "")
-        .toUpperCase()
-        .replace(/[^A-Z0-9]/g, "");
-
-    const coreSubjects = {
-      english: ["ENGLISH", "ENGLISHLANGUAGE"],
-      mathematics: ["MATHEMATICS", "MATHS", "MATH"],
-      science: [
-        "INTEGRATEDSCIENCE",
-        "GENERALSCIENCE",
-        "SCIENCE"
-      ],
-      social: ["SOCIALSTUDIES"]
-    };
-
-    const validScores = scores
+    const validGrades = scores
       .filter(score =>
         String(score.approval_status || "").toLowerCase() === "approved" &&
         score.total_score !== null &&
@@ -100,59 +84,22 @@
               )
             : { grade: "" };
 
-        return {
-          subject: normalize(score.subject),
-          grade: Number(result.grade)
-        };
+        return Number(result.grade);
       })
-      .filter(score =>
-        Number.isInteger(score.grade) &&
-        score.grade >= 1 &&
-        score.grade <= 9
+      .filter(grade =>
+        Number.isInteger(grade) &&
+        grade >= 1 &&
+        grade <= 9
       );
 
-    const selected = [];
-    const used = new Set();
-
-    for (const aliases of Object.values(coreSubjects)) {
-      const index = validScores.findIndex(
-        (score, position) =>
-          !used.has(position) &&
-          aliases.includes(score.subject)
-      );
-
-      if (index === -1) {
-        return {
-          complete: false,
-          aggregate: null,
-          message: "Incomplete"
-        };
-      }
-
-      selected.push(validScores[index]);
-      used.add(index);
-    }
-
-    const electives = validScores
-      .filter((score, index) => !used.has(index))
-      .sort((a, b) => a.grade - b.grade)
-      .slice(0, 2);
-
-    if (electives.length < 2) {
-      return {
-        complete: false,
-        aggregate: null,
-        message: "Incomplete"
-      };
-    }
-
-    const aggregate = [...selected, ...electives]
-      .reduce((sum, score) => sum + score.grade, 0);
+    const aggregate = validGrades.reduce(
+      (sum, grade) => sum + grade, 0
+    );
 
     return {
-      complete: true,
-      aggregate,
-      message: String(aggregate)
+      complete: validGrades.length > 0,
+      aggregate: validGrades.length ? aggregate : null,
+      message: validGrades.length ? String(aggregate) : "—"
     };
   }
 
@@ -302,7 +249,7 @@
           <span><strong>Overall Remark:</strong> ${escapeHtml(overall.remark || "—")}</span>
           ${isJhs ? `
             <span>
-              <strong>Aggregate (6 Subjects):</strong>
+              <strong>Aggregate:</strong>
               ${escapeHtml(jhsAggregate.message)}
             </span>
           ` : ""}

@@ -50,7 +50,22 @@
 
         <div>
           <label>Password / Phone Number</label>
-          <input type="password" id="password" placeholder="Enter phone number or password" required>
+          <div style="position:relative;">
+            <input type="password" id="password"
+                   placeholder="Enter phone number or password"
+                   style="padding-right:50px; box-sizing:border-box;"
+                   required>
+            <button type="button" id="togglePassword"
+                    aria-label="Show password"
+                    aria-pressed="false"
+                    style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
+                           border:none;background:transparent;color:#003366;
+                           cursor:pointer;font-size:20px;padding:0;width:30px;
+                           height:30px;margin:0;display:flex;align-items:center;
+                           justify-content:center;box-shadow:none;">
+              👁
+            </button>
+          </div>
         </div>
 
         <button type="submit">Login</button>
@@ -74,5 +89,15 @@
   <script src="../js/login.js?v=25"></script>
   <script src="../js/site-footer-settings.js?v=1"></script>
   <script src="../js/site-settings.js?v=4"></script>
+
+  <script>
+    document.getElementById("togglePassword").addEventListener("click", function () {
+      const passwordInput = document.getElementById("password");
+      const show = passwordInput.type === "password";
+      passwordInput.type = show ? "text" : "password";
+      this.setAttribute("aria-label", show ? "Hide password" : "Show password");
+      this.setAttribute("aria-pressed", String(show));
+    });
+  </script>
 </body>
 </html>

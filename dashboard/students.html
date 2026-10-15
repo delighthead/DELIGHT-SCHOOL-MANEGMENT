@@ -5,6 +5,87 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Students - Delight International School</title>
   <link rel="stylesheet" href="../css/style.css">
+
+  <style>
+    .student-picture-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .student-picture-actions input[type="file"] {
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .student-camera-btn,
+    .student-camera-controls button {
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 600;
+      background: #064579;
+      color: #fff;
+    }
+
+    .student-camera-panel {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid #d8e1ea;
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+
+    #studentCameraVideo {
+      display: block;
+      width: 100%;
+      max-width: 420px;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      background: #111;
+      border-radius: 8px;
+    }
+
+    .student-camera-controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    #closeStudentCamera {
+      background: #6b7280;
+    }
+
+    .student-photo-preview {
+      margin-top: 12px;
+    }
+
+    #studentPhotoPreview {
+      display: block;
+      width: 130px;
+      height: 130px;
+      object-fit: cover;
+      border: 2px solid #d8e1ea;
+      border-radius: 8px;
+      margin-bottom: 5px;
+    }
+
+    @media (max-width: 600px) {
+      .student-picture-actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .student-picture-actions input[type="file"],
+      .student-camera-btn {
+        width: 100%;
+      }
+    }
+  </style>
+
 </head>
 <body>
   <div class="dashboard-layout">
@@ -31,6 +112,61 @@
     <main class="dashboard-main">
       <h1>Add / Manage Students</h1>
       <p>Register students and save parent or guardian details.</p>
+
+      <section class="dashboard-section" id="studentExcelSection">
+        <h2>Student Excel Import</h2>
+        <p>Download the official Excel template before preparing students for bulk upload.</p>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;">
+          <button type="button" id="downloadStudentExcelTemplate" class="btn">
+            Download Excel Template
+          </button>
+
+          <input
+            type="file"
+            id="studentExcelFile"
+            accept=".xlsx,.xls"
+            style="max-width:320px;"
+          >
+
+          <button type="button" id="previewStudentExcel" class="btn">
+            Preview & Validate
+          </button>
+
+          <button
+            type="button"
+            id="importStudentExcel"
+            class="btn"
+            disabled
+            title="Preview and validate the Excel file first"
+          >
+            Import Valid Students
+          </button>
+        </div>
+
+        <div id="studentExcelSummary" style="display:none; margin-top:15px;"></div>
+
+        <div
+          id="studentExcelPreviewWrap"
+          style="display:none; margin-top:15px; overflow-x:auto;"
+        >
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr>
+                <th>Excel Row</th>
+                <th>Status</th>
+                <th>Admission No.</th>
+                <th>Branch</th>
+                <th>Full Name</th>
+                <th>Sex</th>
+                <th>Class</th>
+                <th>Errors</th>
+              </tr>
+            </thead>
+            <tbody id="studentExcelPreviewBody"></tbody>
+          </table>
+        </div>
+      </section>
 
       <section class="dashboard-section">
         <h2>Add New Student</h2>
@@ -146,7 +282,7 @@
             <label for="student_status">Student Status</label>
             <select id="student_status">
               <option value="active" selected>Active</option>
-              <option value="inactive">Inactive</option>
+              <option value="inactive">Disabled / Locked</option>
               <option value="stopped">Stopped</option>
               <option value="completed">Completed</option>
               <option value="transferred">Transferred</option>
@@ -155,7 +291,34 @@
 
           <div>
             <label for="student_profile_picture">Student Picture</label>
-            <input type="file" id="student_profile_picture" accept="image/*">
+
+            <div class="student-picture-actions">
+              <input type="file" id="student_profile_picture" accept="image/*">
+
+              <button type="button" id="openStudentCamera" class="student-camera-btn">
+                📷 Take Photo
+              </button>
+            </div>
+
+            <div id="studentCameraPanel" class="student-camera-panel" hidden>
+              <video id="studentCameraVideo" autoplay playsinline></video>
+              <canvas id="studentCameraCanvas" hidden></canvas>
+
+              <div class="student-camera-controls">
+                <button type="button" id="captureStudentPhoto">
+                  Capture Photo
+                </button>
+
+                <button type="button" id="closeStudentCamera">
+                  Cancel
+                </button>
+              </div>
+            </div>
+
+            <div id="studentPhotoPreviewWrap" class="student-photo-preview" hidden>
+              <img id="studentPhotoPreview" alt="Student photo preview">
+              <div>Photo ready</div>
+            </div>
           </div>
 
           <input type="hidden" id="student_id">
@@ -180,7 +343,24 @@
             </select>
           </div>
 
-          <div class="student-search-box">
+          <div class="student-search-box" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+            <select id="studentListBranchFilter" aria-label="Filter students by branch">
+              <option value="">All Branches</option>
+            </select>
+
+            <select id="studentListClassFilter" aria-label="Filter students by class">
+              <option value="">All Classes</option>
+            </select>
+
+            <select id="studentListStatusFilter" aria-label="Filter students by status">
+              <option value="">All Students</option>
+              <option value="active">Active</option>
+              <option value="inactive">Disabled / Locked</option>
+              <option value="stopped">Stopped</option>
+              <option value="transferred">Transferred</option>
+              <option value="completed">Completed</option>
+            </select>
+
             <input type="text" id="studentSearchInput" placeholder="Search by student name or phone number">
             <button type="button" id="studentSearchBtn">Search</button>
             <button type="button" id="studentClearBtn">Clear</button>
@@ -214,8 +394,8 @@
   <script src="../js/logout.js?v=2"></script>
   <script src="../js/admin-panel-title.js?v=2"></script>
   <script src="../js/site-settings.js?v=4"></script>
-  <script src="../js/students-api.js?v=4"></script>
-  <script src="../js/student-search-fix.js?v=2"></script>
+  <script src="../js/students-api.js?v=7"></script>
+  <script src="../js/student-search-fix.js?v=4"></script>
   <script src="../js/student-branch-dropdown-fix.js?v=1"></script>
   <script src="../js/admin-sidebar-picture-final.js?v=1"></script>
   <script src="../js/remove-sidebar-blank-logo.js?v=1"></script>

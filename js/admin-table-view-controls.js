@@ -81,6 +81,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const limit = selected === "all" ? rows.length : Number(selected);
       const safeLimit = Number.isFinite(limit) ? limit : rows.length;
 
+
+      if (
+        tbody.id === "feeTableBody" &&
+        document.getElementById("feesFilterBranch")
+      ) {
+        document.dispatchEvent(
+          new Event("feesViewLimitChanged")
+        );
+        return;
+      }
+
       rows.forEach((row, index) => {
         row.style.display = index < safeLimit ? "" : "none";
       });

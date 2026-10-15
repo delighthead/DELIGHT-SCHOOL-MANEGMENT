@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mock Teacher Dashboard | Delight International School</title>
+
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/mock-teacher.css">
+</head>
+
+<body>
+
+<div class="dashboard-layout">
+
+  <aside class="sidebar mock-teacher-sidebar">
+    <h2>Teacher Panel</h2>
+
+    <a href="teacher.html">Dashboard Overview</a>
+    <a href="teacher-profile.html">My Profile</a>
+    <a href="teacher-class.html">Assigned Class</a>
+    <a href="teacher-students.html">Students</a>
+    <a href="teacher-scores.html">Scores & Uploads</a>
+
+    <a href="mock-teacher.html" class="active">
+      Mock Examinations
+    </a>
+
+    <a href="teacher-attendance.html">Mark Attendance</a>
+    <a href="teacher-announcements.html">Announcements</a>
+    <a href="teacher-lesson-plans.html">Lesson Note</a>
+    <a href="teacher-weekly-reports.html">Handwriting Report</a>
+    <a href="teacher-reports.html">Reports</a>
+    <a href="../pages/login.html">Logout</a>
+  </aside>
+
+  <main class="dashboard-main mock-teacher-main">
+
+    <header class="mock-teacher-header">
+      <div>
+        <p class="mock-eyebrow">DELIGHT INTERNATIONAL SCHOOL</p>
+        <h1>Mock Examination Teacher Dashboard</h1>
+        <p>
+          Manage scores for your officially assigned mock subjects.
+        </p>
+      </div>
+
+      <span id="mockTeacherStatus" class="mock-status-badge">
+        Loading...
+      </span>
+    </header>
+
+    <section class="mock-teacher-summary">
+      <article class="mock-summary-card">
+        <h3>Assigned Mock Examinations</h3>
+        <strong id="mockTeacherExamCount">0</strong>
+      </article>
+
+      <article class="mock-summary-card">
+        <h3>Assigned Subjects</h3>
+        <strong id="mockTeacherSubjectCount">0</strong>
+      </article>
+
+      <article class="mock-summary-card">
+        <h3>Students</h3>
+        <strong id="mockTeacherStudentCount">0</strong>
+      </article>
+
+      <article class="mock-summary-card">
+        <h3>Scores Entered</h3>
+        <strong id="mockTeacherScoreCount">0</strong>
+      </article>
+    </section>
+
+    <section class="mock-teacher-panel">
+      <h2>Select Mock Examination</h2>
+
+      <div class="mock-form-grid">
+        <div class="mock-field">
+          <label for="mockTeacherExamSelect">Mock Examination</label>
+          <select id="mockTeacherExamSelect">
+            <option value="">Loading examinations...</option>
+          </select>
+        </div>
+
+        <div class="mock-field">
+          <label for="mockTeacherSubjectSelect">My Assigned Subject</label>
+          <select id="mockTeacherSubjectSelect" disabled>
+            <option value="">Select an examination first</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mock-exam-information">
+        <p><strong>Examination:</strong>
+          <span id="mockTeacherExamName">—</span>
+        </p>
+
+        <p><strong>Academic Year:</strong>
+          <span id="mockTeacherAcademicYear">—</span>
+        </p>
+
+        <p><strong>Class:</strong>
+          <span id="mockTeacherClass">—</span>
+        </p>
+
+        <p><strong>Status:</strong>
+          <span id="mockTeacherExamState">—</span>
+        </p>
+      </div>
+    </section>
+
+    <section class="mock-teacher-panel">
+      <div class="mock-panel-heading">
+        <div>
+          <h2>Enter Mock Examination Scores</h2>
+          <p>
+            Enter Objective and Written scores for your assigned subject.
+          </p>
+        </div>
+
+        <button id="mockTeacherLoadStudents"
+                class="mock-primary-button"
+                type="button"
+                disabled>
+          Load Students
+        </button>
+      </div>
+
+      <div id="mockTeacherMessage"
+           class="mock-teacher-message"
+           role="status"
+           aria-live="polite"></div>
+
+      <div class="mock-table-wrapper">
+        <table class="mock-score-table">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Admission Number</th>
+              <th>Student Name</th>
+              <th id="mockTeacherObjectivesHeading">Objectives</th>
+              <th id="mockTeacherWrittenHeading">Written</th>
+              <th>Total</th>
+              <th>Grade</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="mockTeacherScoresBody">
+            <tr>
+              <td colspan="8" class="mock-empty-state">
+                Select a mock examination and subject to load students.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+
+    <!-- STEP 459D — TEACHER MOCK EXCEL SCORE MANAGEMENT -->
+    <section class="mock-teacher-panel" id="mockTeacherExcelSection">
+      <h2>Excel Score Management</h2>
+      <p>
+        Download the Excel template for your assigned subject,
+        enter student scores, then upload the completed file.
+      </p>
+
+      <div class="mock-teacher-excel-actions"
+           style="display:flex;flex-wrap:wrap;gap:12px;margin:20px 0;">
+
+        <button id="mockTeacherDownloadExcel"
+                class="mock-primary-button"
+                type="button"
+                disabled>
+          Download Excel Template
+        </button>
+
+        <button id="mockTeacherUploadExcel"
+                class="mock-primary-button"
+                type="button"
+                disabled>
+          Upload Excel Scores
+        </button>
+
+        <input id="mockTeacherExcelFile"
+               type="file"
+               accept=".xlsx"
+               hidden>
+      </div>
+
+      <div id="mockTeacherExcelMessage"
+           class="mock-teacher-message"
+           role="status"
+           aria-live="polite">
+        Select a mock examination and assigned subject.
+      </div>
+
+      <div id="mockTeacherExcelPreview"
+           style="display:none;margin-top:20px;">
+
+        <h3>Preview Uploaded Scores</h3>
+        <p>
+          Check all student scores before confirming.
+          Nothing is saved during preview.
+        </p>
+
+        <div class="mock-table-wrapper">
+          <table class="mock-score-table">
+            <thead>
+              <tr>
+                <th>Student Name</th>
+                <th>Admission Number</th>
+                <th>Objectives</th>
+                <th>Written</th>
+                <th>Total</th>
+                <th>Grade</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="mockTeacherExcelPreviewBody"></tbody>
+          </table>
+        </div>
+
+        <div id="mockTeacherExcelErrors"
+             style="margin-top:12px;color:#b42318;"></div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:18px;">
+          <button id="mockTeacherConfirmExcel"
+                  class="mock-primary-button"
+                  type="button"
+                  disabled>
+            Confirm and Save Scores
+          </button>
+
+          <button id="mockTeacherCancelExcel"
+                  class="mock-primary-button"
+                  type="button">
+            Cancel Preview
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="mock-teacher-panel">
+      <h2>Score Entry Progress</h2>
+
+      <div class="mock-progress-track">
+        <div id="mockTeacherProgressBar"
+             class="mock-progress-fill"
+             style="width:0%"></div>
+      </div>
+
+      <p id="mockTeacherProgressText">
+        No students loaded.
+      </p>
+    </section>
+
+  </main>
+</div>
+
+<script src="../js/api-helper.js"></script>
+<script src="../js/mock-teacher.js"></script>
+
+</body>
+</html>

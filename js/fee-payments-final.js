@@ -33,53 +33,446 @@ document.addEventListener("DOMContentLoaded", function () {
     return data;
   }
 
-  async function addFeePayment(fee) {
-    const amount = prompt("Enter payment amount:");
+  function addFeePayment(fee) {
+    const existingModal = document.getElementById("feePaymentModal");
+    if (existingModal) existingModal.remove();
 
-    if (!amount || Number(amount) <= 0) {
-      alert("Please enter a valid payment amount.");
-      return;
-    }
+    const payable = Number(fee.amount_payable || 0);
+    const paid = Number(fee.amount_paid || 0);
+    const balance = Math.max(0, Number(fee.balance ?? (payable - paid)));
 
     const today = new Date().toISOString().slice(0, 10);
-    const paymentDate = prompt("Enter payment date:", today);
 
-    if (!paymentDate) {
-      alert("Payment date is required.");
-      return;
+    const modal = document.createElement("div");
+    modal.id = "feePaymentModal";
+
+    modal.innerHTML = `
+      <style>
+        #feePaymentModal {
+          position: fixed;
+          inset: 0;
+          z-index: 99999;
+          background: rgba(15, 23, 42, 0.62);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          overflow-y: auto;
+        }
+
+        #feePaymentModal .payment-modal-card {
+          width: min(900px, 100%);
+          background: #fff;
+          border-radius: 16px;
+          box-shadow: 0 24px 70px rgba(0,0,0,0.25);
+          overflow: hidden;
+          animation: feePaymentOpen 0.18s ease-out;
+        }
+
+        @keyframes feePaymentOpen {
+          from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.99);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        #feePaymentModal .payment-modal-header {
+          background: #073d73;
+          color: white;
+          padding: 18px 22px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 15px;
+        }
+
+        #feePaymentModal .payment-modal-header h2 {
+          margin: 0;
+          color: white;
+          font-size: 21px;
+        }
+
+        #feePaymentModal .payment-modal-close {
+          width: 36px;
+          height: 36px;
+          border: 0;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.16);
+          color: white;
+          font-size: 24px;
+          line-height: 1;
+          cursor: pointer;
+        }
+
+        #feePaymentModal .payment-modal-body {
+          padding: 22px;
+        }
+
+        #feePaymentModal .payment-student-title {
+          margin: 0 0 12px;
+          color: #073d73;
+          font-size: 16px;
+          font-weight: 700;
+        }
+
+        #feePaymentModal .payment-info-grid {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px;
+        }
+
+        #feePaymentModal .payment-info-box {
+          border: 1px solid #d7e0ea;
+          background: #f8fafc;
+          border-radius: 10px;
+          padding: 13px 14px;
+          min-height: 72px;
+        }
+
+        #feePaymentModal .payment-info-box span {
+          display: block;
+          margin-bottom: 6px;
+          color: #64748b;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+
+        #feePaymentModal .payment-info-box strong {
+          color: #172033;
+          font-size: 15px;
+          overflow-wrap: anywhere;
+        }
+
+        #feePaymentModal .payment-info-box.balance-box {
+          border-color: #f0c36d;
+          background: #fff9e8;
+        }
+
+        #feePaymentModal .payment-info-box.balance-box strong {
+          color: #9a6700;
+          font-size: 17px;
+        }
+
+        #feePaymentModal .payment-entry-section {
+          margin-top: 22px;
+          border-top: 1px solid #e2e8f0;
+          padding-top: 20px;
+        }
+
+        #feePaymentModal .payment-entry-section h3 {
+          margin: 0 0 14px;
+          color: #073d73;
+          font-size: 16px;
+        }
+
+        #feePaymentModal .payment-entry-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+        }
+
+        #feePaymentModal .payment-field label {
+          display: block;
+          margin-bottom: 7px;
+          color: #334155;
+          font-size: 13px;
+          font-weight: 700;
+        }
+
+        #feePaymentModal .payment-field input {
+          width: 100%;
+          box-sizing: border-box;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          padding: 12px 13px;
+          font-size: 15px;
+          outline: none;
+          background: white;
+        }
+
+        #feePaymentModal .payment-field input:focus {
+          border-color: #073d73;
+          box-shadow: 0 0 0 3px rgba(7,61,115,0.10);
+        }
+
+        #feePaymentModal .payment-balance-hint {
+          margin: 8px 0 0;
+          font-size: 12px;
+          color: #64748b;
+        }
+
+        #feePaymentModal .payment-error {
+          display: none;
+          margin-top: 14px;
+          padding: 10px 12px;
+          border-radius: 8px;
+          background: #fee2e2;
+          color: #991b1b;
+          font-size: 13px;
+          font-weight: 600;
+        }
+
+        #feePaymentModal .payment-modal-actions {
+          margin-top: 22px;
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+        }
+
+        #feePaymentModal .payment-cancel-btn,
+        #feePaymentModal .payment-save-btn {
+          border: 0;
+          border-radius: 8px;
+          padding: 11px 20px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        #feePaymentModal .payment-cancel-btn {
+          background: #e2e8f0;
+          color: #334155;
+        }
+
+        #feePaymentModal .payment-save-btn {
+          background: #073d73;
+          color: white;
+          min-width: 145px;
+        }
+
+        #feePaymentModal .payment-save-btn:disabled {
+          opacity: 0.65;
+          cursor: not-allowed;
+        }
+
+        @media (max-width: 700px) {
+          #feePaymentModal {
+            padding: 10px;
+            align-items: flex-start;
+          }
+
+          #feePaymentModal .payment-modal-card {
+            margin: 15px 0;
+          }
+
+          #feePaymentModal .payment-info-grid,
+          #feePaymentModal .payment-entry-grid {
+            grid-template-columns: 1fr;
+          }
+
+          #feePaymentModal .payment-modal-body {
+            padding: 16px;
+          }
+
+          #feePaymentModal .payment-modal-actions {
+            flex-direction: column-reverse;
+          }
+
+          #feePaymentModal .payment-cancel-btn,
+          #feePaymentModal .payment-save-btn {
+            width: 100%;
+          }
+        }
+      </style>
+
+      <div class="payment-modal-card" role="dialog" aria-modal="true" aria-labelledby="feePaymentModalTitle">
+        <div class="payment-modal-header">
+          <h2 id="feePaymentModalTitle">Add Fee Payment</h2>
+          <button type="button" class="payment-modal-close" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="payment-modal-body">
+          <div class="payment-student-title">Student Fee Details</div>
+
+          <div class="payment-info-grid">
+            <div class="payment-info-box">
+              <span>Student</span>
+              <strong>${fee.student_name || "-"}</strong>
+            </div>
+
+            <div class="payment-info-box">
+              <span>Admission No.</span>
+              <strong>${fee.admission_number || "-"}</strong>
+            </div>
+
+            <div class="payment-info-box">
+              <span>Class</span>
+              <strong>${fee.class_name || "-"}</strong>
+            </div>
+
+            <div class="payment-info-box">
+              <span>Term</span>
+              <strong>${fee.term || "-"}</strong>
+            </div>
+
+            <div class="payment-info-box">
+              <span>Academic Year</span>
+              <strong>${fee.academic_year || "-"}</strong>
+            </div>
+
+            <div class="payment-info-box">
+              <span>Status</span>
+              <strong>${fee.payment_status || "-"}</strong>
+            </div>
+
+            <div class="payment-info-box">
+              <span>Payable</span>
+              <strong>${money(payable)}</strong>
+            </div>
+
+            <div class="payment-info-box">
+              <span>Paid</span>
+              <strong>${money(paid)}</strong>
+            </div>
+
+            <div class="payment-info-box balance-box">
+              <span>Balance</span>
+              <strong>${money(balance)}</strong>
+            </div>
+          </div>
+
+          <div class="payment-entry-section">
+            <h3>Payment Details</h3>
+
+            <div class="payment-entry-grid">
+              <div class="payment-field">
+                <label for="feePaymentAmount">Payment Amount</label>
+                <input
+                  type="number"
+                  id="feePaymentAmount"
+                  min="0.01"
+                  max="${balance.toFixed(2)}"
+                  step="0.01"
+                  placeholder="Enter amount"
+                  autocomplete="off"
+                >
+                <p class="payment-balance-hint">
+                  Outstanding balance: ${money(balance)}
+                </p>
+              </div>
+
+              <div class="payment-field">
+                <label for="feePaymentDate">Payment Date</label>
+                <input
+                  type="date"
+                  id="feePaymentDate"
+                  value="${today}"
+                >
+              </div>
+            </div>
+
+            <div class="payment-error" id="feePaymentError"></div>
+          </div>
+
+          <div class="payment-modal-actions">
+            <button type="button" class="payment-cancel-btn">Cancel</button>
+            <button type="button" class="payment-save-btn">Save Payment</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const amountInput = modal.querySelector("#feePaymentAmount");
+    const dateInput = modal.querySelector("#feePaymentDate");
+    const errorBox = modal.querySelector("#feePaymentError");
+    const saveBtn = modal.querySelector(".payment-save-btn");
+
+    function closeModal() {
+      modal.remove();
     }
 
-    const note = prompt("Payment note optional:", "");
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.style.display = "block";
+    }
 
-    try {
-      const res = await fetch(`/api/fees/${fee.id}/payments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`
-        },
-        body: JSON.stringify({
-          payment_amount: amount,
-          payment_date: paymentDate,
-          payment_note: note || ""
-        })
-      });
+    modal.querySelector(".payment-modal-close").addEventListener("click", closeModal);
+    modal.querySelector(".payment-cancel-btn").addEventListener("click", closeModal);
 
-      const data = await res.json();
+    modal.addEventListener("click", function (event) {
+      if (event.target === modal) closeModal();
+    });
 
-      if (!res.ok) {
-        throw new Error(data.message || "Could not add payment.");
+    amountInput.addEventListener("input", function () {
+      errorBox.style.display = "none";
+    });
+
+    amountInput.focus();
+
+    saveBtn.addEventListener("click", async function () {
+      const amount = Number(amountInput.value || 0);
+      const paymentDate = dateInput.value;
+
+      errorBox.style.display = "none";
+
+      if (amount <= 0) {
+        showError("Please enter a valid payment amount.");
+        amountInput.focus();
+        return;
       }
 
-      alert(
-        `Payment added successfully.\nTotal Paid: ${money(data.total_paid)}\nBalance: ${money(data.balance)}\nStatus: ${data.payment_status}`
-      );
+      if (balance <= 0) {
+        showError("This fee record has no outstanding balance.");
+        return;
+      }
 
-      location.reload();
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
-    }
+      if (amount > balance) {
+        showError(`Payment cannot exceed the outstanding balance of ${money(balance)}.`);
+        amountInput.focus();
+        return;
+      }
+
+      if (!paymentDate) {
+        showError("Payment date is required.");
+        dateInput.focus();
+        return;
+      }
+
+      try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Saving...";
+
+        const res = await fetch(`/api/fees/${fee.id}/payments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`
+          },
+          body: JSON.stringify({
+            payment_amount: amount,
+            payment_date: paymentDate,
+            payment_note: ""
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || "Could not add payment.");
+        }
+
+        closeModal();
+
+        alert(
+          `Payment added successfully.\nTotal Paid: ${money(data.total_paid)}\nBalance: ${money(data.balance)}\nStatus: ${data.payment_status}`
+        );
+
+        location.reload();
+      } catch (error) {
+        console.error(error);
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save Payment";
+        showError(error.message);
+      }
+    });
   }
 
   async function showPaymentHistory(fee) {

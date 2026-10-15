@@ -19,7 +19,7 @@ exports.login = async (req, res) => {
     if (role === "admin") {
       allowedRoles = ["super_admin", "branch_admin", "admin", "teacher_admin"];
     } else if (role === "teacher") {
-      allowedRoles = ["teacher", "teacher_admin"];
+      allowedRoles = ["teacher", "teacher_admin", "parent"];
     } else if (role === "parent") {
       // A teacher or super admin may also use the Parent portal,
       // but only if the Parent profile/child checks below succeed.
@@ -85,12 +85,14 @@ exports.login = async (req, res) => {
 
     const sessionRole = role === "parent"
       ? "parent"
-      : user.role;
+      : role === "teacher" && user.role === "parent"
+        ? "teacher"
+        : user.role;
 
-    if (user.role === "teacher") {
+    if (sessionRole === "teacher" || user.role === "teacher") {
       const [teacherRows] = await db.query(
-        "SELECT status FROM teachers WHERE user_id = ? OR ghana_card_number = ? LIMIT 1",
-        [user.id, user.username]
+        "SELECT status FROM teachers WHERE user_id = ? LIMIT 1",
+        [user.id]
       );
 
       if (teacherRows.length === 0) {

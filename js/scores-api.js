@@ -84,6 +84,10 @@ document.addEventListener("DOMContentLoaded", function () {
   async function loadStudents() {
     if (!studentSelect) return;
 
+    // The class-filter script manages manual-entry students
+    // whenever the Class dropdown is present.
+    if (document.getElementById("score_class_id")) return;
+
     try {
       let studentsUrl = "/api/students";
       const selectedBranch = isBranchAdmin() ? getAdminBranchId() : branchSelect.value;

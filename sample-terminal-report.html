@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sample Terminal Examination Report</title>
+  <style>
+
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: #172033;
+      background: #fff;
+    }
+
+    .terminal-report-page {
+      width: 100%;
+      min-height: 270mm;
+      padding: 5mm;
+      background: white;
+      page-break-after: always;
+      break-after: page;
+      position: relative;
+      font-size: 11px;
+    }
+
+    .terminal-report-page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+
+    .terminal-school-header {
+      text-align: center;
+      border-bottom: 2px solid #17365d;
+      padding-bottom: 7px;
+      margin-bottom: 10px;
+    }
+
+    .terminal-school-brand {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 58px;
+      padding-left: 72px;
+      padding-right: 72px;
+    }
+
+    .terminal-school-logo-box {
+      position: absolute;
+      left: 12.7mm;
+      top: 6.35mm;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .school-logo {
+      width: 60px;
+      height: 60px;
+      object-fit: contain;
+    }
+
+    .terminal-student-photo-box {
+      position: absolute;
+      right: 6.35mm;
+      top: 6.35mm;
+      width: 60px;
+      height: 70px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .terminal-student-photo {
+      width: 60px;
+      height: 70px;
+      object-fit: cover;
+      border: 1px solid #596579;
+    }
+
+    .terminal-school-header h1 {
+      font-size: 20px;
+      color: #17365d;
+      margin: 4px 0;
+    }
+
+    .terminal-school-header h2 {
+      font-size: 14px;
+      margin: 9px 0 2px;
+      letter-spacing: 1px;
+    }
+
+    .terminal-student-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px 12px;
+      margin: 12px 0;
+      font-size: 12px;
+    }
+
+    .terminal-subject-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    .terminal-subject-table th,
+    .terminal-subject-table td {
+      border: 1px solid #596579;
+      padding: 6px 5px;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    .terminal-subject-table th {
+      background: #eaf0f8;
+    }
+
+    .terminal-subject-table th:nth-child(2),
+    .terminal-subject-table td:nth-child(2),
+    .terminal-subject-table th:last-child,
+    .terminal-subject-table td:last-child {
+      text-align: left;
+    }
+
+    .terminal-summary,
+    .terminal-attendance {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      border: 1px solid #596579;
+      padding: 9px;
+      margin-top: 10px;
+    }
+
+    .terminal-comment,
+    .terminal-reopening {
+      margin-top: 13px;
+      line-height: 1.6;
+    }
+
+    .terminal-signatures {
+      display: flex;
+      justify-content: space-between;
+      text-align: center;
+      gap: 15px;
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+
+    .terminal-signature-item {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .terminal-signature-space {
+      height: 35px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .terminal-headteacher-signature {
+      display: block;
+      max-width: 115px;
+      max-height: 35px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+
+    .terminal-footer {
+      position: absolute;
+      bottom: 5mm;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 9px;
+      border-top: 1px solid #ccc;
+      padding-top: 5px;
+    }
+
+    @media screen {
+      body { background: #e5e7eb; }
+
+      .terminal-report-page {
+        width: 190mm;
+        margin: 12px auto;
+        box-shadow: 0 3px 12px #0002;
+      }
+    }
+
+    @media print {
+      body { background: white; }
+
+      .terminal-report-page {
+        margin: 0;
+        box-shadow: none;
+      }
+
+      .terminal-subject-table thead {
+        display: table-header-group;
+      }
+    }
+
+</style>
+</head>
+<body>
+
+      <section class="terminal-report-page">
+        <header class="terminal-school-header">
+
+          <div class="terminal-school-brand">
+  <div class="terminal-school-logo-box">
+    <img class="school-logo" src="backend/uploads/logo/school-logo-1783154789422.png" alt="School logo">
+  </div>
+  <h1>DELIGHT INTERNATIONAL SCHOOL</h1>
+            <div class="terminal-student-photo-box">
+              <img class="terminal-student-photo"
+                   src="backend/uploads/students/1781954157802-962641556.png"
+                   alt="Sample student photograph">
+            </div>
+</div>
+          <div>Arise and Shine</div>
+          <div>Accra, Ghana</div>
+          <div>
+            0244113286 / 0277776449
+             | delightintschool@gmail.com
+          </div>
+          <h2>TERMINAL EXAMINATION REPORT</h2>
+        </header>
+
+        <div class="terminal-student-info">
+          <div><strong>Name:</strong> SAMPLE STUDENT FOR PRINT TEST</div>
+          <div><strong>Admission No.:</strong> TEST/2026/001</div>
+          <div><strong>Class:</strong> Basic 9</div>
+          <div><strong>Gender:</strong> Female</div>
+          <div><strong>Branch:</strong> Ofankor</div>
+          <div><strong>Term:</strong> First Term</div>
+          <div><strong>Academic Year:</strong> 2026/2027</div>
+        </div>
+
+        <table class="terminal-subject-table">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Subject</th>
+              <th>Assessment</th>
+              <th>Exam</th>
+              <th>Total</th>
+              <th>Grade</th>
+              <th>Remark</th>
+            </tr>
+          </thead>
+          <tbody>
+
+        <tr>
+          <td>1</td>
+          <td>English Language</td>
+          <td>30.0</td>
+          <td>55.0</td>
+          <td>85.0</td>
+          <td>1</td>
+          <td>Highest</td>
+        </tr>
+
+        <tr>
+          <td>2</td>
+          <td>Mathematics</td>
+          <td>30.0</td>
+          <td>45.0</td>
+          <td>75.0</td>
+          <td>2</td>
+          <td>Higher</td>
+        </tr>
+
+        <tr>
+          <td>3</td>
+          <td>Integrated Science</td>
+          <td>30.0</td>
+          <td>38.0</td>
+          <td>68.0</td>
+          <td>3</td>
+          <td>High</td>
+        </tr>
+
+        <tr>
+          <td>4</td>
+          <td>Social Studies</td>
+          <td>30.0</td>
+          <td>45.0</td>
+          <td>75.0</td>
+          <td>2</td>
+          <td>Higher</td>
+        </tr>
+
+        <tr>
+          <td>5</td>
+          <td>Computing</td>
+          <td>30.0</td>
+          <td>60.0</td>
+          <td>90.0</td>
+          <td>1</td>
+          <td>Highest</td>
+        </tr>
+
+        <tr>
+          <td>6</td>
+          <td>French</td>
+          <td>30.0</td>
+          <td>38.0</td>
+          <td>68.0</td>
+          <td>3</td>
+          <td>High</td>
+        </tr>
+
+        <tr>
+          <td>7</td>
+          <td>Religious and Moral Education</td>
+          <td>30.0</td>
+          <td>50.0</td>
+          <td>80.0</td>
+          <td>1</td>
+          <td>Highest</td>
+        </tr>
+
+        <tr>
+          <td>8</td>
+          <td>Creative Arts</td>
+          <td>30.0</td>
+          <td>48.0</td>
+          <td>78.0</td>
+          <td>2</td>
+          <td>Higher</td>
+        </tr>
+
+        <tr>
+          <td>9</td>
+          <td>Career Technology</td>
+          <td>30.0</td>
+          <td>42.0</td>
+          <td>72.0</td>
+          <td>2</td>
+          <td>Higher</td>
+        </tr>
+
+        <tr>
+          <td>10</td>
+          <td>Ghanaian Language</td>
+          <td>30.0</td>
+          <td>35.0</td>
+          <td>65.0</td>
+          <td>3</td>
+          <td>High</td>
+        </tr>
+
+        <tr>
+          <td>11</td>
+          <td>Physical Education</td>
+          <td>30.0</td>
+          <td>58.0</td>
+          <td>88.0</td>
+          <td>1</td>
+          <td>Highest</td>
+        </tr>
+
+        <tr>
+          <td>12</td>
+          <td>History</td>
+          <td>30.0</td>
+          <td>44.0</td>
+          <td>74.0</td>
+          <td>2</td>
+          <td>Higher</td>
+        </tr>
+
+          </tbody>
+        </table>
+
+        <div class="terminal-summary">
+          <span><strong>Subjects:</strong> 12</span>
+          <span><strong>Total:</strong> 918.00</span>
+          <span><strong>Average:</strong> 76.50</span>
+          <span><strong>Overall Grade:</strong> 2</span>
+          <span><strong>Overall Remark:</strong> Higher</span>
+
+            <span>
+              <strong>Aggregate (6 Subjects):</strong>
+              10
+            </span>
+
+        </div>
+
+        <div class="terminal-attendance">
+          <strong>Attendance</strong>
+          <span>Days Recorded: 60</span>
+          <span>Present: 56</span>
+          <span>Absent: 4</span>
+        </div>
+
+        <div class="terminal-comment">
+          <strong>Class Teacher's Comment:</strong>
+          A hardworking learner who is showing steady academic improvement.
+        </div>
+
+        <div class="terminal-comment">
+          <strong>Headteacher's Comment:</strong>
+          Good performance. Continue working diligently in all subjects.
+        </div>
+
+        <div class="terminal-reopening">
+          <strong>Reopening Date:</strong>
+          2027-01-12
+        </div>
+
+        <div class="terminal-signatures">
+          <div class="terminal-signature-item">
+            <div class="terminal-signature-space"></div>
+            <div>________________________</div>
+            <div>Class Teacher</div>
+          </div>
+
+          <div class="terminal-signature-item">
+            <div class="terminal-signature-space">
+              <img
+                class="terminal-headteacher-signature"
+                src="images/signature%20.png"
+                alt="Headteacher signature">
+            </div>
+            <div>________________________</div>
+            <div>Headteacher</div>
+          </div>
+
+          <div class="terminal-signature-item">
+            <div class="terminal-signature-space"></div>
+            <div>________________________</div>
+            <div>Parent / Guardian</div>
+          </div>
+        </div>
+
+        <footer class="terminal-footer">Designed &amp; Developed by CRS Tech Solutions 0270556797 / 0244113286</footer>
+      </section>
+
+</body>
+</html>

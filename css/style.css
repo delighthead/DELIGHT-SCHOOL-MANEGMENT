@@ -4541,3 +4541,111 @@ body > header.navbar nav .login-btn {
   }
 }
 
+
+
+/* ==========================================================
+   ADMIN TEACHER SUBMISSIONS - MOBILE RESPONSIVE
+   ========================================================== */
+
+.teacher-submissions-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Keep submission tables readable instead of crushing columns */
+.teacher-submissions-table-wrap .data-table {
+  min-width: 900px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+
+  body:has(#adminLessonNotesBody) .dashboard-main {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  body:has(#adminLessonNotesBody) .dashboard-main > h1 {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  body:has(#adminLessonNotesBody) .dashboard-main > p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  body:has(#adminLessonNotesBody) .dashboard-section {
+    padding: 16px 12px;
+    border-radius: 12px;
+    margin-bottom: 18px;
+  }
+
+  body:has(#adminLessonNotesBody) .dashboard-section h2 {
+    font-size: 20px;
+  }
+
+  body:has(#adminLessonNotesBody) .submission-table-toolbar {
+    width: 100%;
+    margin: 10px 0;
+  }
+
+  body:has(#adminLessonNotesBody) .submission-table-toolbar label {
+    flex-wrap: wrap;
+    font-size: 14px;
+  }
+
+  body:has(#adminLessonNotesBody) .submission-table-toolbar select {
+    min-height: 40px;
+    font-size: 16px;
+  }
+
+  body:has(#adminLessonNotesBody) .submission-table-footer {
+    width: 100%;
+    gap: 10px;
+  }
+
+  body:has(#adminLessonNotesBody) .submission-pagination {
+    width: 100%;
+    gap: 5px;
+  }
+
+  body:has(#adminLessonNotesBody) .submission-page-btn {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 7px 9px;
+  }
+
+  body:has(#adminLessonNotesBody) .submission-actions {
+    min-width: 150px;
+  }
+
+  body:has(#adminLessonNotesBody) .submission-actions button {
+    min-height: 38px;
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+
+  .teacher-submissions-table-wrap {
+    border-radius: 8px;
+  }
+}
+
+/* Extra-small phones */
+@media (max-width: 480px) {
+
+  body:has(#adminLessonNotesBody) .dashboard-main {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  body:has(#adminLessonNotesBody) .dashboard-section {
+    padding: 14px 8px;
+  }
+
+  body:has(#adminLessonNotesBody) .submission-pagination {
+    justify-content: flex-start;
+  }
+}

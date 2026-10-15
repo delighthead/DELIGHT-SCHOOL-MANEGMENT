@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Basic 9 Mock Examinations - Delight International School</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/mock-examinations.css">
+  <link rel="stylesheet" href="../css/mock-dashboard-modern.css">
+  <link rel="stylesheet" href="../css/mock-report-card-modern.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+
+    <aside class="sidebar mock-modern-sidebar">
+
+      <div class="mock-sidebar-brand">
+        <div class="mock-school-icon">D</div>
+
+        <div>
+          <h2 id="mockPanelTitle">School Panel</h2>
+          <p>Delight International School</p>
+        </div>
+      </div>
+
+      <nav class="mock-modern-navigation"
+           aria-label="Mock Examination Navigation">
+
+        <a href="#mockDashboardOverview" id="mockDashboardLink" class="active">
+          <span>⌂</span> Dashboard Overview
+        </a>
+
+        <a href="#mockOverview">
+          <span>▦</span> Mock Examinations
+        </a>
+
+
+
+        <a href="#mockManageSubjects"
+           class="mock-admin-navigation" hidden>
+          <span>▤</span> Manage Subjects
+        </a>
+
+        <a href="#mockScoreSection">
+          <span>✎</span> Enter Scores
+        </a>
+
+        <a href="#mockResultsWorkspace">
+          <span>▥</span> Mock Results
+        </a>
+
+        <a href="#mockReportCardsWorkspace">
+          <span>▣</span> Report Cards
+        </a>
+
+        <a href="#mockExportWorkspace">
+          <span>⇩</span> Export Results
+        </a>
+
+        <!-- STEP 455C — PROFILE AND PARENTS NAVIGATION -->
+
+        <a href="admin-profile.html"
+           id="mockMyProfileLink">
+          <span>◉</span> My Profile
+        </a>
+
+        <a href="parents.html"
+           id="mockManageParentsLink"
+           hidden>
+          <span>♧</span> Manage Parents
+        </a>
+
+      </nav>
+
+      <div class="mock-sidebar-footer">
+        <a href="../index.html">Website Home</a>
+        <a href="../pages/login.html">Logout</a>
+      </div>
+
+    </aside>
+
+
+    <main class="dashboard-main">
+      <header class="mock-header">
+        <div>
+          <h1>Basic 9 Mock Examinations</h1>
+          <p>Manage mock examinations independently from terminal examinations.</p>
+        </div>
+      </header>
+
+      <section class="dashboard-section" id="mockOverview">
+        <h2>Select Examination</h2>
+        <div class="mock-controls">
+          <label>
+            Branch
+            <select id="mockBranch">
+              <option value="">Select branch</option>
+            </select>
+          </label>
+
+          <label>
+            Mock Examination
+            <select id="mockExam">
+              <option value="">Select Mock 1, Mock 2, Mock 3...</option>
+            </select>
+          </label>
+
+
+        </div>
+
+        <p id="mockExamDetails" class="mock-details"></p>
+
+        <!-- STEP 434: EXAMINATION MANAGEMENT -->
+        <div id="mockManageExaminations"
+             class="mock-management-panel">
+
+          <h2>Manage Examinations</h2>
+          <p>Create, activate and complete Basic 9 mock examinations.</p>
+
+          <div class="mock-controls">
+
+            <label>
+              Class
+              <select id="mockClass">
+                <option value="">Select Basic 9 class</option>
+              </select>
+            </label>
+
+            <label>
+              Examination Name
+              <input id="mockName" type="text" placeholder="Mock 1">
+            </label>
+
+            <label>
+              Academic Year
+              <input id="mockAcademicYear"
+                     type="text"
+                     placeholder="2026/2027">
+            </label>
+
+            <button type="button" id="createMockBtn">
+              Create Examination
+            </button>
+
+          </div>
+
+          <div class="mock-actions">
+            <button type="button" id="activateMockBtn">
+              Activate Examination
+            </button>
+
+            <button type="button" id="completeMockBtn">
+              Complete Examination
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+
+      <section class="dashboard-section"
+               id="mockAdminSection" hidden>
+
+        <div id="mockManageSubjects"
+             class="mock-management-panel">
+
+          <h2>Manage Subjects</h2>
+          <p>Add examination subjects and configure marking formats.</p>
+
+          <div class="mock-controls">
+
+            <label>
+              Subject Name
+              <select id="mockNewSubject" required>
+  <option value="">Select Subject</option>
+</select>
+            </label>
+
+            <label>
+              Marking Format
+              <select id="mockMarkingFormat">
+                <option value="40">
+                  40 Objectives + 60 Written
+                </option>
+                <option value="30">
+                  30 Objectives + 70 Written
+                </option>
+              </select>
+            </label>
+
+            <button type="button" id="addMockSubjectBtn">
+              Add Subject
+            </button>
+
+          </div>
+
+          <!-- Configured subjects for the selected mock examination -->
+          <div class="mock-configured-subjects">
+            <h3>Configured Examination Subjects</h3>
+            <p id="mockConfiguredSubjectsContext">
+              Select a branch and mock examination to view subjects.
+            </p>
+
+            <div class="mock-table-wrap">
+              <table class="mock-table">
+                <thead>
+                  <tr>
+                    <th>Subject</th>
+                    <th>Objectives</th>
+                    <th>Written</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="mockConfiguredSubjectsBody">
+                  <tr>
+                    <td colspan="5">
+                      Select a mock examination to display subjects.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section class="dashboard-section" id="mockScoreSection">
+        <h2>Student Mock Examination Scores</h2>
+
+        <!-- STEP 433H: SELECTED EXAMINATION INFORMATION -->
+        <div id="mockScoreExamInfo"
+             class="mock-score-exam-info"
+             aria-live="polite">
+
+          <div class="mock-exam-info-item">
+            <span class="mock-exam-info-label">Branch</span>
+            <strong id="mockScoreBranchInfo">Not selected</strong>
+          </div>
+
+          <div class="mock-exam-info-item">
+            <span class="mock-exam-info-label">Examination</span>
+            <strong id="mockScoreExamNameInfo">Not selected</strong>
+          </div>
+
+          <div class="mock-exam-info-item">
+            <span class="mock-exam-info-label">Academic Year</span>
+            <strong id="mockScoreYearInfo">—</strong>
+          </div>
+
+          <div class="mock-exam-info-item">
+            <span class="mock-exam-info-label">Status</span>
+            <strong id="mockScoreStatusInfo">Not selected</strong>
+          </div>
+
+        </div>
+
+        <div class="mock-controls">
+          <label>
+            Subject
+            <select id="mockSubject">
+              <option value="">Select subject</option>
+            </select>
+          </label>
+        </div>
+        <p id="mockMarkingInfo">
+          Select an examination and subject to begin.
+        </p>
+
+        <div class="mock-actions">
+          <button type="button" id="loadMockScoresBtn">
+            Load Students
+          </button>
+          <button type="button" id="downloadMockTemplateBtn">
+            Download Score Template
+          </button>
+
+          <button type="button" id="uploadMockExcelBtn">
+            Upload Completed Excel
+          </button>
+
+          <input
+            type="file"
+            id="mockExcelFileInput"
+            accept=".xlsx"
+            style="display:none"
+          />
+
+          <button type="button" id="exportMockExcelBtn">
+            Export to Excel
+          </button>
+          <button type="button" id="printMockReportsBtn">
+            Print All Mock Reports
+          </button>
+        </div>
+
+
+        <!-- Excel score upload preview -->
+        <div
+          id="mockExcelPreviewSection"
+          style="display:none; margin:20px 0; padding:18px; border:1px solid #d7e0e8; border-radius:10px; background:#fff;"
+        >
+          <h3>Excel Score Upload Preview</h3>
+
+          <p id="mockExcelPreviewMessage">
+            Select a completed Excel file to preview scores.
+          </p>
+
+          <div
+            id="mockExcelPreviewErrors"
+            style="display:none; color:#a00000; margin:12px 0;"
+          ></div>
+
+          <div style="overflow-x:auto;">
+            <table class="mock-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Admission No.</th>
+                  <th>Objectives</th>
+                  <th>Written</th>
+                  <th>Total</th>
+                  <th>Grade</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+
+              <tbody id="mockExcelPreviewBody">
+                <tr>
+                  <td colspan="7">
+                    No Excel file uploaded yet.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mock-actions" style="margin-top:15px;">
+            <button
+              type="button"
+              id="confirmMockExcelImportBtn"
+              disabled
+            >
+              Confirm and Save Scores
+            </button>
+
+            <button
+              type="button"
+              id="cancelMockExcelPreviewBtn"
+            >
+              Cancel Preview
+            </button>
+          </div>
+        </div>
+
+        <div class="mock-table-wrapper">
+          <table class="mock-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Admission No.</th>
+                <th>Objectives</th>
+                <th>Written</th>
+                <th>Total</th>
+                <th>Grade</th>
+                <th>Remarks</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="mockScoresBody">
+              <tr>
+                <td colspan="8">
+                  Select an examination and subject to display students.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+
+      <!-- STEP 410: ADDITIONAL DASHBOARD WORKSPACES -->
+
+      <section
+        id="mockDashboardOverview"
+        class="dashboard-section mock-workspace"
+        hidden
+      >
+        <div class="mock-workspace-header">
+          <h2>Dashboard Overview</h2>
+          <p>Basic 9 Mock Examination Management</p>
+        </div>
+
+        <div class="mock-workspace-content">
+
+          <!-- STEP 452B: DASHBOARD STATISTICS -->
+
+          <div id="mockDashboardStats"
+               style="display:grid;
+                      grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+                      gap:16px;margin-bottom:24px;">
+
+            <div class="mock-dashboard-stat">
+              <h3>Mock Examinations</h3>
+              <strong id="mockDashExams">—</strong>
+            </div>
+
+            <div class="mock-dashboard-stat">
+              <h3>Basic 9 Students</h3>
+              <strong id="mockDashStudents">—</strong>
+            </div>
+
+            <div class="mock-dashboard-stat">
+              <h3>Subjects</h3>
+              <strong id="mockDashSubjects">—</strong>
+            </div>
+
+            <div class="mock-dashboard-stat">
+              <h3>Scores Entered</h3>
+              <strong id="mockDashScores">—</strong>
+            </div>
+
+            <div class="mock-dashboard-stat">
+              <h3>Average Score</h3>
+              <strong id="mockDashAverage">—</strong>
+            </div>
+
+            <div class="mock-dashboard-stat">
+              <h3>Examination Status</h3>
+              <strong id="mockDashStatus">—</strong>
+            </div>
+
+          </div>
+
+          <div style="display:flex;gap:12px;
+                      flex-wrap:wrap;margin-bottom:20px;">
+
+            <button type="button" id="mockDashRefreshBtn">
+              Refresh Dashboard
+            </button>
+
+          </div>
+
+          <p id="mockDashMessage"
+             role="status"
+             aria-live="polite">
+            Select a branch and examination to view statistics.
+          </p>
+
+          <div style="background:#eef5fc;
+                      padding:20px;border-radius:12px;
+                      margin-top:20px;">
+
+            <h3 style="color:#083d70;margin-top:0;">
+              Examination Information
+            </h3>
+
+            <p><strong>Branch:</strong>
+              <span id="mockDashBranch">—</span>
+            </p>
+
+            <p><strong>Examination:</strong>
+              <span id="mockDashExam">—</span>
+            </p>
+
+            <p><strong>Academic Year:</strong>
+              <span id="mockDashYear">—</span>
+            </p>
+
+          </div>
+
+
+          <!-- STEP 457B — SUBJECT PERFORMANCE PIE CHART -->
+          <div class="mock-pie-section">
+
+            <div class="mock-pie-heading">
+              <h3>Subject Performance Bar Chart</h3>
+              <p>
+                Compare average marks by subject, ranked from highest
+                to lowest.
+              </p>
+            </div>
+
+            <div class="mock-pie-layout">
+
+              <div class="mock-pie-chart-container">
+                <div
+                  id="mockSubjectPieChart"
+                  class="mock-subject-bar-chart"
+                  role="img"
+                  aria-label="Subject performance horizontal bar chart"
+                ></div>
+
+
+              </div>
+
+              <div class="mock-bar-summary">
+                <h4>Examination Performance</h4>
+                <p>Overall Subject Average</p>
+                <strong id="mockPieAverage">—</strong>
+                <span>Average mark out of 100</span>
+                <p class="mock-bar-summary-note">
+                  Subjects are arranged from highest to lowest
+                  average mark.
+                </p>
+              </div>
+
+            </div>
+
+            <p class="mock-pie-note">
+              Each bar represents the subject's average mark out of 100.
+            </p>
+
+          </div>
+          <!-- END STEP 457B -->
+
+<div style="margin-top:25px;">
+
+            <h3 style="color:#083d70;">
+              Subject Performance Summary
+            </h3>
+
+            <div style="overflow-x:auto;">
+
+              <table class="mock-results-table"
+                     style="width:100%;border-collapse:collapse;">
+
+                <thead>
+                  <tr>
+                    <th>Subject</th>
+                    <th>Scores Entered</th>
+                    <th>Average Mark</th>
+                    <th>Highest Mark</th>
+                    <th>Lowest Mark</th>
+                  </tr>
+                </thead>
+
+                <tbody id="mockDashSubjectsBody">
+                  <tr>
+                    <td colspan="5">
+                      Select an examination to load performance.
+                    </td>
+                  </tr>
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+
+<section
+        id="mockResultsWorkspace"
+        class="dashboard-section mock-workspace"
+        hidden
+      >
+        <div class="mock-workspace-header">
+          <h2>Mock Examination Results</h2>
+          <p>
+            View saved Basic 9 mock examination results
+            by student and subject.
+          </p>
+        </div>
+
+        <div class="mock-workspace-content">
+
+          <div class="mock-results-summary"
+               style="padding:18px;background:#eef5fc;
+                      border-radius:10px;margin-bottom:20px;">
+
+            <h3 style="margin-top:0;color:#083d70;">
+              DELIGHT INTERNATIONAL SCHOOL
+            </h3>
+
+            <p><strong>Branch:</strong>
+              <span id="mockResultsBranch">—</span>
+            </p>
+
+            <p><strong>Examination:</strong>
+              <span id="mockResultsExam">—</span>
+            </p>
+
+            <p><strong>Academic Year:</strong>
+              <span id="mockResultsYear">—</span>
+            </p>
+
+            <p><strong>Status:</strong>
+              <span id="mockResultsStatus">—</span>
+            </p>
+
+          </div>
+
+          <div class="mock-results-controls"
+               style="display:flex;gap:12px;flex-wrap:wrap;
+                      align-items:end;margin-bottom:18px;">
+
+            <label>
+              <strong>Subject</strong><br>
+              <select id="mockResultsSubject"
+                      style="min-width:240px;padding:10px;">
+                <option value="all">All Subjects</option>
+              </select>
+            </label>
+
+            <button type="button"
+                    id="loadMockResultsBtn">
+              Refresh Results
+            </button>
+
+            <button type="button"
+                    id="printMockResultsBtn"
+                    class="mock-results-action-btn"
+                    disabled>
+              Print Results
+            </button>
+
+            <button type="button"
+                    id="exportMockResultsBtn"
+                    class="mock-results-action-btn"
+                    disabled>
+              Export to Excel
+            </button>
+
+          </div>
+
+          <div style="overflow-x:auto;">
+
+            <table class="mock-results-table"
+                   style="width:100%;border-collapse:collapse;">
+
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Admission No.</th>
+                  <th>Subject</th>
+                  <th>Objectives</th>
+                  <th>Written</th>
+                  <th>Total</th>
+                  <th>Grade</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+
+              <tbody id="mockResultsBody">
+                <tr>
+                  <td colspan="8">
+                    Select an examination and click Refresh Results.
+                  </td>
+                </tr>
+              </tbody>
+
+            </table>
+
+          </div>
+
+          <p id="mockResultsMessage"
+             role="status"
+             aria-live="polite"
+             style="margin-top:15px;">
+          </p>
+
+        </div>
+      </section>
+
+      <section
+        id="mockReportCardsWorkspace"
+        class="dashboard-section mock-workspace"
+        hidden
+      >
+        <div class="mock-workspace-header">
+          <h2>Mock Examination Report Cards</h2>
+          <p>Generate and print Basic 9 mock examination reports.</p>
+        </div>
+
+        <div class="mock-workspace-content">
+
+          <div class="mock-report-controls">
+
+            <div class="mock-report-selection-info">
+              <h3>Examination Information</h3>
+
+              <p>
+                <strong>Branch:</strong>
+                <span id="mockReportBranchName">
+                  Select a branch
+                </span>
+              </p>
+
+              <p>
+                <strong>Examination:</strong>
+                <span id="mockReportExamName">
+                  Select a mock examination
+                </span>
+              </p>
+
+              <p>
+                <strong>Academic Year:</strong>
+                <span id="mockReportAcademicYear">—</span>
+              </p>
+
+            </div>
+
+            <div class="mock-report-student-selection">
+
+              <label for="mockReportStudent">
+                <strong>Select Student</strong>
+              </label>
+
+              <select id="mockReportStudent">
+                <option value="">
+                  Load students to select a student
+                </option>
+              </select>
+
+            </div>
+
+            <div class="mock-actions">
+
+              <button
+                type="button"
+                id="mockReportLoadStudentsBtn">
+                Load Students
+              </button>
+
+              <button
+                type="button"
+                id="mockReportPreviewBtn"
+                disabled>
+                Preview Report
+              </button>
+
+              <button
+                type="button"
+                id="mockReportPrintSelectedBtn"
+                disabled>
+                Print Selected
+              </button>
+
+              <button
+                type="button"
+                id="mockReportPrintAllBtn">
+                Print All Reports
+              </button>
+
+            </div>
+
+            <!-- STEP 450C: Saved Mock Report Remarks -->
+            <section
+              id="mockReportRemarksPanel"
+              class="mock-report-remarks-panel"
+              hidden
+              aria-label="Student Report Remarks"
+            >
+              <div class="mock-report-remarks-header">
+                <h3>Student Report Remarks</h3>
+                <p>
+                  Enter and save remarks for the selected student.
+                  Saved remarks will appear automatically on
+                  the student's Mock Examination Report Card.
+                </p>
+              </div>
+
+              <div class="mock-report-remarks-field">
+                <label for="mockClassTeacherRemark">
+                  <strong>Class Teacher's Remarks</strong>
+                </label>
+
+                <textarea
+                  id="mockClassTeacherRemark"
+                  rows="3"
+                  maxlength="2000"
+                  placeholder="Enter Class Teacher's Remarks"
+                  disabled
+                ></textarea>
+
+                <button
+                  type="button"
+                  id="mockSaveTeacherRemarkBtn"
+                  disabled
+                >
+                  Save Teacher's Remarks
+                </button>
+              </div>
+
+              <div class="mock-report-remarks-field">
+                <label for="mockHeadteacherRemark">
+                  <strong>Headteacher's Remarks</strong>
+                </label>
+
+                <textarea
+                  id="mockHeadteacherRemark"
+                  rows="3"
+                  maxlength="2000"
+                  placeholder="Enter Headteacher's Remarks"
+                  disabled
+                ></textarea>
+
+                <button
+                  type="button"
+                  id="mockSaveHeadteacherRemarkBtn"
+                  disabled
+                >
+                  Save Headteacher's Remarks
+                </button>
+              </div>
+
+              <p
+                id="mockRemarksSaveStatus"
+                role="status"
+                aria-live="polite"
+              >
+                Select a student to load saved remarks.
+              </p>
+            </section>
+
+
+            <p
+              id="mockReportStatus"
+              role="status"
+              aria-live="polite">
+              Select a branch and mock examination to begin.
+            </p>
+
+            <div
+              id="mockReportPreviewArea"
+              class="mock-report-preview-area"
+              hidden>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <section
+        id="mockExportWorkspace"
+        class="dashboard-section mock-workspace"
+        hidden
+      >
+        <div class="mock-workspace-header">
+          <h2>Export Mock Examination Results</h2>
+          <p>Export examination results to Excel.</p>
+        </div>
+
+        <div class="mock-workspace-content">
+
+          <div style="padding:20px;background:#eef5fc;
+                      border:1px solid #dce6f3;
+                      border-radius:10px;margin-bottom:20px;">
+
+            <h3 style="margin-top:0;color:#083d70;">
+              Examination Information
+            </h3>
+
+            <p>
+              <strong>Branch:</strong>
+              <span id="mockExportBranch">—</span>
+            </p>
+
+            <p>
+              <strong>Examination:</strong>
+              <span id="mockExportExam">—</span>
+            </p>
+
+            <p>
+              <strong>Academic Year:</strong>
+              <span id="mockExportYear">—</span>
+            </p>
+
+          </div>
+
+          <div style="display:flex;gap:12px;
+                      flex-wrap:wrap;margin-bottom:18px;">
+
+            <button type="button" id="mockExportLoadBtn">
+              Load Results
+            </button>
+
+            <button type="button"
+                    id="mockExportDownloadBtn"
+                    disabled>
+              Export to Excel
+            </button>
+
+          </div>
+
+          <p id="mockExportStatus"
+             role="status"
+             aria-live="polite">
+            Click Load Results to prepare the Excel export.
+          </p>
+
+        </div>
+      </section>
+
+      <p id="mockMessage" role="status" aria-live="polite"></p>
+    </main>
+  </div>
+
+  <script src="../js/mock-report-card.js"></script>
+  <script src="../js/mock-examinations.js"></script>
+  <script src="../js/logout.js?v=2"></script>
+</body>
+</html>

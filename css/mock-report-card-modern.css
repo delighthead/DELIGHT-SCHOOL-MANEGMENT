@@ -1,0 +1,413 @@
+/*
+ DELIGHT INTERNATIONAL SCHOOL
+ PROFESSIONAL BASIC 9 MOCK EXAMINATION REPORT CARD
+
+ Blue and Gold Theme
+ A4 Portrait Layout
+ Mock Examinations Only
+*/
+
+:root {
+    --mock-report-blue: #12376b;
+    --mock-report-dark-blue: #0b2548;
+    --mock-report-gold: #d4a72c;
+    --mock-report-light-blue: #edf4fc;
+    --mock-report-border: #b8c7d8;
+}
+
+/* REPORT PAGE */
+
+.mock-report-page {
+    background: #ffffff;
+    color: #172033;
+    border: 2px solid var(--mock-report-blue);
+    border-top: 7px solid var(--mock-report-gold);
+    font-family: Arial, sans-serif;
+}
+
+/* SCHOOL HEADER */
+
+.mock-report-header {
+    text-align: center;
+    border-bottom: 3px solid var(--mock-report-gold);
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+}
+
+.mock-report-header h1 {
+    color: var(--mock-report-blue);
+    font-size: 23px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mock-report-header h2 {
+    background: var(--mock-report-blue);
+    color: #ffffff;
+    padding: 9px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+/* SCHOOL LOGO */
+
+.mock-report-logo {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+}
+
+/* STUDENT PHOTO */
+
+.mock-report-photo {
+    width: 75px;
+    height: 85px;
+    object-fit: cover;
+    border: 2px solid var(--mock-report-gold);
+    border-radius: 4px;
+}
+
+/* STUDENT INFORMATION */
+
+.mock-report-student-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 18px;
+    padding: 13px;
+    background: var(--mock-report-light-blue);
+    border: 1px solid var(--mock-report-border);
+    border-left: 4px solid var(--mock-report-gold);
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+.mock-report-student-info strong {
+    color: var(--mock-report-dark-blue);
+}
+
+/* SUBJECT RESULTS TABLE */
+
+.mock-report-subject-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 11px;
+}
+
+.mock-report-subject-table th {
+    background: var(--mock-report-blue);
+    color: #ffffff;
+    padding: 9px 5px;
+    border: 1px solid var(--mock-report-blue);
+    font-weight: 700;
+}
+
+.mock-report-subject-table td {
+    padding: 8px 5px;
+    border: 1px solid var(--mock-report-border);
+    text-align: center;
+}
+
+.mock-report-subject-table tbody tr:nth-child(even) {
+    background: #f4f8fd;
+}
+
+.mock-report-subject {
+    font-weight: 600;
+    text-align: left !important;
+}
+
+/* PERFORMANCE SUMMARY */
+
+.mock-report-summary {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 12px;
+    background: var(--mock-report-light-blue);
+    border: 2px solid var(--mock-report-gold);
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+.mock-report-summary strong {
+    color: var(--mock-report-blue);
+}
+
+/* REMARKS */
+
+.mock-report-comments {
+    margin-top: 20px;
+    padding: 12px;
+    border: 1px solid var(--mock-report-border);
+    border-radius: 4px;
+}
+
+/* SIGNATURES */
+
+.mock-report-signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    padding-top: 10px;
+    text-align: center;
+    font-size: 11px;
+}
+
+/* FOOTER */
+
+.mock-report-footer {
+    border-top: 2px solid var(--mock-report-gold);
+    padding-top: 7px;
+    color: var(--mock-report-dark-blue);
+    font-size: 9px;
+}
+
+/* A4 PRINTING */
+
+@media print {
+
+    @page {
+        size: A4 portrait;
+        margin: 10mm;
+    }
+
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+    }
+
+    .mock-report-page {
+        width: 100% !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        break-after: page;
+        page-break-after: always;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .mock-report-page:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+
+    .mock-report-subject-table tr,
+    .mock-report-summary,
+    .mock-report-comments,
+    .mock-report-signatures {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}
+
+
+/* STEP 440K — MOCK REPORT PREVIEW */
+
+.mock-report-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.mock-report-selection-info {
+    background: #f4f7fc;
+    border-left: 5px solid #c9a227;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.mock-report-selection-info h3 {
+    color: #123c78;
+    margin: 0 0 14px;
+}
+
+.mock-report-selection-info p {
+    margin: 8px 0;
+    color: #26364a;
+}
+
+.mock-report-student-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 480px;
+}
+
+.mock-report-student-selection label {
+    color: #123c78;
+}
+
+#mockReportStudent {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: white;
+    font-size: 14px;
+}
+
+#mockReportStatus {
+    padding: 12px 15px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    color: #334155;
+}
+
+.mock-report-preview-area {
+    background: #e8edf4;
+    border-radius: 12px;
+    padding: 24px;
+    overflow-x: auto;
+}
+
+.mock-report-preview-area .mock-report-page {
+    background: #ffffff;
+    width: 190mm;
+    max-width: 100%;
+    min-height: 267mm;
+    margin: 0 auto;
+    box-sizing: border-box;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+@media (max-width: 768px) {
+    .mock-report-preview-area {
+        padding: 10px;
+    }
+
+    .mock-report-preview-area .mock-report-page {
+        width: 100%;
+        min-height: auto;
+    }
+}
+
+@media print {
+    .mock-report-controls,
+    .mock-report-preview-area {
+        display: none !important;
+    }
+}
+
+/* END STEP 440K */
+
+
+/* STEP 440M — FINAL A4 REPORT PRINTING */
+
+/* Keep report styling independent of dashboard layout. */
+
+.mock-report-page {
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+.mock-report-page .mock-report-header,
+.mock-report-page .mock-report-student-info,
+.mock-report-page .mock-report-summary,
+.mock-report-page .mock-report-comments,
+.mock-report-page .mock-report-signatures {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+.mock-report-page .mock-report-subject-table {
+    table-layout: auto;
+}
+
+.mock-report-page .mock-report-subject-table thead {
+    display: table-header-group;
+}
+
+.mock-report-page .mock-report-subject-table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+@media print {
+
+    @page {
+        size: A4 portrait;
+        margin: 10mm;
+    }
+
+    html,
+    body {
+        width: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .mock-report-page {
+        width: 100% !important;
+        min-height: 0 !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 6mm !important;
+        box-sizing: border-box !important;
+        border: 2px solid #12376b !important;
+        border-top: 6px solid #d4a72c !important;
+        box-shadow: none !important;
+        position: relative !important;
+        overflow: visible !important;
+        break-after: page;
+        page-break-after: always;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .mock-report-page:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+
+    .mock-report-page .mock-report-header {
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+    }
+
+    .mock-report-page .mock-report-subject-table {
+        width: 100%;
+        font-size: 10px;
+        margin-top: 10px;
+    }
+
+    .mock-report-page .mock-report-subject-table th,
+    .mock-report-page .mock-report-subject-table td {
+        padding: 5px 4px;
+    }
+
+    .mock-report-page .mock-report-summary {
+        margin-top: 10px;
+        padding: 8px;
+    }
+
+    .mock-report-page .mock-report-comments {
+        margin-top: 10px !important;
+        padding: 8px;
+    }
+
+    .mock-report-page .mock-report-signatures {
+        margin-top: 18px;
+    }
+
+    .mock-report-page .mock-report-footer {
+        position: static !important;
+        margin-top: 14px;
+    }
+
+    /* Hide dashboard controls if printing from dashboard. */
+
+    .mock-report-controls,
+    .mock-report-preview-area {
+        display: none !important;
+    }
+}
+
+/* END STEP 440M */
