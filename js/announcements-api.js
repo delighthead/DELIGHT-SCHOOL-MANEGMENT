@@ -39,11 +39,13 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         kotobabi_parents: {
           audience: "parents",
-          branch_id: 3
+          branch_id: null,
+          branchName: "KOTOBABI"
         },
         ofankor_parents: {
           audience: "parents",
-          branch_id: 2
+          branch_id: null,
+          branchName: "OFANKOR"
         },
         all: {
           audience: "all",
@@ -63,6 +65,49 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!currentUser) {
         alert("Your session has expired. Please log in again.");
         return;
+      }
+
+      if (selectedMapping.branchName) {
+        try {
+          const branchResponse = await fetch("/api/branches", {
+            headers: getAuthHeaders()
+          });
+
+          if (!branchResponse.ok) {
+            alert("Unable to retrieve school branches.");
+            return;
+          }
+
+          const branchData = await branchResponse.json();
+
+          const matches = (branchData.branches || []).filter(branch =>
+            branch.status === "active" &&
+            String(branch.branch_name || "")
+              .toUpperCase()
+              .includes(selectedMapping.branchName)
+          );
+
+          if (matches.length !== 1) {
+            alert(
+              "Unable to identify the selected school branch uniquely."
+            );
+            return;
+          }
+
+          selectedMapping.branch_id = Number(matches[0].id);
+
+          if (
+            !Number.isSafeInteger(selectedMapping.branch_id) ||
+            selectedMapping.branch_id <= 0
+          ) {
+            alert("Invalid school branch configuration.");
+            return;
+          }
+        } catch (error) {
+          console.error("Branch lookup failed:", error);
+          alert("Unable to retrieve school branches.");
+          return;
+        }
       }
 
       if (!isSuperAdmin()) {

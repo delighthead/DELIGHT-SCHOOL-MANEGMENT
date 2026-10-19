@@ -1,4 +1,5 @@
 const db = require("../config/database");
+const { getAnnouncementBranchIds } = require("../utils/announcementBranches");
 const {
   sendSms,
   normalizeGhanaPhone
@@ -12,6 +13,7 @@ function isBranchScopedAdmin(user) {
 // Get announcements
 exports.getAnnouncements = async (req, res) => {
   try {
+    const { schoolBranchIds } = await getAnnouncementBranchIds();
     const { branch_id } = req.query;
 
     // Enforce announcement branch access for legacy administrators.
@@ -42,7 +44,7 @@ exports.getAnnouncements = async (req, res) => {
 
     if (branch_id) {
       // School-wide announcements belong to Kotobabi and Ofankor only.
-      if ([2, 3].includes(Number(branch_id))) {
+      if (schoolBranchIds.includes(Number(branch_id))) {
         sql += ` WHERE (
           announcements.branch_id = ?
           OR announcements.branch_id IS NULL
@@ -79,6 +81,7 @@ exports.getAnnouncements = async (req, res) => {
 // Add announcement
 exports.createAnnouncement = async (req, res) => {
   try {
+    const { schoolBranchIds } = await getAnnouncementBranchIds();
     const { branch_id, title, message, audience } = req.body;
 
     if (!title || !message) {
@@ -119,7 +122,7 @@ exports.createAnnouncement = async (req, res) => {
     // Parent-only announcements must target Kotobabi or Ofankor.
     if (
       finalAudience === "parents" &&
-      ![2, 3].includes(Number(finalBranchId))
+      !schoolBranchIds.includes(Number(finalBranchId))
     ) {
       return res.status(400).json({
         message: "Select a valid parent branch."
@@ -211,7 +214,8 @@ exports.createAnnouncement = async (req, res) => {
           teacherParams.push(finalBranchId);
         } else {
           // School-wide announcements target Kotobabi and Ofankor only.
-          teacherSql += " AND branch_id IN (2, 3)";
+          teacherSql += " AND branch_id IN (?, ?)";
+          teacherParams.push(...schoolBranchIds);
         }
 
         const [teacherRows] = await db.query(
@@ -248,7 +252,8 @@ exports.createAnnouncement = async (req, res) => {
           parentParams.push(finalBranchId);
         } else {
           // School-wide announcements target Kotobabi and Ofankor only.
-          parentSql += " AND branch_id IN (2, 3)";
+          parentSql += " AND branch_id IN (?, ?)";
+          parentParams.push(...schoolBranchIds);
         }
 
         const [parentRows] = await db.query(
@@ -364,6 +369,7 @@ exports.deleteAnnouncement = async (req, res) => {
 // Get announcements for logged-in parent
 exports.getParentAnnouncements = async (req, res) => {
   try {
+    const { schoolBranchIds } = await getAnnouncementBranchIds();
     const [parents] = await db.query(
       "SELECT branch_id FROM parents WHERE user_id = ? OR ghana_card_number = ? LIMIT 1",
       [req.user.id, req.user.username]
@@ -394,13 +400,13 @@ exports.getParentAnnouncements = async (req, res) => {
             AND announcements.audience IN ('parent', 'parents', 'all')
           )
           OR (
-            ? IN (2, 3)
+            ? IN (?, ?)
             AND announcements.branch_id IS NULL
             AND announcements.audience IN ('all', 'everyone', 'parents', 'parent')
           )
         )
       ORDER BY announcements.created_at DESC`,
-      [parentBranchId, parentBranchId]
+      [parentBranchId, parentBranchId, ...schoolBranchIds]
     );
 
     res.json({
