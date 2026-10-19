@@ -34,9 +34,25 @@ document.addEventListener("DOMContentLoaded", function () {
     return data.teacher;
   }
 
+  function escapeAnnouncementHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, function (character) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[character];
+    });
+  }
+
   function formatAudience(audience) {
-    if (audience === "all") return "Everyone";
-    if (audience === "teachers") return "Teachers";
+    if (audience === "all" || audience === "everyone") {
+      return "everyone";
+    }
+    if (audience === "teachers" || audience === "teacher") {
+      return "Teachers Only";
+    }
     return audience || "";
   }
 
@@ -54,12 +70,16 @@ document.addEventListener("DOMContentLoaded", function () {
       announcementList.innerHTML = "";
 
       if (!response.ok) {
-        announcementList.innerHTML = `<p>${data.message || "Could not load announcements."}</p>`;
+        announcementList.innerHTML = `<p>${escapeAnnouncementHtml(data.message || "Could not load announcements.")}</p>`;
         return;
       }
 
       const announcements = (data.announcements || []).filter(function (announcement) {
-        return announcement.audience === "all" || announcement.audience === "teachers";
+        const audience = String(announcement.audience || "")
+          .trim()
+          .toLowerCase();
+
+        return ["all", "everyone", "teachers", "teacher"].includes(audience);
       });
 
       if (announcements.length === 0) {
@@ -72,17 +92,17 @@ document.addEventListener("DOMContentLoaded", function () {
         card.className = "dashboard-card";
 
         card.innerHTML = `
-          <h2>${announcement.title || ""}</h2>
-          <p>${announcement.message || ""}</p>
-          <p><strong>Audience:</strong> ${formatAudience(announcement.audience)}</p>
-          <p><strong>Date:</strong> ${announcement.created_at ? announcement.created_at.slice(0, 10) : ""}</p>
+          <h2>${escapeAnnouncementHtml(announcement.title || "")}</h2>
+          <p>${escapeAnnouncementHtml(announcement.message || "")}</p>
+          <p><strong>Audience:</strong> ${escapeAnnouncementHtml(formatAudience(announcement.audience))}</p>
+          <p><strong>Date:</strong> ${escapeAnnouncementHtml(announcement.created_at ? announcement.created_at.slice(0, 10) : "")}</p>
         `;
 
         announcementList.appendChild(card);
       });
     } catch (error) {
       console.error(error);
-      announcementList.innerHTML = `<p>${error.message}</p>`;
+      announcementList.innerHTML = `<p>${escapeAnnouncementHtml(error.message)}</p>`;
     }
   }
 

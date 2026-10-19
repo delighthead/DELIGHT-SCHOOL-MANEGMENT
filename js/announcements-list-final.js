@@ -33,6 +33,44 @@ document.addEventListener("DOMContentLoaded", function () {
     return [];
   }
 
+
+  function escapeAnnouncementHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, function (character) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[character];
+    });
+  }
+
+  function formatAnnouncementAudience(item) {
+    const audience = String(item.audience || "").trim().toLowerCase();
+    const branchId = Number(item.branch_id);
+
+    if (audience === "teachers" || audience === "teacher") {
+      return "Teachers Only";
+    }
+
+    if (audience === "parents" || audience === "parent") {
+      if (branchId === 3) return "Kotobabi Parents Only";
+      if (branchId === 2) return "Ofankor Parents Only";
+      return "Parents";
+    }
+
+    if (audience === "all" || audience === "everyone") {
+      return "everyone";
+    }
+
+    if (audience === "students" || audience === "student") {
+      return "Students";
+    }
+
+    return item.audience || "";
+  }
+
   async function loadAnnouncementsFinal() {
     if (!tableBody) return;
 
@@ -68,16 +106,16 @@ document.addEventListener("DOMContentLoaded", function () {
         const row = document.createElement("tr");
 
         row.innerHTML = `
-          <td>${item.branch_name || item.branch || ""}</td>
-          <td>${item.title || ""}</td>
-          <td>${item.message || ""}</td>
-          <td>${item.audience || ""}</td>
-          <td>${item.created_at ? String(item.created_at).slice(0, 10) : ""}</td>
+          <td>${escapeAnnouncementHtml(item.branch_name || item.branch || "")}</td>
+          <td>${escapeAnnouncementHtml(item.title || "")}</td>
+          <td>${escapeAnnouncementHtml(item.message || "")}</td>
+          <td>${escapeAnnouncementHtml(formatAnnouncementAudience(item))}</td>
+          <td>${escapeAnnouncementHtml(item.created_at ? String(item.created_at).slice(0, 10) : "")}</td>
           <td>
             <button
               type="button"
               class="small-btn danger final-delete-announcement-btn"
-              data-id="${item.id}"
+              data-id="${escapeAnnouncementHtml(item.id)}"
             >
               Delete
             </button>
@@ -88,7 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     } catch (error) {
       console.error("Announcement list load error:", error);
-      tableBody.innerHTML = `<tr><td colspan="6">${error.message}</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="6">${escapeAnnouncementHtml(error.message)}</td></tr>`;
     }
   }
 
@@ -145,7 +183,4 @@ document.addEventListener("DOMContentLoaded", function () {
   window.loadAnnouncementsFinal = loadAnnouncementsFinal;
   loadAnnouncementsFinal();
 
-  document.addEventListener("submit", function () {
-    setTimeout(loadAnnouncementsFinal, 800);
-  }, true);
 });

@@ -12,6 +12,18 @@ document.addEventListener("DOMContentLoaded", function () {
     return token() ? { Authorization: `Bearer ${token()}` } : {};
   }
 
+  function escapeAnnouncementHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, function (character) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[character];
+    });
+  }
+
   function formatDate(value) {
     if (!value) return "";
     return String(value).slice(0, 10);
@@ -28,7 +40,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const data = await response.json();
 
       if (!response.ok) {
-        announcementBox.innerHTML = `<p>${data.message || "Could not load announcements."}</p>`;
+        announcementBox.innerHTML = `<p>${escapeAnnouncementHtml(data.message || "Could not load announcements.")}</p>`;
         return;
       }
 
@@ -45,11 +57,11 @@ document.addEventListener("DOMContentLoaded", function () {
         html += `
           <div class="parent-announcement-card">
             <div class="announcement-card-header">
-              <h3>${announcement.title || "Announcement"}</h3>
-              <span>${formatDate(announcement.created_at || announcement.date)}</span>
+              <h3>${escapeAnnouncementHtml(announcement.title || "Announcement")}</h3>
+              <span>${escapeAnnouncementHtml(formatDate(announcement.created_at || announcement.date))}</span>
             </div>
 
-            <p>${announcement.message || ""}</p>
+            <p>${escapeAnnouncementHtml(announcement.message || "")}</p>
           </div>
         `;
       });

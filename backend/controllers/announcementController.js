@@ -6,13 +6,26 @@ const {
 
 function isBranchScopedAdmin(user) {
   if (!user) return false;
-  return user.role === "branch_admin" || user.role === "teacher_admin";
+  return ["branch_admin", "teacher_admin", "admin"].includes(user.role);
 }
 
 // Get announcements
 exports.getAnnouncements = async (req, res) => {
   try {
     const { branch_id } = req.query;
+
+    // Enforce announcement branch access for legacy administrators.
+    if (
+      isBranchScopedAdmin(req.user) &&
+      (
+        !req.user.branch_id ||
+        Number(branch_id) !== Number(req.user.branch_id)
+      )
+    ) {
+      return res.status(403).json({
+        message: "You cannot view announcements outside your branch."
+      });
+    }
 
     let sql = `SELECT
         announcements.id,
@@ -28,8 +41,23 @@ exports.getAnnouncements = async (req, res) => {
     const params = [];
 
     if (branch_id) {
-      sql += " WHERE announcements.branch_id = ? OR announcements.branch_id IS NULL";
+      // School-wide announcements belong to Kotobabi and Ofankor only.
+      if ([2, 3].includes(Number(branch_id))) {
+        sql += ` WHERE (
+          announcements.branch_id = ?
+          OR announcements.branch_id IS NULL
+        )`;
+      } else {
+        // Other branches must not receive school-wide announcements.
+        sql += " WHERE announcements.branch_id = ?";
+      }
+
       params.push(branch_id);
+    } else if (req.user?.role !== "super_admin") {
+      // Only the Super Admin may retrieve announcements across branches.
+      return res.status(403).json({
+        message: "Branch selection is required."
+      });
     }
 
     sql += " ORDER BY announcements.created_at DESC";
@@ -59,10 +87,74 @@ exports.createAnnouncement = async (req, res) => {
       });
     }
 
+    const requestedBranchId = req.requestedAnnouncementBranchId;
+
+    // Reject cross-branch or school-wide requests from branch administrators.
+    if (
+      isBranchScopedAdmin(req.user) &&
+      (
+        requestedBranchId === null ||
+        Number(requestedBranchId) !== Number(req.user.branch_id)
+      )
+    ) {
+      return res.status(403).json({
+        message: "You cannot publish announcements outside your branch."
+      });
+    }
+
     const finalBranchId = branch_id || null;
     const finalAudience = String(audience || "all")
       .trim()
       .toLowerCase();
+
+    // Only supported announcement audiences may be published.
+    const allowedAudiences = ["teachers", "parents", "all"];
+
+    if (!allowedAudiences.includes(finalAudience)) {
+      return res.status(400).json({
+        message: "Invalid announcement audience."
+      });
+    }
+
+    // Parent-only announcements must target Kotobabi or Ofankor.
+    if (
+      finalAudience === "parents" &&
+      ![2, 3].includes(Number(finalBranchId))
+    ) {
+      return res.status(400).json({
+        message: "Select a valid parent branch."
+      });
+    }
+
+    // Teachers Only and everyone are school-wide announcements.
+    if (
+      ["teachers", "all"].includes(finalAudience) &&
+      finalBranchId !== null
+    ) {
+      return res.status(400).json({
+        message: "This audience must target both branches."
+      });
+    }
+
+    // Only the Super Admin can publish school-wide announcements.
+    if (
+      finalBranchId === null &&
+      req.user?.role !== "super_admin"
+    ) {
+      return res.status(403).json({
+        message: "Only the Super Admin can publish school-wide announcements."
+      });
+    }
+
+    // Branch administrators cannot publish outside their branch.
+    if (
+      isBranchScopedAdmin(req.user) &&
+      Number(finalBranchId) !== Number(req.user.branch_id)
+    ) {
+      return res.status(403).json({
+        message: "You cannot publish announcements outside your branch."
+      });
+    }
 
     const [result] = await db.query(
       `INSERT INTO announcements
@@ -117,6 +209,9 @@ exports.createAnnouncement = async (req, res) => {
         if (finalBranchId) {
           teacherSql += " AND branch_id = ?";
           teacherParams.push(finalBranchId);
+        } else {
+          // School-wide announcements target Kotobabi and Ofankor only.
+          teacherSql += " AND branch_id IN (2, 3)";
         }
 
         const [teacherRows] = await db.query(
@@ -151,6 +246,9 @@ exports.createAnnouncement = async (req, res) => {
         if (finalBranchId) {
           parentSql += " AND branch_id = ?";
           parentParams.push(finalBranchId);
+        } else {
+          // School-wide announcements target Kotobabi and Ofankor only.
+          parentSql += " AND branch_id IN (2, 3)";
         }
 
         const [parentRows] = await db.query(
@@ -290,13 +388,19 @@ exports.getParentAnnouncements = async (req, res) => {
         announcements.created_at
       FROM announcements
       LEFT JOIN branches ON announcements.branch_id = branches.id
-      WHERE (announcements.branch_id = ? OR announcements.branch_id IS NULL)
-        AND (announcements.audience = 'parent'
-             OR announcements.audience = 'parents'
-             OR announcements.audience = 'everyone'
-             OR announcements.audience = 'all')
+      WHERE (
+          (
+            announcements.branch_id = ?
+            AND announcements.audience IN ('parent', 'parents', 'all')
+          )
+          OR (
+            ? IN (2, 3)
+            AND announcements.branch_id IS NULL
+            AND announcements.audience IN ('all', 'everyone', 'parents', 'parent')
+          )
+        )
       ORDER BY announcements.created_at DESC`,
-      [parentBranchId]
+      [parentBranchId, parentBranchId]
     );
 
     res.json({
